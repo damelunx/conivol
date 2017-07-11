@@ -1,0 +1,27 @@
+Package: conivol
+Type: Package
+Title: Conic intrinsic volumes and chibarsquare distribution
+Version: 0.0.0.9000
+Authors@R: as.person(c(
+        "Dennis Amelunxen <damelunx@gmail.com> [aut, cre]"
+    ))
+Description: A package for computing the conic intrinsic volumes and
+    chibarsquare distribution of products of circular cones, and
+    for estimating the intrinsic volumes of a closed convex cone
+    from projection data. The projection data has to consist of two values:
+    (1) the squared norm of a point in the ambient space, randomly
+    sampled from the corresponding standard normal distribution, and
+    (2) the squared norm of its projection on the cone.
+    The main function for the intrinsic volumes estimation produces EM-type
+    iterates, which should converge to the maximum likelihood estimate, if the
+    starting point has been chosen well. Different choices of starting points,
+    using products of circular cones or user-specified parameters, are
+    supported. See conivol website for more information.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Suggests: knitr,
+    rmarkdown,
+    testthat
+VignetteBuilder: knitr
+RoxygenNote: 6.0.1
