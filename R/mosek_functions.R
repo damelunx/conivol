@@ -84,31 +84,37 @@
 }
 
 
-.update_mosek_input <- function(mos_inp, d, c0, c1, c2, v0, vd) {
-    # update optimizer
-    mos_inp$mode0$scopt$opro[3, ] <- c0
-    mos_inp$mode1$scopt$opro[3, ] <- c1
-    mos_inp$mode2$scopt$opro[3, ] <- c2
-
-    # update variable constraints
-    mos_inp$mode0$bx[2, ] <- rep(.5/(1-v0-vd), d-1)
-    mos_inp$mode1$bx[2, ] <- rep(.5/(1-v0), d)
-    mos_inp$mode2$bx[2, ] <- rep(.5/(1-vd), d)
-
-    # update constraint rhs:
-    if (d%%2) {
-        mos_inp$mode0$bc[1,c(1,2)] <- c( (.5-vd)/(1-v0-vd) ,    (.5-v0)/(1-v0-vd) )
-        mos_inp$mode1$bc[1,c(1,2)] <- c(      .5/(1-v0)    ,    (.5-v0)/(1-v0)    )
-        mos_inp$mode2$bc[1,c(1,2)] <- c(      .5/(1-vd)    ,    (.5-vd)/(1-vd)    )
+# .update_mosek_input <- function(mos_inp, d, c0, c1, c2, v0, vd) {
+.update_mosek_input <- function(mos_inp, d, const, v0, vd, mode) {
+        # update optimizer
+    if (mode==1) {
+        mos_inp$mode1$scopt$opro[3, ] <- const
+        # update variable constraints
+        mos_inp$mode1$bx[2, ] <- rep(.5/(1-v0), d)
+        # update constraint rhs:
+        if (d%%2) mos_inp$mode1$bc[1,c(1,2)] <- c(      .5/(1-v0)    ,    (.5-v0)/(1-v0)    )
+            else  mos_inp$mode1$bc[1,c(1,2)] <- c(      .5/(1-v0)    ,    (.5-v0)/(1-v0)    )
+        # match the upper constraints
+        mos_inp$mode1$bc[2,c(1,2)] <- mos_inp$mode1$bc[1,c(1,2)]
+    } else if (mode==2) {
+        mos_inp$mode2$scopt$opro[3, ] <- const
+        # update variable constraints
+        mos_inp$mode2$bx[2, ] <- rep(.5/(1-vd), d)
+        # update constraint rhs:
+        if (d%%2) mos_inp$mode2$bc[1,c(1,2)] <- c(      .5/(1-vd)    ,    (.5-vd)/(1-vd)    )
+            else  mos_inp$mode2$bc[1,c(1,2)] <- c(   .5-vd/(1-vd)    ,         .5/(1-vd)    )
+        # match the upper constraints
+        mos_inp$mode2$bc[2,c(1,2)] <- mos_inp$mode2$bc[1,c(1,2)]
     } else {
-        mos_inp$mode0$bc[1,c(1,2)] <- c(      .5/(1-v0-vd) , (.5-v0-vd)/(1-v0-vd) )
-        mos_inp$mode1$bc[1,c(1,2)] <- c(      .5/(1-v0)    ,    (.5-v0)/(1-v0)    )
-        mos_inp$mode2$bc[1,c(1,2)] <- c(   .5-vd/(1-vd)    ,         .5/(1-vd)    )
+        mos_inp$mode0$scopt$opro[3, ] <- const
+        # update variable constraints
+        mos_inp$mode0$bx[2, ] <- rep(.5/(1-v0-vd), d-1)
+        # update constraint rhs:
+        if (d%%2) mos_inp$mode0$bc[1,c(1,2)] <- c( (.5-vd)/(1-v0-vd) ,    (.5-v0)/(1-v0-vd) )
+            else  mos_inp$mode0$bc[1,c(1,2)] <- c(      .5/(1-v0-vd) , (.5-v0-vd)/(1-v0-vd) )
+        # match the upper constraints
+        mos_inp$mode0$bc[2,c(1,2)] <- mos_inp$mode0$bc[1,c(1,2)]
     }
-    # match the upper constraints
-    mos_inp$mode0$bc[2,c(1,2)] <- mos_inp$mode0$bc[1,c(1,2)]
-    mos_inp$mode1$bc[2,c(1,2)] <- mos_inp$mode1$bc[1,c(1,2)]
-    mos_inp$mode2$bc[2,c(1,2)] <- mos_inp$mode2$bc[1,c(1,2)]
 
     return(mos_inp)
 }

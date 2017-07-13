@@ -19,7 +19,7 @@
 #'               \item{\code{mode==3}:}{circular cone fitting variance}
 #'               \item{\code{mode==4}:}{circular cone fitting statdim and variance (geometric mean)}
 #'             }
-#'             The starting point will be returned as the first column in the
+#'             The starting point will be returned as the first row in the
 #'             output matrix.
 #' @param lambda nonnegative parameters which, if positive, enforce the
 #'               log-concavity inequalities. Enforcing these may have negative
@@ -29,8 +29,8 @@
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
 #'
-#' @return The output of \code{bichibarsq_find_weights} is a \code{(d+1)}-by-\code{(N+1)}
-#'         matrix whose columns constitute EM-type iterates, which may or may not
+#' @return The output of \code{bichibarsq_find_weights} is a \code{(N+1)}-by-\code{(d+1)}
+#'         matrix whose rows constitute EM-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution.
 #'
@@ -42,22 +42,23 @@
 bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
                                     lambda=0, selfdual=FALSE) {
 
-    out <- matrix(0,d+1,N+1)
+    out <- matrix(0,N+1,d+1)
+    # out <- list()
+    # out$v <- matrix(0,N+1,d+1)
+    # out$w0 <- matrix(0,N+1,d-1)
+    # out$w1 <- matrix(0,N+1,d)
+    # out$w2 <- matrix(0,N+1,d)
+    # out$log_enforce <- matrix(0,N,3)
 
     # set the starting point for EM
     if (length(v_start)==d+1)
         v <- v_start
     else {
-        # estimate statistical dimension
-        md <- colMeans(m_samp)
-        delta <- (md[1] + d-md[2])/2
-        # estimate variance
-        mv <- colMeans(m_samp^2)
-        var <- sqrt( (1+mv[1]-(delta+1)^2) * (1+mv[2]-(d-delta+1)^2) )
-
-        v <- .init_v(d,mode,delta=delta,var=var)
+        est <- estimate_statdim_var(m_samp)
+        v <- .init_v(d,mode,delta=est$delta,var=est$var)
     }
-    out[ ,1] <- v
+    # out$v[1, ] <- v
+    out[1, ] <- v
 
     # find the values of the chi-squared densities at the sample points
     D <- .prepare_proj_data(d, m_samp)
@@ -88,28 +89,65 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
         denom1 <- rowSums( sweep( D$prim[I1,1:d] , MARGIN=2,v1,"*") )
         denom2 <- rowSums( sweep( D$pol[I2,1:d]  , MARGIN=2,v2,"*") )
 
-        c0 <- lambda0[1:(d-1)]-2*lambda0[2:d]+lambda0[3:(d+1)] +
-            colSums( sweep( D$prim[I0,1:(d-1)] * D$pol[I0,rev(1:(d-1))] ,
-                                                 MARGIN=2, v0, "*") / denom0 )
-        c1 <- lambda1[1:d]-2*lambda1[2:(d+1)]+lambda1[3:(d+2)] +
-            colSums( sweep( D$prim[I1,1:d] ,     MARGIN=2, v1, "*") / denom1 )
-        c2 <- lambda2[1:d]-2*lambda2[2:(d+1)]+lambda2[3:(d+2)] +
-            colSums( sweep( D$pol[I2,rev(1:d)] , MARGIN=2, v2, "*") / denom2 )
+        # set constants without lambda
+        c0_pre <- colSums( sweep( D$prim[I0,1:(d-1)] * D$pol[I0,rev(1:(d-1))] , MARGIN=2, v0, "*") / denom0 )
+        c1_pre <- colSums( sweep( D$prim[I1,1:d] ,     MARGIN=2, v1, "*") / denom1 )
+        c2_pre <- colSums( sweep( D$pol[I2,rev(1:d)] , MARGIN=2, v2, "*") / denom2 )
 
-        # update mosek input
-        mos_inp <- .update_mosek_input(mos_inp, d, c0, c1, c2, v[1], v[d+1])
+        # try enforcing log-concavity
+        c_lambda <- (3:0)/3
 
-        # solve maximization step
-        w0 <- mosek(mos_inp$mode0, opts)$sol$itr$xx
-        w1 <- mosek(mos_inp$mode1, opts)$sol$itr$xx
-        w2 <- mosek(mos_inp$mode2, opts)$sol$itr$xx
+        i_rel0 <- 0
+        success <- FALSE
+        while(!success) {
+            i_rel0 <- i_rel0+1
+            c0 <- c0_pre + c_lambda[i_rel0] * ( lambda0[1:(d-1)]-2*lambda0[2:d]+lambda0[3:(d+1)] )
+            # update mosek input
+            mos_inp <- .update_mosek_input(mos_inp, d, c0, v[1], v[d+1], mode=0)
+            # solve maximization step
+            mos_out <- mosek(mos_inp$mode0, opts)
+            success <- identical(mos_out$response$code,0)
+        }
+        w0 <- mos_out$sol$itr$xx
+
+        i_rel1 <- 0
+        success <- FALSE
+        while(!success) {
+            i_rel1 <- i_rel1+1
+            c1 <- c1_pre + c_lambda[i_rel1] * ( lambda1[1:d]-2*lambda1[2:(d+1)]+lambda1[3:(d+2)] )
+            # update mosek input
+            mos_inp <- .update_mosek_input(mos_inp, d, c1, v[1], v[d+1], mode=1)
+            # solve maximization step
+            mos_out <- mosek(mos_inp$mode1, opts)
+            success <- identical(mos_out$response$code,0)
+        }
+        w1 <- mos_out$sol$itr$xx
+
+        i_rel2 <- 0
+        success <- FALSE
+        while(!success) {
+            i_rel2 <- i_rel2+1
+            c2 <- c2_pre + c_lambda[i_rel2] * ( lambda2[1:d]-2*lambda2[2:(d+1)]+lambda2[3:(d+2)] )
+            # update mosek input
+            mos_inp <- .update_mosek_input(mos_inp, d, c2, v[1], v[d+1], mode=2)
+            # solve maximization step
+            mos_out <- mosek(mos_inp$mode2, opts)
+            success <- identical(mos_out$response$code,0)
+        }
+        w2 <- mos_out$sol$itr$xx
 
         # set the next iterate
         v[1]   <- w2[1]  *(1-w1[d]) / (1-w2[1]*w1[d])
         v[d+1] <- w1[d]*(1-w2[1])   / (1-w2[1]*w1[d])
         v[2:d] <- w0 * (1-v[1]-v[d+1])
 
-        out[ ,i+1] <- v
+        out[i+1, ] <- v
+        # out$v[i+1, ] <- v
+        # out$w0[i+1, ] <- w0
+        # out$w1[i+1, ] <- w1
+        # out$w2[i+1, ] <- w2
+        # out$mosout <- mos_out
+        # out$log_enforce[i, ] <- c(i_rel0,i_rel1,i_rel2)
     }
     return(out)
 }
