@@ -62,7 +62,7 @@ circ_ivol <- function(d, alpha, product = FALSE) {
 
 #' Sample from bivariate chi-bar-squared distribution of products of circular cones
 #'
-#' \code{generate_circ_proj_data} generates an \code{n} by \code{2} matrix
+#' \code{rbichibarsq_circ} generates an \code{n} by \code{2} matrix
 #' such that the rows form iid samples from the bivariate chi-bar-squared
 #' distribution of products of circular cones.
 #'
@@ -118,7 +118,7 @@ rbichibarsq_circ <- function(n,d,alpha) {
     #     out[-c(I,J),1] <- out[-c(I,J),1] + proj
     #     out[-c(I,J),2] <- out[-c(I,J),2] + normsq_x[-c(I,J)]-proj
     # }
-    return(out)
+    # return(out)
 }
 
 

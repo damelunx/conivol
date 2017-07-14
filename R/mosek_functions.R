@@ -1,7 +1,7 @@
 
-# create the input for mosek
+# create the input for mosek for EM step
 #
-.create_mosek_input <- function(d, const, v0, vd, selfdual) {
+.create_mosek_input_EM <- function(d, const, v0, vd, selfdual) {
     mos_inp0 <- list()
     mos_inp1 <- list()
     mos_inp2 <- list()
@@ -85,7 +85,7 @@
 
 
 # .update_mosek_input <- function(mos_inp, d, c0, c1, c2, v0, vd) {
-.update_mosek_input <- function(mos_inp, d, const, v0, vd, mode) {
+.update_mosek_input_EM <- function(mos_inp, d, const, v0, vd, mode) {
         # update optimizer
     if (mode==1) {
         mos_inp$mode1$scopt$opro[3, ] <- const

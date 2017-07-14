@@ -74,7 +74,7 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
 
     # prepare Mosek inputs
     const <- list( c0=rep(0,d-1), c1=rep(0,d), c2=rep(0,d) )
-    mos_inp <- .create_mosek_input(d,const,0,0,selfdual)
+    mos_inp <- .create_mosek_input_EM(d,const,0,0,selfdual)
     opts <- list()
     opts$verbose <- 0
 
@@ -103,7 +103,7 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
             i_rel0 <- i_rel0+1
             c0 <- c0_pre + c_lambda[i_rel0] * ( lambda0[1:(d-1)]-2*lambda0[2:d]+lambda0[3:(d+1)] )
             # update mosek input
-            mos_inp <- .update_mosek_input(mos_inp, d, c0, v[1], v[d+1], mode=0)
+            mos_inp <- .update_mosek_input_EM(mos_inp, d, c0, v[1], v[d+1], mode=0)
             # solve maximization step
             mos_out <- mosek(mos_inp$mode0, opts)
             success <- identical(mos_out$response$code,0)
@@ -116,7 +116,7 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
             i_rel1 <- i_rel1+1
             c1 <- c1_pre + c_lambda[i_rel1] * ( lambda1[1:d]-2*lambda1[2:(d+1)]+lambda1[3:(d+2)] )
             # update mosek input
-            mos_inp <- .update_mosek_input(mos_inp, d, c1, v[1], v[d+1], mode=1)
+            mos_inp <- .update_mosek_input_EM(mos_inp, d, c1, v[1], v[d+1], mode=1)
             # solve maximization step
             mos_out <- mosek(mos_inp$mode1, opts)
             success <- identical(mos_out$response$code,0)
@@ -129,7 +129,7 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
             i_rel2 <- i_rel2+1
             c2 <- c2_pre + c_lambda[i_rel2] * ( lambda2[1:d]-2*lambda2[2:(d+1)]+lambda2[3:(d+2)] )
             # update mosek input
-            mos_inp <- .update_mosek_input(mos_inp, d, c2, v[1], v[d+1], mode=2)
+            mos_inp <- .update_mosek_input_EM(mos_inp, d, c2, v[1], v[d+1], mode=2)
             # solve maximization step
             mos_out <- mosek(mos_inp$mode2, opts)
             success <- identical(mos_out$response$code,0)
@@ -140,6 +140,11 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
         v[1]   <- w2[1]  *(1-w1[d]) / (1-w2[1]*w1[d])
         v[d+1] <- w1[d]*(1-w2[1])   / (1-w2[1]*w1[d])
         v[2:d] <- w0 * (1-v[1]-v[d+1])
+
+        if(selfdual) {
+            v[1] <- (v[1]+v[d+1])/2
+            v[d+1] <- (v[1]+v[d+1])/2
+        }
 
         out[i+1, ] <- v
         # out$v[i+1, ] <- v
