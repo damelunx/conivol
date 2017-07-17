@@ -79,11 +79,20 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
     opts$verbose <- 0
 
     # loop of EM algorithm
+    v0 <- v[2:d]/(1-v[1]-v[d+1])
+    v1 <- v[2:(d+1)]/(1-v[1])
+    v2 <- v[1:d]/(1-v[d+1])
+    resp_code_0 = list()
+    resp_msg_0 = list()
+    resp_code_1 = list()
+    resp_msg_1 = list()
+    resp_code_2 = list()
+    resp_msg_2 = list()
     for (i in 1:N) {
         # compute constants for next step
-        v0 <- v[2:d]/(1-v[1]-v[d+1])
-        v1 <- v[2:(d+1)]/(1-v[1])
-        v2 <- v[1:d]/(1-v[d+1])
+        # v0 <- v[2:d]/(1-v[1]-v[d+1])
+        # v1 <- v[2:(d+1)]/(1-v[1])
+        # v2 <- v[1:d]/(1-v[d+1])
 
         denom0 <- rowSums( sweep( D$prim[I0,1:(d-1)] * D$pol[I0,rev(1:(d-1))] , MARGIN=2,v0,"*") )
         denom1 <- rowSums( sweep( D$prim[I1,1:d] , MARGIN=2,v1,"*") )
@@ -98,8 +107,8 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
         c_lambda <- (3:0)/3
 
         i_rel0 <- 0
-        success <- FALSE
-        while(!success) {
+        # success <- FALSE
+        # while(!success) {
             i_rel0 <- i_rel0+1
             c0 <- c0_pre + c_lambda[i_rel0] * ( lambda0[1:(d-1)]-2*lambda0[2:d]+lambda0[3:(d+1)] )
             # update mosek input
@@ -107,12 +116,15 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
             # solve maximization step
             mos_out <- mosek(mos_inp$mode0, opts)
             success <- identical(mos_out$response$code,0)
-        }
-        w0 <- mos_out$sol$itr$xx
+            resp_code_0[[i]] = list(mos_out$response$code)
+            resp_msg_0[[i]] = list(mos_out$response$msg)
+        # }
+        # w0 <- mos_out$sol$itr$xx
+        v0 <- mos_out$sol$itr$xx
 
         i_rel1 <- 0
-        success <- FALSE
-        while(!success) {
+        # success <- FALSE
+        # while(!success) {
             i_rel1 <- i_rel1+1
             c1 <- c1_pre + c_lambda[i_rel1] * ( lambda1[1:d]-2*lambda1[2:(d+1)]+lambda1[3:(d+2)] )
             # update mosek input
@@ -120,12 +132,15 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
             # solve maximization step
             mos_out <- mosek(mos_inp$mode1, opts)
             success <- identical(mos_out$response$code,0)
-        }
-        w1 <- mos_out$sol$itr$xx
+            resp_code_1[[i]] = list(mos_out$response$code)
+            resp_msg_1[[i]] = list(mos_out$response$msg)
+        # }
+        # w1 <- mos_out$sol$itr$xx
+        v1 <- mos_out$sol$itr$xx
 
         i_rel2 <- 0
-        success <- FALSE
-        while(!success) {
+        # success <- FALSE
+        # while(!success) {
             i_rel2 <- i_rel2+1
             c2 <- c2_pre + c_lambda[i_rel2] * ( lambda2[1:d]-2*lambda2[2:(d+1)]+lambda2[3:(d+2)] )
             # update mosek input
@@ -133,13 +148,19 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
             # solve maximization step
             mos_out <- mosek(mos_inp$mode2, opts)
             success <- identical(mos_out$response$code,0)
-        }
-        w2 <- mos_out$sol$itr$xx
+            resp_code_2[[i]] = list(mos_out$response$code)
+            resp_msg_2[[i]] = list(mos_out$response$msg)
+        # }
+        # w2 <- mos_out$sol$itr$xx
+        v2 <- mos_out$sol$itr$xx
 
         # set the next iterate
-        v[1]   <- w2[1]  *(1-w1[d]) / (1-w2[1]*w1[d])
-        v[d+1] <- w1[d]*(1-w2[1])   / (1-w2[1]*w1[d])
-        v[2:d] <- w0 * (1-v[1]-v[d+1])
+        # v[1]   <- w2[1]  *(1-w1[d]) / (1-w2[1]*w1[d])
+        # v[d+1] <- w1[d]*(1-w2[1])   / (1-w2[1]*w1[d])
+        # v[2:d] <- w0 * (1-v[1]-v[d+1])
+        v[1]   <- v2[1]  *(1-v1[d]) / (1-v2[1]*v1[d])
+        v[d+1] <- v1[d]*(1-v2[1])   / (1-v2[1]*v1[d])
+        v[2:d] <- v0 * (1-v[1]-v[d+1])
 
         if(selfdual) {
             v[1] <- (v[1]+v[d+1])/2
@@ -154,7 +175,13 @@ bichibarsq_find_weights <- function(m_samp, d, N=20, v_start=NULL, mode=0,
         # out$mosout <- mos_out
         # out$log_enforce[i, ] <- c(i_rel0,i_rel1,i_rel2)
     }
-    return(out)
+    return(list(iterates=out,
+                resp_code=list(mode0 = resp_code_0,
+                               mode1 = resp_code_1,
+                               mode2 = resp_code_2),
+                resp_msg =list(mode0 = resp_msg_0,
+                               mode1 = resp_msg_1,
+                               mode2 = resp_msg_2)))
 }
 
 
