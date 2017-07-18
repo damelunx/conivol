@@ -85,13 +85,16 @@ bichibarsq_find_weights_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mo
             denom <- colSums( data$dens * v[2:d] )
             c <- rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") ) +
                         lambda_v[1:(d-1)]-2*lambda_v[2:d]+lambda_v[3:(d+1)]
-            H <- diag(lambda_v[1:(d-1)-2*(2:d)+3:(d+1)]) + matrix( rowSums( sweep(
-                        apply( 1/data$n * data&dens * v[2:d] , 2, function(x) return(x %x% x) ) ,
+            H <- diag(lambda_v[1:(d-1)]-2*lambda_v[2:d]+lambda_v[3:(d+1)]) +
+                    matrix( rowSums( sweep(
+                        apply( 1/data$n * data$dens * v[2:d] , 2, function(x) return(x %x% x) ) ,
                         MARGIN=2, denom^2, "/") ), d-1, d-1 )
 
             v[1]   <- (1+gamma)*v[1]
             v[2:d] <- v[2:d] * (1 + gamma * solve(H,c) )
             v[d+1] <- (1+gamma)*v[d+1]
+            v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
+            v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
             out[i+1, ] <- v
         }
     } else if (extrap_pol & !extrap_prim) {
@@ -99,9 +102,10 @@ bichibarsq_find_weights_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mo
             denom <- colSums( data$dens * v[2:d] )
             c <- rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") ) +
                 lambda_v[1:(d-1)]-2*lambda_v[2:d]+lambda_v[3:(d+1)]
-            H <- diag(lambda_v[1:(d-1)-2*(2:d)+3:(d+1)]) + matrix( rowSums( sweep(
-                apply( 1/data$n * data&dens * v[2:d] , 2, function(x) return(x %x% x) ) ,
-                MARGIN=2, denom^2, "/") ), d-1, d-1 )
+            H <- diag(lambda_v[1:(d-1)]-2*lambda_v[2:d]+lambda_v[3:(d+1)]) +
+                matrix( rowSums( sweep(
+                    apply( 1/data$n * data$dens * v[2:d] , 2, function(x) return(x %x% x) ) ,
+                    MARGIN=2, denom^2, "/") ), d-1, d-1 )
 
             v[2:d] <- v[2:d] * (1 + gamma * solve(H,c) )
             v[d+1] <- (1+gamma)*v[d+1]
@@ -115,9 +119,10 @@ bichibarsq_find_weights_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mo
             denom <- colSums( data$dens * v[2:d] )
             c <- rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") ) +
                 lambda_v[1:(d-1)]-2*lambda_v[2:d]+lambda_v[3:(d+1)]
-            H <- diag(lambda_v[1:(d-1)-2*(2:d)+3:(d+1)]) + matrix( rowSums( sweep(
-                apply( 1/data$n * data&dens * v[2:d] , 2, function(x) return(x %x% x) ) ,
-                MARGIN=2, denom^2, "/") ), d-1, d-1 )
+            H <- diag(lambda_v[1:(d-1)]-2*lambda_v[2:d]+lambda_v[3:(d+1)]) +
+                matrix( rowSums( sweep(
+                    apply( 1/data$n * data$dens * v[2:d] , 2, function(x) return(x %x% x) ) ,
+                    MARGIN=2, denom^2, "/") ), d-1, d-1 )
 
             v[1]   <- (1+gamma)*v[1]
             v[2:d] <- v[2:d] * (1 + gamma * solve(H,c) )
@@ -131,9 +136,10 @@ bichibarsq_find_weights_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mo
             denom <- colSums( data$dens * v[2:d] )
             c <- rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") ) +
                 lambda_v[1:(d-1)]-2*lambda_v[2:d]+lambda_v[3:(d+1)]
-            H <- diag(lambda_v[1:(d-1)-2*(2:d)+3:(d+1)]) + matrix( rowSums( sweep(
-                apply( 1/data$n * data&dens * v[2:d] , 2, function(x) return(x %x% x) ) ,
-                MARGIN=2, denom^2, "/") ), d-1, d-1 )
+            H <- diag(lambda_v[1:(d-1)]-2*lambda_v[2:d]+lambda_v[3:(d+1)]) +
+                matrix( rowSums( sweep(
+                    apply( 1/data$n * data$dens * v[2:d] , 2, function(x) return(x %x% x) ) ,
+                    MARGIN=2, denom^2, "/") ), d-1, d-1 )
 
             v[2:d] <- v[2:d] * (1 + gamma * solve(H,c) )
             v[c(1,d+1)] <- exp( spline(x=1:(d-1),y=log(v[2:d]),method="natural",xout=c(0,d+1))$y )
