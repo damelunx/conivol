@@ -102,7 +102,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 
 
 
-#' Finding the weights of the bivariate chi-bar-squared distribution.
+#' Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm.
 #'
 #' \code{bichibarsq_find_weights_EM} produces EM-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
@@ -127,8 +127,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'             output matrix.
 #' @param lambda nonnegative parameters which, if positive, enforce the
 #'               log-concavity inequalities. Enforcing these may have negative
-#'               effects on the performance, as the update step may become non-
-#'               convex. \code{lambda} can be a scalar or vector of length \code{d-1}.
+#'               effects on the performance. \code{lambda} can be a scalar or vector of length \code{d-1}.
 #' @param extrapolate specifies the way the edge cases are handled:
 #'             \describe{
 #'               \item{\code{extrapolate==0}:}{extrapolate \code{v_d} if no \code{x\in C} and
