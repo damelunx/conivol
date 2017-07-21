@@ -130,8 +130,8 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'               effects on the performance. \code{lambda} can be a scalar or vector of length \code{d-1}.
 #' @param extrapolate specifies the way the edge cases are handled:
 #'             \describe{
-#'               \item{\code{extrapolate==0}:}{extrapolate \code{v_d} if no \code{x\in C} and
-#'                                      extrapolate \code{v_0} if no \code{x\in C°}}
+#'               \item{\code{extrapolate==0}:}{extrapolate \code{v_d} if no \code{x in C} and
+#'                                      extrapolate \code{v_0} if no \code{x in C°}}
 #'               \item{\code{extrapolate==1}:}{extrapolate \code{v_d}, do not extrapolate \code{v_0}}
 #'               \item{\code{extrapolate==2}:}{extrapolate \code{v_0}, do not extrapolate \code{v_d}}
 #'               \item{\code{extrapolate==3}:}{extrapolate \code{v_0} and \code{v_d}}
