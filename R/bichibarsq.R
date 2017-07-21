@@ -22,8 +22,10 @@ NULL
 #' dbichibarsq(c(2,3),c(0.1,0.6,0.3))
 #' dbichibarsq(matrix(c(2,3,4,5),2,2),c(0.1,0.6,0.3))
 #'
+#' @export
+#'
 dbichibarsq <- function(x, v) {
-    .test_vector(v)
+    .conivol_test_vector(v)
     d <- length(v)-1
     D <- dim(x)
     # test whether input is vector or matrix; first cover vector case
@@ -118,8 +120,10 @@ dbichibarsq <- function(x, v) {
 #' pbichibarsq(3,c(0.1,0.6,0.3))
 #' pbichibarsq(c(0.2,3,4.5),c(0.1,0.6,0.3))
 #'
+#' @export
+#'
 pbichibarsq <- function(x, v) {
-    .test_vector(v)
+    .conivol_test_vector(v)
     d <- length(v)-1
     D <- dim(x)
     if ( is.null(D) ) {
@@ -158,8 +162,10 @@ pbichibarsq <- function(x, v) {
 #' @examples
 #' rbichibarsq(10,c(0.1,0.6,0.3))
 #'
+#' @export
+#'
 rbichibarsq <- function(n, v) {
-    .test_vector(v)
+    .conivol_test_vector(v)
     d <- length(v)-1
     Z <- sample(d+1, n, replace=TRUE, prob=v)-1
     return( matrix( c(rchisq(n,Z),rchisq(n,d-Z)), n, 2 ) )

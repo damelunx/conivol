@@ -21,8 +21,10 @@ NULL
 #' dchibarsq(3,c(0.1,0.6,0.3))
 #' dchibarsq(c(0.2,3,4.5),c(0.1,0.6,0.3))
 #'
+#' @export
+#'
 dchibarsq <- function(x, v) {
-    .test_vector(v)
+    .conivol_test_vector(v)
     out <- vector("double",length(x))
     d <- length(v)-1
     # check where x==0 and set to Inf if v[1]!=0 or v[2]!=0
@@ -51,8 +53,10 @@ dchibarsq <- function(x, v) {
 #' pchibarsq(3,c(0.1,0.6,0.3))
 #' pchibarsq(c(0.2,3,4.5),c(0.1,0.6,0.3))
 #'
+#' @export
+#'
 pchibarsq <- function(q, v) {
-    .test_vector(v)
+    .conivol_test_vector(v)
     out <- vector("double",length(q))
     d <- length(v)-1
 
@@ -73,8 +77,10 @@ pchibarsq <- function(q, v) {
 #' @examples
 #' rchibarsq(10,c(0.1,0.6,0.3))
 #'
+#' @export
+#'
 rchibarsq <- function(n, v) {
-    .test_vector(v)
+    .conivol_test_vector(v)
     return( rchisq(n, sample(length(v), n, replace=TRUE, prob=v)-1) )
 }
 

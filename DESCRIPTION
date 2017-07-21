@@ -1,6 +1,6 @@
 Package: conivol
 Type: Package
-Title: Conic intrinsic volumes and chibarsquare distribution
+Title: Conic intrinsic volumes and (bivariate) chibarsquare distribution
 Version: 0.0.0.9000
 Authors@R: as.person(c(
         "Dennis Amelunxen <damelunx@gmail.com> [aut, cre]"
@@ -25,4 +25,5 @@ Suggests: knitr,
     testthat
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
-Imports: Rmosek
+Imports: Rmosek,
+    Matrix

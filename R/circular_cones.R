@@ -22,6 +22,8 @@
 #' circ_ivol(c(5,5), c(pi/4,pi/8))
 #' circ_ivol(c(5,5), c(pi/4,pi/8), product = TRUE)
 #'
+#' @export
+#'
 circ_ivol <- function(d, alpha, product = FALSE) {
     if (length(d)!=length(alpha))
         stop("Inputs d and alpha must be of same length.")
@@ -52,12 +54,10 @@ circ_ivol <- function(d, alpha, product = FALSE) {
     if (length(d)==1)
          return(V[[1]])
     else if (product)
-         return(comp_ivols_product(V))
+         return(conivol::comp_ivols_product(V))
     else return(V)
 }
 
-
-#===============================================================================
 
 
 #' Sample from bivariate chi-bar-squared distribution of products of circular cones
@@ -80,13 +80,15 @@ circ_ivol <- function(d, alpha, product = FALSE) {
 #' rbichibarsq_circ(20,5,pi/3)
 #' rbichibarsq_circ(20,c(5,3),c(pi/3,pi/4))
 #'
+#' @export
+#'
 rbichibarsq_circ <- function(n,d,alpha) {
     if (length(d)!=length(alpha))
         stop("Inputs d and alpha must be of same length.")
     if (any(d<2) || any(alpha<0) || any(alpha>pi/2))
         stop("Dimensions d must be >=2 and alpha must be between 0 and pi/2.")
 
-    return( rbichibarsq(n, circ_ivol(d,alpha,TRUE)) )
+    return( conivol::rbichibarsq(n, conivol::circ_ivol(d,alpha,TRUE)) )
 
     # SLOW:
     # if (length(d)==1)

@@ -13,13 +13,15 @@
 #' comp_ivols_product(list( c(0.5,0.5), c(0.1,0.4,0.5) ))
 #' comp_ivols_product(list( c(0.5,0.5), c(0.5,0.5), c(0.5, 0.5) ))
 #'
+#' @export
+#'
 comp_ivols_product <- function(V) {
-    lapply(V, .test_vector)
+    lapply(V, .conivol_test_vector)
     for (i in 2:length(V))
         V[[1]] <- convolve(V[[1]],rev(V[[i]]),type="o")
     # test which one are numerically zero, then set them equal to zero
     # (to avoid negative entries)
-    I <- which(sapply(V[[1]], function(t){isTRUE(all.equal(t,0,tolerance=.adj_tol))}))
+    I <- which(sapply(V[[1]], function(t){isTRUE(all.equal(t,0,tolerance=.conivol_adj_tol))}))
     V[[1]][I]=0
     return(V[[1]])
 }
@@ -40,6 +42,8 @@ comp_ivols_product <- function(V) {
 #'
 #' @examples
 #' estimate_statdim_var(rbichibarsq_circ(10^4,10,pi/8))
+#'
+#' @export
 #'
 estimate_statdim_var <- function(m_samp) {
     md <- colMeans(m_samp)
