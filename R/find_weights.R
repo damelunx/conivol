@@ -105,6 +105,112 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 }
 
 
+# create the input for mosek for EM step
+#
+.conivol_create_mosek_input_EM <- function(const,extrap_pol,extrap_prim,selfdual) {
+    d <- length(const)-1
+
+    mos_inp <- list()
+    mos_inp$sense <- "max"
+
+    # setting optimizer
+    if (!extrap_pol & !extrap_prim) {
+        mos_inp$c <- c(rep(0,d+1))
+        opro <- matrix(list(), nrow=5, ncol=d+1)
+        rownames(opro) <- c("type","j","f","g","h")
+        for (i in 1:(d+1)) {
+            opro[ ,i] <- list("LOG", i, const[i], 1.0, 0.0)
+        }
+    } else if ((extrap_pol & !extrap_prim) | (!extrap_pol & extrap_prim)) {
+        mos_inp$c <- c(rep(0,d))
+        opro <- matrix(list(), nrow=5, ncol=d)
+        rownames(opro) <- c("type","j","f","g","h")
+        for (i in 1:d) {
+            opro[ ,i] <- list("LOG", i, const[i], 1.0, 0.0)
+        }
+    } else if (extrap_pol & extrap_prim) {
+        mos_inp$c <- c(rep(0,d-1))
+        opro <- matrix(list(), nrow=5, ncol=d-1)
+        rownames(opro) <- c("type","j","f","g","h")
+        for (i in 1:(d-1)) {
+            opro[ ,i] <- list("LOG", i, const[i], 1.0, 0.0)
+        }
+    }
+    mos_inp$scopt <- list(opro=opro)
+
+    # variable constraints
+    if (!extrap_pol & !extrap_prim) {
+        blx <- rep(0, d+1)            # v_i >= 0
+        bux <- rep(.5, d+1)           # v_i <= 0.5
+    } else if ((extrap_pol & !extrap_prim) | (!extrap_pol & extrap_prim)) {
+        blx <- rep(0, d)              # v_i >= 0
+        bux <- rep(.5, d)             # v_i <= 0.5
+    } else if (extrap_pol & extrap_prim) {
+        blx <- rep(0, d-1)            # v_i >= 0
+        bux <- rep(.5, d-1)           # v_i <= 0.5
+    }
+    mos_inp$bx <- rbind(blx, bux)
+
+    # constraint matrix:
+    if (!selfdual) {
+        nrow <- 2
+    } else {
+        if (!extrap_pol & !extrap_prim)
+            nrow <- 2+floor((d+1)/2)
+        else
+            nrow <- 2+floor((d-1)/2)
+    }
+    if (!extrap_pol & !extrap_prim) {
+        A <- Matrix::Matrix(c( rep_len(1:0,d+1), rep_len(0:1,d+1) , rep(0,(nrow-2)*(d+1)) ), nrow=nrow, byrow=TRUE, sparse=TRUE)
+        if (nrow>2)
+            for (i in 1:(nrow-2))
+                A[2+i,c(i,d+2-i)] <- c(1,-1)
+    } else if (extrap_pol & !extrap_prim) {
+        A <- Matrix::Matrix(c( rep_len(1:0,d), rep_len(0:1,d) , rep(0,(nrow-2)*d) ), nrow=nrow, byrow=TRUE, sparse=TRUE)
+        if (nrow>2)
+            for (i in 1:(nrow-2))
+                A[2+i,c(1+i,d+2-i)] <- c(1,-1)
+    } else if (!extrap_pol & extrap_prim) {
+        A <- Matrix::Matrix(c( rep_len(1:0,d), rep_len(0:1,d) , rep(0,(nrow-2)*d) ), nrow=nrow, byrow=TRUE, sparse=TRUE)
+        if (nrow>2)
+            for (i in 1:(nrow-2))
+                A[2+i,c(i,d+2-i-1)] <- c(1,-1)
+    } else if (extrap_pol & extrap_prim) {
+        A <- Matrix::Matrix(c( rep_len(1:0,d-1), rep_len(0:1,d-1) , rep(0,(nrow-2)*(d-1)) ), nrow=nrow, byrow=TRUE, sparse=TRUE)
+        if (nrow>2)
+            for (i in 1:(nrow-2))
+                A[2+i,c(i,d+2-i)] <- c(1,-1)
+    }
+    mos_inp$A <- A
+
+    # constraint rhs:
+    buc <- c( .5, .5, rep(0,nrow-2) )
+    if (!extrap_pol & !extrap_prim)
+        blc <- buc
+    else if (extrap_pol & !extrap_prim)
+        blc <- c( 0, .5, rep(0,nrow-2) )
+    else if (!extrap_pol & extrap_prim) {
+        if (d%%2 == 0)
+            blc <- c( 0, .5, rep(0,nrow-2) )
+        else
+            blc <- c( .5, 0, rep(0,nrow-2) )
+    } else if (extrap_pol & extrap_prim) {
+        if (d%%2 == 0)
+            blc <- c( 0, .5, rep(0,nrow-2) )
+        else
+            blc <- c( 0, 0, rep(0,nrow-2) )
+    }
+
+    mos_inp$bc <- rbind(blc, buc);
+
+    return( mos_inp )
+}
+
+
+.conivol_update_mosek_input_EM <- function(mos_inp,const) {
+    mos_inp$scopt$opro[3, ] <- const
+    return(mos_inp)
+}
 
 #' Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm.
 #'
@@ -385,8 +491,8 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         # choose k0 and k1
         v0 <- v
         v1 <- v
-        v0[TRUE,as.logical(rep_len(1:0,d-1)),TRUE] <- 0
-        v1[TRUE,as.logical(rep_len(0:1,d-1)),TRUE] <- 0
+        v0[c(TRUE,as.logical(rep_len(1:0,d-1)),TRUE)] <- 0
+        v1[c(TRUE,as.logical(rep_len(0:1,d-1)),TRUE)] <- 0
         k0 <- which.max(v0)-1
         k1 <- which.max(v1)-1
         # start finding gradient
@@ -410,8 +516,8 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         # gradient descent step
         I <- c(k0+1,k1+1)
         v[-I] <- v[-I]+step_len*v[-I]*grad[-I]
-        v[k0+1] <- 0.5-sum( (v*rep(1:0,d+1))[-I] )
-        v[k1+1] <- 0.5-sum( (v*rep(0:1,d+1))[-I] )
+        v[k0+1] <- 0.5-sum( (v*rep_len(1:0,d+1))[-I] )
+        v[k1+1] <- 0.5-sum( (v*rep_len(0:1,d+1))[-I] )
 
         if (extrap_pol & !extrap_prim) {
             v[1] <- exp( spline(x=1:d,y=log(v[2:(d+1)]),method="natural",xout=0)$y )
@@ -517,7 +623,7 @@ find_ivols_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     extrap_pol  = (data$prop_pol ==0 & extrapolate==0) | extrapolate==2 | extrapolate==3
 
     # prepare log-concavity enforcing parameters
-    lambda_v <- c(0,rep_len(lambda, d-1),0)
+    lambda_v <- c(0,0,rep_len(lambda, d-1),0,0)
     # prepare index sets for potential normalization
     I_even <- as.logical(rep_len(1:0,d+1))
     I_odd  <- as.logical(rep_len(0:1,d+1))
@@ -526,8 +632,8 @@ find_ivols_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         # choose k0 and k1
         v0 <- v
         v1 <- v
-        v0[TRUE,as.logical(rep_len(1:0,d-1)),TRUE] <- 0
-        v1[TRUE,as.logical(rep_len(0:1,d-1)),TRUE] <- 0
+        v0[c(TRUE,as.logical(rep_len(1:0,d-1)),TRUE)] <- 0
+        v1[c(TRUE,as.logical(rep_len(0:1,d-1)),TRUE)] <- 0
         k0 <- which.max(v0)-1
         k1 <- which.max(v1)-1
         # start finding gradient
@@ -551,10 +657,10 @@ find_ivols_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 
         # computing the negative Hessian
         negHess <- diag( lambda_v[1:(d+1)]-2*lambda_v[2:(d+2)]+lambda_v[3:(d+3)] ) +
-            (lambda_v[k0+1]-2*lambda_v[k0+2]+lambda_v[k0+3]) *
-            ( (v/v[k0+1]*rep_len(1:0,d+1)) %x% (v/v[k0+1]*rep_len(1:0,d+1)) ) +
-            (lambda_v[k1+1]-2*lambda_v[k1+2]+lambda_v[k1+3]) *
-            ( (v/v[k1+1]*rep_len(0:1,d+1)) %x% (v/v[k1+1]*rep_len(0:1,d+1)) )
+                    (lambda_v[k0+1]-2*lambda_v[k0+2]+lambda_v[k0+3]) *
+                    matrix( (v/v[k0+1]*rep_len(1:0,d+1)) %x% (v/v[k0+1]*rep_len(1:0,d+1)), d+1, d+1) +
+                    (lambda_v[k1+1]-2*lambda_v[k1+2]+lambda_v[k1+3]) *
+                    matrix( (v/v[k1+1]*rep_len(0:1,d+1)) %x% (v/v[k1+1]*rep_len(0:1,d+1)), d+1, d+1)
         # adding corner values
         negHess[1,1]     <- negHess[1,1]     + data$prop_pol
         negHess[d+1,d+1] <- negHess[d+1,d+1] + data$prop_prim
@@ -598,8 +704,8 @@ find_ivols_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         # compute Newton step
         I <- c(k0+1,k1+1)
         v[-I] <- v[-I] + step_len*v[-I]*solve( negHess[-I,-I], grad[-I] )
-        v[k0+1] <- 0.5-sum( (v*rep(1:0,d+1))[-I] )
-        v[k1+1] <- 0.5-sum( (v*rep(0:1,d+1))[-I] )
+        v[k0+1] <- 0.5-sum( (v*rep_len(1:0,d+1))[-I] )
+        v[k1+1] <- 0.5-sum( (v*rep_len(0:1,d+1))[-I] )
 
         if (extrap_pol & !extrap_prim) {
             v[1] <- exp( spline(x=1:d,y=log(v[2:(d+1)]),method="natural",xout=0)$y )
