@@ -21,7 +21,7 @@ comp_ivols_product <- function(V) {
         V[[1]] <- convolve(V[[1]],rev(V[[i]]),type="o")
     # test which one are numerically zero, then set them equal to zero
     # (to avoid negative entries)
-    I <- which(sapply(V[[1]], function(t){isTRUE(all.equal(t,0,tolerance=.conivol_adj_tol))}))
+    I <- which(sapply(V[[1]], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.conivol_adj_tol))}))
     V[[1]][I]=0
     return(V[[1]])
 }
@@ -33,6 +33,7 @@ comp_ivols_product <- function(V) {
 #' variance of intrinsic volumes from samples from the corresponding
 #' bivariate chi-bar-squared distribution.
 #'
+#' @param d the dimension of the bivariate chi-bar squared distribution.
 #' @param m_samp two-column matrix whose rows from iid samples from the bivariate
 #'               chi-bar-squared distribution corresponding to the cone
 #'
@@ -41,15 +42,17 @@ comp_ivols_product <- function(V) {
 #'         and variance \code{var},
 #'
 #' @examples
-#' estimate_statdim_var(rbichibarsq_circ(10^4,10,pi/8))
+#' m_samp <- rbichibarsq_circ(10^4,10,pi/8)
+#' estimate_statdim_var(10, m_samp)
 #'
 #' @export
 #'
-estimate_statdim_var <- function(m_samp) {
+estimate_statdim_var <- function(d, m_samp) {
     md <- colMeans(m_samp)
     mv <- colMeans(m_samp^2)
     delta <- (md[1] + d-md[2])/2
-    var <- sqrt( (1+mv[1]-(delta+1)^2) * (1+mv[2]-(d-delta+1)^2) )
+    # var <- sqrt( (1+mv[1]-(delta+1)^2) * (1+mv[2]-(d-delta+1)^2) )
+    var <- (1+mv[1]-(delta+1)^2)
 
     return(list(delta=delta,var=var))
 }

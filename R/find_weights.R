@@ -31,8 +31,8 @@
 #' @export
 #'
 prepare_data <- function(d, m_samp) {
-    I1 <- which( sapply(m_samp[ ,1], function(t){isTRUE(all.equal(t,0,tolerance=.conivol_adj_tol))}) )
-    I2 <- which( sapply(m_samp[ ,2], function(t){isTRUE(all.equal(t,0,tolerance=.conivol_adj_tol))}) )
+    I1 <- which( sapply(m_samp[ ,1], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.conivol_adj_tol))}) )
+    I2 <- which( sapply(m_samp[ ,2], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.conivol_adj_tol))}) )
 
     n <- dim(m_samp)[1]
 
@@ -44,6 +44,59 @@ prepare_data <- function(d, m_samp) {
 
     return(out)
 }
+
+
+#' Evaluate the log-likelihood of the estimated intrinsic volumes.
+#'
+#' \code{comp_loglike} evaluates the (normalized) log-likelihood of a vector
+#' with respect to given data, the output of \code{prepare_data}.
+#'
+#' @param v vector of mixing weights (conic intrinsic volumes).
+#' @param data output of \code{prepare_data(d, m_samp)}.
+#'
+#' @return The output of \code{comp_loglike} is the value of the normalized
+#'         log-likelihood of the mixing weights \code{v} with respect to the
+#'         sample data given in \code{data}
+#'
+#' @examples
+#' D <- c(5,5)
+#' alpha <- c(pi/3,pi/4)
+#' d <- sum(D)
+#' N <- 10^5
+#' v_exact <- circ_ivol( D, alpha, product=TRUE )
+#'
+#' # collect sample data
+#' m_samp <- rbichibarsq_circ(N,D,alpha)
+#' data <- prepare_data(d, m_samp)
+#' est <- estimate_statdim_var(d, m_samp)
+#' v1 <- init_v( d )
+#' v2 <- init_v( d, 1, delta=est$delta, var=est$var )
+#' v3 <- init_v( d, 2, delta=est$delta )
+#' v4 <- init_v( d, 3, var=est$var )
+#' v5 <- init_v( d, 4, delta=est$delta, var=est$var )
+#'
+#' # evaluate log-likelihood function
+#' comp_loglike(v_exact, data)
+#' comp_loglike(v1, data)
+#' comp_loglike(v2, data)
+#' comp_loglike(v3, data)
+#' comp_loglike(v4, data)
+#' comp_loglike(v5, data)
+#'
+#' @export
+#'
+comp_loglike <- function(v, data){
+    conivol:::.conivol_test_vector(v)
+    d <- length(v)-1
+    if (dim(data$dens)[1]!=d-1)
+        stop("Wrong format.")
+    return(
+        data$prop_pol  * log(v[1]) +
+            sum( 1/data$n * log( colSums( data$dens * v[2:d] ) ) ) +
+            data$prop_prim * log(v[d+1])
+    )
+}
+
 
 
 #' Finding an initial estimate of the intrinsic volumes.
@@ -67,7 +120,7 @@ prepare_data <- function(d, m_samp) {
 #'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
-#' est <- estimate_statdim_var(m_samp)
+#' est <- estimate_statdim_var(d, m_samp)
 #' init_v( 10 )
 #' init_v( 10, 1, delta=est$delta, var=est$var )
 #' init_v( 10, 2, delta=est$delta )
@@ -88,7 +141,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
     } else if (init_mode==3) {
         alpha <- asin(sqrt(2*var/(d-2)))/2
         if ((alpha<pi/4 && delta>d/2) || (alpha>pi/4 && delta<d/2))
-            alpha <- pi/2-alpha;
+        alpha <- pi/2-alpha;
         return(conivol::circ_ivol(d,alpha))
     } else if (init_mode==4) {
         alpha1 <- asin(sqrt(delta/d))
@@ -251,14 +304,15 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
 #'
-#' @param .data output of \code{prepare_data(d, m_samp)}; this can be called
+#' @param data output of \code{prepare_data(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_EM} is a \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{find_ivols_EM} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute EM-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
-#'         the bivariate chi-bar-squared distribution.
+#'         the bivariate chi-bar-squared distribution, and the corresponding values
+#'         of the log-likelihood function.
 #'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
@@ -268,7 +322,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @export
 #'
 find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
-                          lambda=0, extrapolate=0, selfdual=FALSE, .data=NULL) {
+                          lambda=0, extrapolate=0, selfdual=FALSE, data=NULL) {
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop( paste0("\n Could not find package 'Rmosek'.",
             "\n If MOSEK is not available, try using 'find_ivols_GD' and 'find_ivols_Newton' instead of 'find_ivols_EM'.",
@@ -286,19 +340,8 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     opts <- list(verbose=0)
     #################################
 
-    out <- matrix(0,N+1,d+1)
-
-    # set the starting point for EM
-    if (length(v_init)==d+1)
-        v <- v_init
-    else {
-        est <- conivol::estimate_statdim_var(m_samp)
-        v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
-    }
-    out[1, ] <- v
-
     # find the values of the chi-squared densities at the sample points
-    if (is.null(.data))
+    if (is.null(data))
         data <- conivol::prepare_data(d, m_samp)
 
     # decide whether v0 or vd should/have to be extrapolated, add Machine epsilon
@@ -307,6 +350,19 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     extrap_pol  = (data$prop_pol ==0 & extrapolate==0) | extrapolate==2 | extrapolate==3
     if (data$prop_prim==0 & !extrap_prim) data$prop_prim <- .Machine$double.eps
     if (data$prop_pol ==0 & !extrap_pol)  data$prop_pol  <- .Machine$double.eps
+
+    out_iterates <- matrix(0,N+1,d+1)
+    out_loglike  <- vector("double", N+1)
+
+    # set the starting point for EM
+    if (length(v_init)==d+1)
+        v <- v_init
+    else {
+        est <- conivol::estimate_statdim_var(d, m_samp)
+        v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
+    }
+    out_iterates[1, ] <- v
+    out_loglike[1] <- comp_loglike(v,data)
 
     # prepare Mosek inputs
     mos_inp <- .conivol_create_mosek_input_EM(rep(0,d+1),extrap_pol,extrap_prim,selfdual)
@@ -327,13 +383,14 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             success <- FALSE
             while(!success & i_rel<=NO_TRIES_LAMBDA) {
                 i_rel <- i_rel+1
-                const <- const_pre + c_lambda[i_rel] * ( lambda_v[1:(d+1)]-2*lambda_v[2:(d+2)]+lambda_v[3:(d+3)] )
+                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[2:(d+2)]-lambda_v[1:(d+1)]-lambda_v[3:(d+3)] )
                 mos_inp <- .conivol_update_mosek_input_EM(mos_inp,const)
                 mos_out <- Rmosek::mosek(mos_inp, opts)
                 success <- check_mosek_success(mos_out$response$code)
             }
             v <- mos_out$sol$itr$xx
-            out[i+1, ] <- v
+            out_iterates[i+1, ] <- v
+            out_loglike[i+1] <- comp_loglike(v,data)
         }
     } else if (extrap_pol & !extrap_prim) {
         for (i in 1:N) {
@@ -345,7 +402,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             success <- FALSE
             while(!success & i_rel<=NO_TRIES_LAMBDA) {
                 i_rel <- i_rel+1
-                const <- const_pre + c_lambda[i_rel] * ( lambda_v[2:(d+1)]-2*lambda_v[3:(d+2)]+lambda_v[4:(d+3)] )
+                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[3:(d+2)]-lambda_v[2:(d+1)]-lambda_v[4:(d+3)] )
                 mos_inp <- .conivol_update_mosek_input_EM(mos_inp, const)
                 mos_out <- Rmosek::mosek(mos_inp, opts)
                 success <- check_mosek_success(mos_out$response$code)
@@ -354,7 +411,8 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[1] <- exp( spline(x=1:d,y=log(v[2:(d+1)]),method="natural",xout=0)$y )
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
-            out[i+1, ] <- v
+            out_iterates[i+1, ] <- v
+            out_loglike[i+1] <- comp_loglike(v,data)
         }
     } else if (!extrap_pol & extrap_prim) {
         for (i in 1:N) {
@@ -366,7 +424,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             success <- FALSE
             while(!success & i_rel<=NO_TRIES_LAMBDA) {
                 i_rel <- i_rel+1
-                const <- const_pre + c_lambda[i_rel] * ( lambda_v[1:d]-2*lambda_v[2:(d+1)]+lambda_v[3:(d+2)] )
+                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[2:(d+1)]-lambda_v[1:d]-lambda_v[3:(d+2)] )
                 mos_inp <- .conivol_update_mosek_input_EM(mos_inp,const)
                 mos_out <- Rmosek::mosek(mos_inp, opts)
                 success <- check_mosek_success(mos_out$response$code)
@@ -375,7 +433,8 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[d+1] <- exp( spline(x=0:(d-1),y=log(v[1:d]),method="natural",xout=d)$y )
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
-            out[i+1, ] <- v
+            out_iterates[i+1, ] <- v
+            out_loglike[i+1] <- comp_loglike(v,data)
         }
     } else if (extrap_pol & extrap_prim) {
         for (i in 1:N) {
@@ -386,7 +445,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             success <- FALSE
             while(!success & i_rel<=NO_TRIES_LAMBDA) {
                 i_rel <- i_rel+1
-                const <- const_pre + c_lambda[i_rel] * ( lambda_v[2:d]-2*lambda_v[3:(d+1)]+lambda_v[4:(d+2)] )
+                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[3:(d+1)]-lambda_v[2:d]-lambda_v[4:(d+2)] )
                 mos_inp <- .conivol_update_mosek_input_EM(mos_inp,const)
                 mos_out <- Rmosek::mosek(mos_inp, opts)
                 success <- check_mosek_success(mos_out$response$code)
@@ -396,10 +455,11 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
             out[i+1, ] <- v
+            out_loglike[i+1] <- comp_loglike(v,data)
         }
     }
 
-    return(out)
+    return(list(iterates=out_iterates, loglike=out_loglike))
 }
 
 
@@ -444,14 +504,15 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
 #'
-#' @param .data output of \code{prepare_data(d, m_samp)}; this can be called
+#' @param data output of \code{prepare_data(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_GD} is a \code{(N+1)}-by-\code{(d+1)}
-#'         matrix whose rows constitute gradient descent iterates, which may or may not
+#' @return The output of \code{find_ivols_GD} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#'         matrix whose rows constitute gradient descent-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
-#'         the bivariate chi-bar-squared distribution.
+#'         the bivariate chi-bar-squared distribution, and the corresponding values
+#'         of the log-likelihood function.
 #'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
@@ -461,21 +522,23 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #' @export
 #'
 find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
-                          lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, .data=NULL) {
-    out <- matrix(0,N+1,d+1)
+                          lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
+    # find the values of the chi-squared densities at the sample points
+    if (is.null(data))
+        data <- conivol::prepare_data(d, m_samp)
+
+    out_iterates <- matrix(0,N+1,d+1)
+    out_loglike  <- vector("double", N+1)
 
     # set the starting point for GD
     if (length(v_init)==d+1)
         v <- v_init
     else {
-        est <- conivol::estimate_statdim_var(m_samp)
+        est <- conivol::estimate_statdim_var(d, m_samp)
         v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
     }
-    out[1, ] <- v
-
-    # find the values of the chi-squared densities at the sample points
-    if (is.null(.data))
-        data <- conivol::prepare_data(d, m_samp)
+    out_iterates[1, ] <- v
+    out_loglike[1] <- comp_loglike(v,data)
 
     # decide whether v0 or vd shall be extrapolated
     extrap_prim = (data$prop_prim==0 & extrapolate==0) | extrapolate==1 | extrapolate==3
@@ -496,9 +559,9 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         k0 <- which.max(v0)-1
         k1 <- which.max(v1)-1
         # start finding gradient
-        grad <- lambda_v[1:(d+1)]-2*lambda_v[2:(d+2)]+lambda_v[3:(d+3)] -
-            (lambda_v[k0+1]-2*lambda_v[k0+2]+lambda_v[k0+3]) * v/v[k0+1] * rep_len(1:0,d+1) -
-            (lambda_v[k1+1]-2*lambda_v[k1+2]+lambda_v[k1+3]) * v/v[k1+1] * rep_len(0:1,d+1)
+        grad <- 2*lambda_v[2:(d+2)]-lambda_v[1:(d+1)]-lambda_v[3:(d+3)] -
+            (2*lambda_v[k0+2]-lambda_v[k0+1]-lambda_v[k0+3]) * v/v[k0+1] * rep_len(1:0,d+1) -
+            (2*lambda_v[k1+2]-lambda_v[k1+1]-lambda_v[k1+3]) * v/v[k1+1] * rep_len(0:1,d+1)
         # adding to the middle part
         denom <- colSums( data$dens * v[2:d] )
         num   <- 1/data$n * v[2:d] * (
@@ -536,9 +599,10 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
         }
-        out[i+1, ] <- v
+        out_iterates[i+1, ] <- v
+        # out_loglike[i+1] <- comp_loglike(v,data)
     }
-    return(out)
+    return(list(iterates=out_iterates, loglike=out_loglike))
 }
 
 
@@ -585,14 +649,15 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
 #'
-#' @param .data output of \code{prepare_data(d, m_samp)}; this can be called
+#' @param data output of \code{prepare_data(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_Newton} is a \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{find_ivols_Newton} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute Newton-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
-#'         the bivariate chi-bar-squared distribution.
+#'         the bivariate chi-bar-squared distribution, and the corresponding values
+#'         of the log-likelihood function.
 #'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
@@ -602,21 +667,22 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #' @export
 #'
 find_ivols_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
-                              lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, .data=NULL) {
-    out <- matrix(0,N+1,d+1)
+                              lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
+    # find the values of the chi-squared densities at the sample points
+    if (is.null(data))
+        data <- conivol::prepare_data(d, m_samp)
+
+    out_iterates <- matrix(0,N+1,d+1)
+    out_loglike  <- vector("double", N+1)
 
     # set the starting point for Newton
     if (length(v_init)==d+1)
         v <- v_init
     else {
-        est <- conivol::estimate_statdim_var(m_samp)
+        est <- conivol::estimate_statdim_var(d, m_samp)
         v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
     }
-    out[1, ] <- v
-
-    # find the values of the chi-squared densities at the sample points
-    if (is.null(.data))
-        data <- conivol::prepare_data(d, m_samp)
+    out_iterates[1, ] <- v
 
     # decide whether v0 or vd shall be extrapolated
     extrap_prim = (data$prop_prim==0 & extrapolate==0) | extrapolate==1 | extrapolate==3
@@ -637,9 +703,9 @@ find_ivols_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         k0 <- which.max(v0)-1
         k1 <- which.max(v1)-1
         # start finding gradient
-        grad <- lambda_v[1:(d+1)]-2*lambda_v[2:(d+2)]+lambda_v[3:(d+3)] -
-            (lambda_v[k0+1]-2*lambda_v[k0+2]+lambda_v[k0+3]) * v/v[k0+1] * rep_len(0:1,d+1) -
-            (lambda_v[k1+1]-2*lambda_v[k1+2]+lambda_v[k1+3]) * v/v[k1+1] * rep_len(1:0,d+1)
+        grad <- 2*lambda_v[2:(d+2)]-lambda_v[1:(d+1)]-lambda_v[3:(d+3)] -
+            (2*lambda_v[k0+2]-lambda_v[k0+1]-lambda_v[k0+3]) * v/v[k0+1] * rep_len(1:0,d+1) -
+            (2*lambda_v[k1+2]-lambda_v[k1+1]-lambda_v[k1+3]) * v/v[k1+1] * rep_len(0:1,d+1)
         # adding to the middle part
         denom <- colSums( data$dens * v[2:d] )
         num   <- 1/data$n * v[2:d] * (
@@ -656,47 +722,47 @@ find_ivols_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             grad[d+1] <- grad[d+1] + data$prop_prim - sum( 1/data$n * v[d+1] * data$dens[k1, ] / denom )
 
         # computing the negative Hessian
-        negHess <- diag( lambda_v[1:(d+1)]-2*lambda_v[2:(d+2)]+lambda_v[3:(d+3)] ) +
-                    (lambda_v[k0+1]-2*lambda_v[k0+2]+lambda_v[k0+3]) *
+        negHess <- diag( 2*lambda_v[2:(d+2)]-lambda_v[1:(d+1)]-lambda_v[3:(d+3)] ) +
+                    (2*lambda_v[k0+2]-lambda_v[k0+1]-lambda_v[k0+3]) *
                     matrix( (v/v[k0+1]*rep_len(1:0,d+1)) %x% (v/v[k0+1]*rep_len(1:0,d+1)), d+1, d+1) +
-                    (lambda_v[k1+1]-2*lambda_v[k1+2]+lambda_v[k1+3]) *
+                    (2*lambda_v[k1+2]-lambda_v[k1+1]-lambda_v[k1+3]) *
                     matrix( (v/v[k1+1]*rep_len(0:1,d+1)) %x% (v/v[k1+1]*rep_len(0:1,d+1)), d+1, d+1)
         # adding corner values
         negHess[1,1]     <- negHess[1,1]     + data$prop_pol
         negHess[d+1,d+1] <- negHess[d+1,d+1] + data$prop_prim
         # adding main middle part
-        negHess[2:d,2:d] <- negHess[2:d,2:d] - matrix( rowSums( sweep( 1/data$n *
+        negHess[2:d,2:d] <- negHess[2:d,2:d] + matrix( rowSums( sweep( 1/data$n *
             apply( v[2:d] * (matrix(data$dens[k0, ] %x% rep_len(0:1,d-1), dim(data$dens)) +
                              matrix(data$dens[k1, ] %x% rep_len(1:0,d-1), dim(data$dens)) - data$dens) , 2,
                    function(x) return(x %x% x) ) ,
             MARGIN=2, denom^2, "/") ), d-1, d-1 )
         # adding to first and last row
-        negHess[1, ] <- negHess[1, ] - 1/data$n * rowSums( sweep( 1/data$n *
+        negHess[1, ] <- negHess[1, ] + 1/data$n * rowSums( sweep( 1/data$n *
             v * (matrix(data$dens[k0, ] %x% rep_len(1:0,d+1), dim(data$dens)+c(2,0)) +
                  matrix(data$dens[k1, ] %x% rep_len(0:1,d+1), dim(data$dens)+c(2,0)) ) ,
             MARGIN=2, denom^2/(v[1]*data$dens[k0, ]), "/") )
         if (d%%2==0)
-            negHess[d+1, ] <- negHess[d+1, ] - 1/data$n * rowSums( sweep( 1/data$n *
+            negHess[d+1, ] <- negHess[d+1, ] + 1/data$n * rowSums( sweep( 1/data$n *
                 v * (matrix(data$dens[k0, ] %x% rep_len(1:0,d+1), dim(data$dens)+c(2,0)) +
                      matrix(data$dens[k1, ] %x% rep_len(0:1,d+1), dim(data$dens)+c(2,0)) ) ,
                 MARGIN=2, denom^2/(v[d+1]*data$dens[k0, ]), "/") )
         else
-            negHess[d+1, ] <- negHess[d+1, ] - 1/data$n * rowSums( sweep( 1/data$n *
+            negHess[d+1, ] <- negHess[d+1, ] + 1/data$n * rowSums( sweep( 1/data$n *
                 v * (matrix(data$dens[k0, ] %x% rep_len(1:0,d+1), dim(data$dens)+c(2,0)) +
                      matrix(data$dens[k1, ] %x% rep_len(0:1,d+1), dim(data$dens)+c(2,0)) ) ,
                 MARGIN=2, denom^2/(v[d+1]*data$dens[k1, ]), "/") )
         # adding to first and last column
-        negHess[2:d, 1] <- negHess[2:d, 1] - 1/data$n * rowSums( sweep( 1/data$n *
+        negHess[2:d, 1] <- negHess[2:d, 1] + 1/data$n * rowSums( sweep( 1/data$n *
             v[2:d] * (matrix(data$dens[k0, ] %x% rep_len(0:1,d-1), dim(data$dens)) +
                       matrix(data$dens[k1, ] %x% rep_len(1:0,d-1), dim(data$dens)) ) ,
             MARGIN=2, denom^2/(v[1]*data$dens[k0, ]), "/") )
         if (d%%2==0)
-            negHess[2:d, d+1] <- negHess[2:d, d+1] - 1/data$n * rowSums( sweep( 1/data$n *
+            negHess[2:d, d+1] <- negHess[2:d, d+1] + 1/data$n * rowSums( sweep( 1/data$n *
                 v[2:d] * (matrix(data$dens[k0, ] %x% rep_len(0:1,d-1), dim(data$dens)) +
                           matrix(data$dens[k1, ] %x% rep_len(1:0,d-1), dim(data$dens)) ) ,
                 MARGIN=2, denom^2/(v[d+1]*data$dens[k0, ]), "/") )
         else
-            negHess[2:d, d+1] <- negHess[2:d, d+1] - 1/data$n * rowSums( sweep( 1/data$n *
+            negHess[2:d, d+1] <- negHess[2:d, d+1] + 1/data$n * rowSums( sweep( 1/data$n *
                 v[2:d] * (matrix(data$dens[k0, ] %x% rep_len(0:1,d-1), dim(data$dens)) +
                           matrix(data$dens[k1, ] %x% rep_len(1:0,d-1), dim(data$dens)) ) ,
                 MARGIN=2, denom^2/(v[d+1]*data$dens[k1, ]), "/") )
@@ -724,7 +790,8 @@ find_ivols_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
         }
-        out[i+1, ] <- v
+        out_iterates[i+1, ] <- v
+        out_loglike[i+1] <- comp_loglike(v,data)
     }
-    return(out)
+    return(list(iterates=out_iterates, loglike=out_loglike))
 }

@@ -2,6 +2,7 @@
 
 export(circ_ivol)
 export(comp_ivols_product)
+export(comp_loglike)
 export(dbichibarsq)
 export(dchibarsq)
 export(estimate_statdim_var)
