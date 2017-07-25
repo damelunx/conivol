@@ -372,91 +372,61 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     I_even <- as.logical(rep_len(1:0,d+1))
     I_odd  <- as.logical(rep_len(0:1,d+1))
 
-    if (!extrap_pol & !extrap_prim) {
-        for (i in 1:N) {
-            denom <- colSums( data$dens * v[2:d] )
+    for (i in 1:N) {
+        denom <- colSums( data$dens * v[2:d] )
+
+        if (!extrap_pol & !extrap_prim)
             const_pre <- c( data$prop_pol,
                             rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") ) ,
                             data$prop_prim )
-            c_lambda <- (NO_TRIES_LAMBDA:0)/NO_TRIES_LAMBDA
-            i_rel <- 0
-            success <- FALSE
-            while(!success & i_rel<=NO_TRIES_LAMBDA) {
-                i_rel <- i_rel+1
-                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[2:(d+2)]-lambda_v[1:(d+1)]-lambda_v[3:(d+3)] )
-                mos_inp <- .conivol_update_mosek_input_EM(mos_inp,const)
-                mos_out <- Rmosek::mosek(mos_inp, opts)
-                success <- check_mosek_success(mos_out$response$code)
-            }
-            v <- mos_out$sol$itr$xx
-            out_iterates[i+1, ] <- v
-            out_loglike[i+1] <- comp_loglike(v,data)
-        }
-    } else if (extrap_pol & !extrap_prim) {
-        for (i in 1:N) {
-            denom <- colSums( data$dens * v[2:d] )
+        else if (extrap_pol & !extrap_prim)
             const_pre <- c( rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") ) ,
                             data$prop_prim )
-            c_lambda <- (NO_TRIES_LAMBDA:0)/NO_TRIES_LAMBDA
-            i_rel <- 0
-            success <- FALSE
-            while(!success & i_rel<=NO_TRIES_LAMBDA) {
-                i_rel <- i_rel+1
+        else if (!extrap_pol & extrap_prim)
+            const_pre <- c( data$prop_pol,
+                            rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") ) )
+        else if (extrap_pol & extrap_prim)
+            const_pre <- rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") )
+
+        c_lambda <- (NO_TRIES_LAMBDA:0)/NO_TRIES_LAMBDA
+        i_rel <- 0
+        success <- FALSE
+        while(!success & i_rel<=NO_TRIES_LAMBDA) {
+            i_rel <- i_rel+1
+
+            if (!extrap_pol & !extrap_prim)
+                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[2:(d+2)]-lambda_v[1:(d+1)]-lambda_v[3:(d+3)] )
+            else if (extrap_pol & !extrap_prim)
                 const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[3:(d+2)]-lambda_v[2:(d+1)]-lambda_v[4:(d+3)] )
-                mos_inp <- .conivol_update_mosek_input_EM(mos_inp, const)
-                mos_out <- Rmosek::mosek(mos_inp, opts)
-                success <- check_mosek_success(mos_out$response$code)
-            }
+            else if (!extrap_pol & extrap_prim)
+                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[2:(d+1)]-lambda_v[1:d]-lambda_v[3:(d+2)] )
+            else if (extrap_pol & extrap_prim)
+                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[3:(d+1)]-lambda_v[2:d]-lambda_v[4:(d+2)] )
+
+            mos_inp <- .conivol_update_mosek_input_EM(mos_inp,const)
+            mos_out <- Rmosek::mosek(mos_inp, opts)
+            success <- check_mosek_success(mos_out$response$code)
+        }
+        if (!extrap_pol & !extrap_prim)
+            v <- mos_out$sol$itr$xx
+        else if (extrap_pol & !extrap_prim) {
             v[2:(d+1)] <- mos_out$sol$itr$xx
             v[1] <- exp( spline(x=1:d,y=log(v[2:(d+1)]),method="natural",xout=0)$y )
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
-            out_iterates[i+1, ] <- v
-            out_loglike[i+1] <- comp_loglike(v,data)
-        }
-    } else if (!extrap_pol & extrap_prim) {
-        for (i in 1:N) {
-            denom <- colSums( data$dens * v[2:d] )
-            const_pre <- c( data$prop_pol,
-                            rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") ) )
-            c_lambda <- (NO_TRIES_LAMBDA:0)/NO_TRIES_LAMBDA
-            i_rel <- 0
-            success <- FALSE
-            while(!success & i_rel<=NO_TRIES_LAMBDA) {
-                i_rel <- i_rel+1
-                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[2:(d+1)]-lambda_v[1:d]-lambda_v[3:(d+2)] )
-                mos_inp <- .conivol_update_mosek_input_EM(mos_inp,const)
-                mos_out <- Rmosek::mosek(mos_inp, opts)
-                success <- check_mosek_success(mos_out$response$code)
-            }
+        } else if (!extrap_pol & extrap_prim) {
             v[1:d] <- mos_out$sol$itr$xx
             v[d+1] <- exp( spline(x=0:(d-1),y=log(v[1:d]),method="natural",xout=d)$y )
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
-            out_iterates[i+1, ] <- v
-            out_loglike[i+1] <- comp_loglike(v,data)
-        }
-    } else if (extrap_pol & extrap_prim) {
-        for (i in 1:N) {
-            denom <- colSums( data$dens * v[2:d] )
-            const_pre <- rowSums( sweep( 1/data$n * data$dens * v[2:d] , MARGIN=2, denom, "/") )
-            c_lambda <- (NO_TRIES_LAMBDA:0)/NO_TRIES_LAMBDA
-            i_rel <- 0
-            success <- FALSE
-            while(!success & i_rel<=NO_TRIES_LAMBDA) {
-                i_rel <- i_rel+1
-                const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[3:(d+1)]-lambda_v[2:d]-lambda_v[4:(d+2)] )
-                mos_inp <- .conivol_update_mosek_input_EM(mos_inp,const)
-                mos_out <- Rmosek::mosek(mos_inp, opts)
-                success <- check_mosek_success(mos_out$response$code)
-            }
+        } else if (extrap_pol & extrap_prim) {
             v[2:d] <- mos_out$sol$itr$xx
             v[c(1,d+1)] <- exp( spline(x=1:(d-1),y=log(v[2:d]),method="natural",xout=c(0,d+1))$y )
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
-            out[i+1, ] <- v
-            out_loglike[i+1] <- comp_loglike(v,data)
         }
+        out_iterates[i+1, ] <- v
+        out_loglike[i+1] <- comp_loglike(v,data)
     }
 
     return(list(iterates=out_iterates, loglike=out_loglike))
