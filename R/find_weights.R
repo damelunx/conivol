@@ -291,6 +291,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @param lambda nonnegative parameters which, if positive, enforce the
 #'               log-concavity inequalities. Enforcing these may have negative
 #'               effects on the performance. \code{lambda} can be a scalar or vector of length \code{d-1}.
+#' @param no_of_lcc_projections numer of projections on the log-concavity cone
 #' @param extrapolate specifies the way the edge cases are handled:
 #'             \describe{
 #'               \item{\code{extrapolate==0}:}{extrapolate \code{v_d} if no \code{x in C} and
@@ -303,7 +304,6 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @param selfdual logical; if \code{TRUE}, the symmetry equations \code{v[k+1]==v[d-k+1]},
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
-#'
 #' @param data output of \code{prepare_data(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
@@ -322,7 +322,8 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @export
 #'
 find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
-                          lambda=0, extrapolate=0, selfdual=FALSE, data=NULL) {
+                          lambda=0, no_of_lcc_projections=1,
+                          extrapolate=0, selfdual=FALSE, data=NULL) {
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop( paste0("\n Could not find package 'Rmosek'.",
             "\n If MOSEK is not available, try using 'find_ivols_GD' and 'find_ivols_Newton' instead of 'find_ivols_EM'.",
@@ -371,6 +372,13 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     # prepare index sets for potential normalization
     I_even <- as.logical(rep_len(1:0,d+1))
     I_odd  <- as.logical(rep_len(0:1,d+1))
+
+    # prepare Mosek inputs for log-concavity enforcing
+    A_lcc <- matrix(0,d+1,d-1)
+    diag(A_lcc) <- 1
+    diag(A_lcc[2:d,]) <- -2
+    diag(A_lcc[3:(d+1),]) <- 1
+    mos_inp_lcc <- conivol:::.conivol_create_mosek_input_polyh(A_lcc, rep(0,d+1))
 
     for (i in 1:N) {
         denom <- colSums( data$dens * v[2:d] )
@@ -425,6 +433,17 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
         }
+
+        i_lcc <- 0
+        while (i_lcc < no_of_lcc_projections) {
+            i_lcc <- i_lcc+1
+            mos_inp_lcc <- conivol:::.conivol_update_mosek_input_polyh(mos_inp_lcc, log(v))
+            mos_out <- Rmosek::mosek(mos_inp_lcc, opts)
+            v <- v/exp(mos_out$sol$itr$xx[(d+2):(2*d+2)])
+            v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
+            v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
+        }
+
         out_iterates[i+1, ] <- v
         out_loglike[i+1] <- comp_loglike(v,data)
     }

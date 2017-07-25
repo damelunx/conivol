@@ -22,7 +22,7 @@
 .conivol_update_mosek_input_polyh <- function(mos_inp,y) {
     m <- length(y)
     n <- dim(mos_inp$A)[2]-m-2
-    mos_inp$c[1:n] <- -as.vector( t(mos_inp$A[1:m,1:n]) %*% y )
+    mos_inp$c[1:n] <- -as.vector( Matrix::t(mos_inp$A[1:m,1:n]) %*% y )
     return(mos_inp)
 }
 
