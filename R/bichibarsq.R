@@ -4,6 +4,10 @@
 #' chi-bar-squared distribution with mixing weights (conic intrinsic volumes) \code{v}.
 #'
 #' @name Bichibarsquare
+#'
+#' @section See also:
+#' \code{\link[conivol]{dchibarsq}}, \code{\link[conivol]{pchibarsq}}, \code{\link[conivol]{rchibarsq}},
+#' \code{\link[stats]{dchisq}}, \code{\link[stats]{pchisq}}, \code{\link[stats]{qchisq}}, \code{\link[stats]{rchisq}},
 NULL
 
 

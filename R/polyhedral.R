@@ -79,6 +79,9 @@
 #'       for further info; in particular, info about how
 #'       to work with polyhedral cones given in the form \code{{x|Ax>=0}}.
 #'
+#' @section See also:
+#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+#'
 #' @examples
 #' rbichibarsq_polyh(20,matrix(1:12,4,3)
 #'

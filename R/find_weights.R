@@ -24,6 +24,10 @@
 #'                               the computations}
 #'         }
 #'
+#' @section See also:
+#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{find_ivols_EM}}
+#'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
 #' prepare_data( 10, m_samp )
@@ -57,6 +61,9 @@ prepare_data <- function(d, m_samp) {
 #' @return The output of \code{comp_loglike} is the value of the normalized
 #'         log-likelihood of the mixing weights \code{v} with respect to the
 #'         sample data given in \code{data}
+#'
+#' @section See also:
+#' \code{\link[conivol]{prepare_data}}, \code{\link[conivol]{estimate_statdim_var}}
 #'
 #' @examples
 #' D <- c(5,5)
@@ -117,6 +124,10 @@ comp_loglike <- function(v, data){
 #' @param var an estimate of the variane of the intrinsic volumes.
 #'
 #' @return The output of \code{init_v} is a \code{(d+1)}-column vector.
+#'
+#' @section See also:
+#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+#' \code{\link[conivol]{rbichibarsq_polyh}}
 #'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
@@ -291,7 +302,8 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @param lambda nonnegative parameters which, if positive, enforce the
 #'               log-concavity inequalities. Enforcing these may have negative
 #'               effects on the performance. \code{lambda} can be a scalar or vector of length \code{d-1}.
-#' @param no_of_lcc_projections numer of projections on the log-concavity cone
+#' @param no_of_lcc_projections number of projections on the log-concavity cone
+#' @param lcc_amount constant for strict log-concavity
 #' @param extrapolate specifies the way the edge cases are handled:
 #'             \describe{
 #'               \item{\code{extrapolate==0}:}{extrapolate \code{v_d} if no \code{x in C} and
@@ -313,6 +325,11 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
 #'         of the log-likelihood function.
+#'
+#' @section See also:
+#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{prepare_data}},
+#' \code{\link[conivol]{init_v}}, \code{\link[conivol]{comp_loglike}}
 #'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))

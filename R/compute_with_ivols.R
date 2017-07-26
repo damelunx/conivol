@@ -9,6 +9,9 @@
 #' @return The output of \code{comp_ivols_product(V)} is the vector that is
 #'         obtained from convolving the components of \code{V}.
 #'
+#' @section See also:
+#' \code{\link[conivol]{circ_ivol}}
+#'
 #' @examples
 #' comp_ivols_product(list( c(0.5,0.5), c(0.1,0.4,0.5) ))
 #' comp_ivols_product(list( c(0.5,0.5), c(0.5,0.5), c(0.5, 0.5) ))
@@ -40,6 +43,10 @@ comp_ivols_product <- function(V) {
 #' @return The output of \code{estimate_statdim_var} is a two-element list
 #'         consisting of the esimated statistical dimension \code{delta}
 #'         and variance \code{var},
+#'
+#' @section See also:
+#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+#' \code{\link[conivol]{rbichibarsq_polyh}}
 #'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^4,10,pi/8)
