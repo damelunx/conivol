@@ -25,7 +25,7 @@ NULL
 #' @export
 #'
 dbichibarsq <- function(x, v) {
-    conivol:::.conivol_test_vector(v)
+    conivol:::.test_vector(v)
     d <- length(v)-1
     D <- dim(x)
     # test whether input is vector or matrix; first cover vector case
@@ -123,7 +123,7 @@ dbichibarsq <- function(x, v) {
 #' @export
 #'
 pbichibarsq <- function(x, v) {
-    conivol:::.conivol_test_vector(v)
+    conivol:::.test_vector(v)
     d <- length(v)-1
     D <- dim(x)
     if ( is.null(D) ) {
@@ -165,7 +165,7 @@ pbichibarsq <- function(x, v) {
 #' @export
 #'
 rbichibarsq <- function(n, v) {
-    conivol:::.conivol_test_vector(v)
+    conivol:::.test_vector(v)
     d <- length(v)-1
     Z <- sample(d+1, n, replace=TRUE, prob=v)-1
     return( matrix( c(rchisq(n,Z),rchisq(n,d-Z)), n, 2 ) )

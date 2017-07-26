@@ -31,8 +31,8 @@
 #' @export
 #'
 prepare_data <- function(d, m_samp) {
-    I1 <- which( sapply(m_samp[ ,1], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.conivol_adj_tol))}) )
-    I2 <- which( sapply(m_samp[ ,2], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.conivol_adj_tol))}) )
+    I1 <- which( sapply(m_samp[ ,1], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.adj_tol))}) )
+    I2 <- which( sapply(m_samp[ ,2], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.adj_tol))}) )
 
     n <- dim(m_samp)[1]
 
@@ -86,7 +86,7 @@ prepare_data <- function(d, m_samp) {
 #' @export
 #'
 comp_loglike <- function(v, data){
-    conivol:::.conivol_test_vector(v)
+    conivol:::.test_vector(v)
     d <- length(v)-1
     if (dim(data$dens)[1]!=d-1)
         stop("Wrong format.")
@@ -160,7 +160,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 
 # create the input for mosek for EM step
 #
-.conivol_create_mosek_input_EM <- function(const,extrap_pol,extrap_prim,selfdual) {
+.create_mosek_input_EM <- function(const,extrap_pol,extrap_prim,selfdual) {
     d <- length(const)-1
 
     mos_inp <- list()
@@ -260,7 +260,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 }
 
 
-.conivol_update_mosek_input_EM <- function(mos_inp,const) {
+.update_mosek_input_EM <- function(mos_inp,const) {
     mos_inp$scopt$opro[3, ] <- const
     return(mos_inp)
 }
@@ -366,7 +366,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     out_loglike[1] <- comp_loglike(v,data)
 
     # prepare Mosek inputs
-    mos_inp <- .conivol_create_mosek_input_EM(rep(0,d+1),extrap_pol,extrap_prim,selfdual)
+    mos_inp <- .create_mosek_input_EM(rep(0,d+1),extrap_pol,extrap_prim,selfdual)
     # prepare log-concavity enforcing parameters
     lambda_v <- c(0,0,rep_len(lambda, d-1),0,0)
     # prepare index sets for potential normalization
@@ -378,8 +378,8 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     diag(A_lcc) <- 1
     diag(A_lcc[2:d,]) <- -2
     diag(A_lcc[3:(d+1),]) <- 1
-    # mos_inp_lcc <- conivol:::.conivol_create_mosek_input_polyh_prim(A_lcc, rep(0,d+1))
-    mos_inp_lcc <- conivol:::.conivol_create_mosek_input_polyh_pol(A_lcc, rep(0,d+1), -lcc_amount)
+    # mos_inp_lcc <- conivol:::.create_mosek_input_polyh_prim(A_lcc, rep(0,d+1))
+    mos_inp_lcc <- conivol:::.create_mosek_input_polyh_pol(A_lcc, rep(0,d+1), -lcc_amount)
 
     for (i in 1:N) {
         denom <- colSums( data$dens * v[2:d] )
@@ -412,7 +412,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             else if (extrap_pol & extrap_prim)
                 const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[3:(d+1)]-lambda_v[2:d]-lambda_v[4:(d+2)] )
 
-            mos_inp <- .conivol_update_mosek_input_EM(mos_inp,const)
+            mos_inp <- .update_mosek_input_EM(mos_inp,const)
             mos_out <- Rmosek::mosek(mos_inp, opts)
             success <- check_mosek_success(mos_out$response$code)
         }
@@ -438,10 +438,10 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         i_lcc <- 0
         while (i_lcc < no_of_lcc_projections) {
             i_lcc <- i_lcc+1
-            # mos_inp_lcc <- conivol:::.conivol_update_mosek_input_polyh_prim(mos_inp_lcc, log(v))
+            # mos_inp_lcc <- conivol:::.update_mosek_input_polyh_prim(mos_inp_lcc, log(v))
             # mos_out <- Rmosek::mosek(mos_inp_lcc, opts)
             # v <- v/exp(mos_out$sol$itr$xx[(d+2):(2*d+2)])
-            mos_inp_lcc <- conivol:::.conivol_update_mosek_input_polyh_pol(mos_inp_lcc, log(v))
+            mos_inp_lcc <- conivol:::.update_mosek_input_polyh_pol(mos_inp_lcc, log(v))
             mos_out <- Rmosek::mosek(mos_inp_lcc, opts)
             v <- exp(mos_out$sol$itr$xx[1:(d+1)])
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])

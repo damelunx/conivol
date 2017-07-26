@@ -16,12 +16,12 @@
 #' @export
 #'
 comp_ivols_product <- function(V) {
-    lapply(V, .conivol_test_vector)
+    lapply(V, conivol:::.test_vector)
     for (i in 2:length(V))
         V[[1]] <- convolve(V[[1]],rev(V[[i]]),type="o")
     # test which one are numerically zero, then set them equal to zero
     # (to avoid negative entries)
-    I <- which(sapply(V[[1]], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.conivol_adj_tol))}))
+    I <- which(sapply(V[[1]], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.adj_tol))}))
     V[[1]][I]=0
     return(V[[1]])
 }
