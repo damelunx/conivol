@@ -1,0 +1,330 @@
+---
+title: "Estimating conic intrinsic volumes via EM algorithm"
+author: "Dennis Amelunxen"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Estimating conic intrinsic volumes via EM algorithm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This vignette is supposed to at some later point explain the details about the EM algorithm, but let's use it at this point to have a tour about the main functions in the package (at this moment), the problems encountered, etc.
+
+
+## The conivol functions
+
+So far we have the following functions (you can find this list also in the help function via `?conivol`):
+
+### Chi-bar-squared distribution:
+
+* `dchibarsq`: evaluates the density
+* `pchibarsq`: evaluates the cumulative distribution function
+* `rchibarsq`: produces samples
+
+### Bivariate chi-bar-squared distribution:
+
+* `dbichibarsq`: evaluates the density
+* `pbichibarsq`: evaluates the cumulative distribution function
+* `rbichibarsq`: produces samples
+
+
+### Computing with conic intrinsic volumes:
+
+* `comp_ivols_product`: computes the intrinsic volumes of a product cone by convolving the intrinsic volumes of its elements
+* `estimate_statdim_var`: estimates the statistical dimension and the variance of the intrinsic volumes from samples of the corresponding bivariate chi-bar-squared distribution
+
+
+### Computations involving products of circular cones:
+
+* `circ_ivol`: computes the intrinsic volumes of (a product of) circular cones
+* `rbichibarsq_circ`: produces samples from the bivariate chi-bar-squared distribution with weights given by the conic intrinsic volumes of a product of circular cones
+
+
+### Estimating the weights of the bivariate chi-bar-squared distribution:
+
+* `bichibarsq_find_weights`: produces EM-type iterates that may or may not converge to the maximum likelihood estimate for the weights of the bivariate chi-bar-squared distribution from sample data
+
+
+## Finding a good example with circular cones
+
+```{r results='hide', message=FALSE, warning=FALSE, echo=FALSE}
+### loading some packages
+library(conivol)
+library(tidyverse)
+library(Rmosek)
+```
+
+Ok, so the main function is of course `bichibarsq_find_weights`. Note that a simple way of estimating the intrinsic volumes is to estimate the statistical dimension and the variance, and then fit (and discretize) a normal distribution. This works very well for some cones (for example the nonnegative orthant), so we should find an example where this simple strategy does not work well. Another strategy is to find the circular cone that fits the statistical dimension. We should also avoid examples where this strategy gives a too good starting point.
+
+Let's try a product of two cones such that the statistical dimension is comparably large:
+  $$C=\text{Circ}_{d_1}(\alpha_1)\times \text{Circ}_{d_2}(\alpha_2)$$
+with $d_1=5, d_2=8, \alpha_1=\text{arcsin}(\sqrt{0.9}), \alpha_2=\text{arcsin}(\sqrt{0.8})$:
+```{r}
+D <- c(5,8)
+alpha <- c( asin(sqrt(0.9)) , asin(sqrt(0.8)))
+v <- circ_ivol(D, alpha, product = TRUE)
+```
+We compute the statistical dimension and variance and fit-and-discretize a normal distribution:
+```{r}
+d <- sum(D)
+delta <- sum(v*(0:d))
+var <- sum(v*(0:d)^2) - delta^2
+vn <- sapply( 0:d, 
+     function(k){ pnorm((k+0.5-delta)/sqrt(var)) - pnorm((k-0.5-delta)/sqrt(var)) })
+vn <- vn/sum(vn)
+```
+We find the circular cone, which matches the statistical dimension:
+```{r}
+search_alpha <- pi/2*(1:999)/1000
+ivols <- circ_ivol(rep(d,length(search_alpha)),search_alpha)
+i_fit <- which.min( ( sapply(ivols, function(v){sum(v*(0:d))}) - delta )^2 )
+alpha_fit <- search_alpha[i_fit]
+vc <- circ_ivol(d, alpha_fit)
+```
+Let's have a look at the corresponding plots (normal and log):
+
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+tib_plot     <- gather(tibble(k=0:d,exact=v,     est_norm=vn,     est_circ=vc),    type,value,2:4)
+tib_plot_log <- gather(tibble(k=0:d,exact=log(v),est_norm=log(vn),est_circ=log(vc)),type,value,2:4)
+
+ggplot(tib_plot, aes(x=k, y=value, color=type)) +
+    geom_line() +
+    scale_colour_manual(values=c("red","blue","black")) +
+    theme(legend.position="bottom",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank())
+
+ggplot(tib_plot_log, aes(x=k, y=value, color=type)) +
+    geom_line() +
+    scale_colour_manual(values=c("red","blue","black")) +
+    theme(legend.position="bottom",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank())
+```
+
+Ok, that example seems reasonable. We will choose this example for the next computations.
+
+## Estimating the conic weights from projection data
+
+First, let's sample from the bivariate chi-bar-squared distribution. Internally, this will be done by sampling with the exact values of the intrinsic volumes, because the conic intrinsic volumes of products of circular cones are easy to calculate and because this seems to be the fastest way to sample from this distribution. But the idea is of course that these samples can be obtained by computing the squared norms of the projections of random Gaussian vectors onto the cone and its polar.
+```{r, fig.align='center', fig.width=7, fig.height=6, eval=TRUE}
+n <- 10^5
+set.seed(1234)
+m_samp <- rbichibarsq_circ(n,D,alpha)
+ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
+    theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+```
+We compute the first thousand iterates of the EM algorithm, using three different starting points: uniform, discretized normal (from estimated statistical dimension and variance), circular cone (fitting the estimated statistical dimension). 
+```{r, eval=FALSE}
+EM_iterates_mode0 <- bichibarsq_find_weights( m_samp, d, N=1000, mode=0)
+EM_iterates_mode1 <- bichibarsq_find_weights( m_samp, d, N=1000, mode=1)
+EM_iterates_mode2 <- bichibarsq_find_weights( m_samp, d, N=1000, mode=2)
+```
+Each computation (of thousand iterates) takes about ten minutes, so the resulting data has been included in the package. See the corresponding descriptions via `?EM_iterates_mode0`, etc.  
+
+Here are the first few iterates (normal and log-plots); the true values are plotted in black:
+
+0. uniform distribution as starting point
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+tib_iter <- as_tibble( t(EM_iterates_mode0$iterates[1:8, ]) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2])
+tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE))
+ggplot(tib_plot,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+
+tib_iter_log <- as_tibble( t(log(EM_iterates_mode0$iterates[1:8, ])) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2])
+tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE)))
+ggplot(tib_plot_log,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+```
+
+1. discretized normal distribution as starting point
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+tib_iter <- as_tibble( t(EM_iterates_mode1$iterates[1:8, ]) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2])
+tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE))
+ggplot(tib_plot,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+
+tib_iter_log <- as_tibble( t(log(EM_iterates_mode1$iterates[1:8, ])) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2])
+tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE)))
+ggplot(tib_plot_log,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+```
+
+2. circular cone with same statistical dimension as starting point
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+tib_iter <- as_tibble( t(EM_iterates_mode2$iterates[1:8, ]) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2])
+tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE))
+ggplot(tib_plot,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+
+tib_iter_log <- as_tibble( t(log(EM_iterates_mode2$iterates[1:8, ])) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2])
+tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE)))
+ggplot(tib_plot_log,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+```
+
+Well, that looks promising. Let's have a look at the iterates further out, say, in steps of thousands:
+
+0. uniform distribution as starting point
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+tib_iter <- as_tibble( t(EM_iterates_mode0$iterates[c(10,20,100,500,1000,2000,4000,10000), ]) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2])
+tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE))
+ggplot(tib_plot,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+
+tib_iter_log <- as_tibble( t(log(EM_iterates_mode0$iterates[c(10,20,100,500,1000,2000,4000,10000), ])) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2])
+tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE)))
+ggplot(tib_plot_log,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+```
+
+1. discretized normal distribution as starting point
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+tib_iter <- as_tibble( t(EM_iterates_mode1$iterates[c(10,20,100,500,1000,2000,4000,10000), ]) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2])
+tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE))
+ggplot(tib_plot,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+
+tib_iter_log <- as_tibble( t(log(EM_iterates_mode1$iterates[c(10,20,100,500,1000,2000,4000,10000), ])) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2])
+tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE)))
+ggplot(tib_plot_log,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+```
+
+2. circular cone with same statistical dimension as starting point
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+tib_iter <- as_tibble( t(EM_iterates_mode2$iterates[c(10,20,100,500,1000,2000,4000,10000), ]) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2])
+tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE))
+ggplot(tib_plot,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+
+tib_iter_log <- as_tibble( t(log(EM_iterates_mode2$iterates[c(10,20,100,500,1000,2000,4000,10000), ])) ) %>%
+                add_column(k=0:d,.before=1)
+tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2])
+tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE)))
+ggplot(tib_plot_log,aes(x=k,y=value,color=step)) +
+    geom_line() +
+    geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") + 
+    theme(legend.position="none",
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    scale_colour_brewer()
+```
+
+<!--
+Let's have a look at the normalized (logarithmic) progression, that is, we normalize each intrinsic volume by the true value (without those one would of course take the last iterate); leaving out the first ten iterates:
+
+0. uniform distribution as starting point
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+#N_plot <- 100
+tib_prog <- as_tibble( sweep( EM_iterates_mode0$iterates[101:1001, ], MARGIN=2, circ_ivol(D,alpha,TRUE), "/") ) %>%
+                add_column(iterate=100:1000, .before=1)
+tib_prog_plot <- gather(tib_prog, vol, value, 2:dim(tib_prog)[2])
+ggplot(tib_prog_plot, aes(x=iterate, y=value, color=vol)) +
+    geom_line() +
+    scale_colour_brewer(palette = "Set3")
+```
+
+1. discretized normal distribution as starting point
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+
+```
+
+2. circular cone with same statistical dimension as starting point
+```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE}
+
+```
+
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+

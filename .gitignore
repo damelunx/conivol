@@ -1,0 +1,16 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+inst/doc
+tmp.R
+tmp3.R
+tmp2.R
+tmp4.R
+.Rbuildignore
+NAMESPACE_old
+conivol.Rproj
+graveyard.R
+signatures_probabilities.txt
+man
+tests
