@@ -1,14 +1,14 @@
-# create the mosek input for the projection
+# create the mosek input for the projection on {Ax|x>=0}
 #
-.conivol_create_mosek_input_polyh <- function(A,y) {
+.conivol_create_mosek_input_polyh_prim <- function(A,z) {
     m <- dim(A)[1]
     n <- dim(A)[2]
 
-    Aext <- cbind( A, matrix(0,m,2), diag(-1,m,m) )
+    Aext <- cbind( A, matrix(0,m,2), diag(-1,m) )
 
     mos_inp <- list(sense = "min")
-    mos_inp$c     <- c( -as.vector(t(A)%*%y), 1, rep(0,m+1) )
-    mos_inp$A     <- Matrix::Matrix( as.vector(Aext), nrow=m, byrow=FALSE, sparse=TRUE )
+    mos_inp$c     <- c( -as.vector(t(A)%*%z), 1, rep(0,m+1) )
+    mos_inp$A     <- Matrix::Matrix( Aext, sparse=TRUE )
     mos_inp$bc    <- rbind(blc = rep(0,m),
                            buc = rep(0,m))
     mos_inp$bx    <- rbind(blx = c(rep(0,n+1),1,rep(-Inf,m)),
@@ -19,10 +19,37 @@
     return(mos_inp)
 }
 
-.conivol_update_mosek_input_polyh <- function(mos_inp,y) {
-    m <- length(y)
+.conivol_update_mosek_input_polyh_prim <- function(mos_inp,z) {
+    m <- length(z)
     n <- dim(mos_inp$A)[2]-m-2
-    mos_inp$c[1:n] <- -as.vector( Matrix::t(mos_inp$A[1:m,1:n]) %*% y )
+    mos_inp$c[1:n] <- -as.vector( Matrix::t(mos_inp$A[, 1:n]) %*% z )
+    return(mos_inp)
+}
+
+# create the mosek input for the projection on {y|A^Ty<=c}
+#
+.conivol_create_mosek_input_polyh_pol <- function(A,z,c=0) {
+    m <- dim(A)[1]
+    n <- dim(A)[2]
+
+    Aext <- cbind( t(A), matrix(0,n,2), diag(1,n) )
+
+    mos_inp <- list(sense = "min")
+    mos_inp$c     <- c( -z, 1, rep(0,n+1) )
+    mos_inp$A     <- Matrix::Matrix( Aext, sparse=TRUE )
+    mos_inp$bc    <- rbind(blc = rep_len(c,n),
+                           buc = rep_len(c,n))
+    mos_inp$bx    <- rbind(blx = c(rep(-Inf,m),0,1,rep(0,n)),
+                           bux = c(rep(Inf,m+1),1,rep(Inf,n)))
+    mos_inp$cones <- matrix( list("RQUAD", c(m+1,m+2,1:m)), 2, 1 )
+    rownames(mos_inp$cones) <- c("type", "sub")
+
+    return(mos_inp)
+}
+
+.conivol_update_mosek_input_polyh_pol <- function(mos_inp,z) {
+    m <- length(z)
+    mos_inp$c[1:m] <- -z
     return(mos_inp)
 }
 
@@ -77,7 +104,7 @@ rbichibarsq_polyh <- function(n, A, reduce=TRUE) {
         nn <- dim(A)[2]
         is_superfluous <- rep(0,nn)
         for (j in 1:nn) {
-            mos_inp <- .conivol_create_mosek_input_polyh(A[ ,-j],A[ ,j])
+            mos_inp <- .conivol_create_mosek_input_polyh_prim(A[ ,-j],A[ ,j])
             is_superfluous[j] <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+m+1)]^2 ) == sum(A[ ,j]^2)
         }
         if (any(is_superfluous>0)) {
@@ -88,11 +115,11 @@ rbichibarsq_polyh <- function(n, A, reduce=TRUE) {
 
     m <- dim(A)[1]
     nn <- dim(A)[2]
-    mos_inp <- .conivol_create_mosek_input_polyh(A,rep(0,m))
+    mos_inp <- .conivol_create_mosek_input_polyh_prim(A,rep(0,m))
     out <- matrix(0,n,2)
     for (i in 1:n) {
         y <- rnorm(m)
-        mos_inp <- .conivol_update_mosek_input_polyh(mos_inp,y)
+        mos_inp <- .conivol_update_mosek_input_polyh_prim(mos_inp,y)
         p <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+3):(nn+m+2)]^2 )
         out[i, ] <- c(p,sum(y^2)-p)
     }

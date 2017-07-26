@@ -322,7 +322,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @export
 #'
 find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
-                          lambda=0, no_of_lcc_projections=1,
+                          lambda=0, no_of_lcc_projections=1, lcc_amount=0,
                           extrapolate=0, selfdual=FALSE, data=NULL) {
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop( paste0("\n Could not find package 'Rmosek'.",
@@ -378,7 +378,8 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     diag(A_lcc) <- 1
     diag(A_lcc[2:d,]) <- -2
     diag(A_lcc[3:(d+1),]) <- 1
-    mos_inp_lcc <- conivol:::.conivol_create_mosek_input_polyh(A_lcc, rep(0,d+1))
+    # mos_inp_lcc <- conivol:::.conivol_create_mosek_input_polyh_prim(A_lcc, rep(0,d+1))
+    mos_inp_lcc <- conivol:::.conivol_create_mosek_input_polyh_pol(A_lcc, rep(0,d+1), -lcc_amount)
 
     for (i in 1:N) {
         denom <- colSums( data$dens * v[2:d] )
@@ -437,15 +438,18 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         i_lcc <- 0
         while (i_lcc < no_of_lcc_projections) {
             i_lcc <- i_lcc+1
-            mos_inp_lcc <- conivol:::.conivol_update_mosek_input_polyh(mos_inp_lcc, log(v))
+            # mos_inp_lcc <- conivol:::.conivol_update_mosek_input_polyh_prim(mos_inp_lcc, log(v))
+            # mos_out <- Rmosek::mosek(mos_inp_lcc, opts)
+            # v <- v/exp(mos_out$sol$itr$xx[(d+2):(2*d+2)])
+            mos_inp_lcc <- conivol:::.conivol_update_mosek_input_polyh_pol(mos_inp_lcc, log(v))
             mos_out <- Rmosek::mosek(mos_inp_lcc, opts)
-            v <- v/exp(mos_out$sol$itr$xx[(d+2):(2*d+2)])
+            v <- exp(mos_out$sol$itr$xx[1:(d+1)])
             v[I_even] <- 0.5 * v[I_even]/sum(v[I_even])
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
         }
 
         out_iterates[i+1, ] <- v
-        out_loglike[i+1] <- comp_loglike(v,data)
+        # out_loglike[i+1] <- comp_loglike(v,data)
     }
 
     return(list(iterates=out_iterates, loglike=out_loglike))
