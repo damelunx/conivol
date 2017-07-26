@@ -42,7 +42,7 @@
 #'                                  a product of circular cones
 #' }
 #'
-#' @section Sampling from bivariate chi-bar-squared distribution of general polyhedral cone:
+#' @section General polyhedral cones:
 #' \itemize{
 #'   \item \code{\link[conivol]{rbichibarsq_polyh}}: produces samples from the bivariate
 #'                                   chi-bar-squared distribution with weights
