@@ -7,7 +7,9 @@
 #'
 #' @section See also:
 #' \code{\link[conivol]{dchibarsq}}, \code{\link[conivol]{pchibarsq}}, \code{\link[conivol]{rchibarsq}},
-#' \code{\link[stats]{dchisq}}, \code{\link[stats]{pchisq}}, \code{\link[stats]{qchisq}}, \code{\link[stats]{rchisq}},
+#' \code{\link[stats]{dchisq}}, \code{\link[stats]{pchisq}}, \code{\link[stats]{qchisq}}, \code{\link[stats]{rchisq}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
 NULL
 
 

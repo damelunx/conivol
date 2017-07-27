@@ -12,6 +12,8 @@
 #' @section See also:
 #' \code{\link[conivol]{circ_ivol}}
 #'
+#' Package: \code{\link[conivol]{conivol}}
+#'
 #' @examples
 #' comp_ivols_product(list( c(0.5,0.5), c(0.1,0.4,0.5) ))
 #' comp_ivols_product(list( c(0.5,0.5), c(0.5,0.5), c(0.5, 0.5) ))
@@ -47,6 +49,8 @@ comp_ivols_product <- function(V) {
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
 #' \code{\link[conivol]{rbichibarsq_polyh}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^4,10,pi/8)

@@ -56,7 +56,7 @@
 #'                              data (find the corresponding chi-squared density values);
 #'                              this potentially time-consuming step is called during
 #'                              \code{find_ivols_EM} and can be computed outside and passed
-#'                              as parameter to avoid multiple calls should \code{find_ivols_EM}
+#'                              as parameter to avoid multiple calls, should \code{find_ivols_EM}
 #'                              be called more than once
 #'   \item \code{\link[conivol]{init_v}}: find an initial estimate of the weights, potentially
 #'                        based on first and/or second moment

@@ -28,6 +28,8 @@
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
 #' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{find_ivols_EM}}
 #'
+#' Package: \code{\link[conivol]{conivol}}
+#'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
 #' prepare_data( 10, m_samp )
@@ -64,6 +66,8 @@ prepare_data <- function(d, m_samp) {
 #'
 #' @section See also:
 #' \code{\link[conivol]{prepare_data}}, \code{\link[conivol]{estimate_statdim_var}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
 #' D <- c(5,5)
@@ -129,13 +133,15 @@ comp_loglike <- function(v, data){
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
 #' \code{\link[conivol]{rbichibarsq_polyh}}
 #'
+#' Package: \code{\link[conivol]{conivol}}
+#'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
 #' est <- estimate_statdim_var(d, m_samp)
 #' init_v( 10 )
 #' init_v( 10, 1, delta=est$delta, var=est$var )
 #' init_v( 10, 2, delta=est$delta )
-#' init_v( 10, 3, var=est$var )
+#' init_v( 10, 3, delta=est$delta, var=est$var )
 #' init_v( 10, 4, delta=est$delta, var=est$var )
 #'
 # creating the starting point for the EM algorithm
@@ -330,6 +336,8 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
 #' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{prepare_data}},
 #' \code{\link[conivol]{init_v}}, \code{\link[conivol]{comp_loglike}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
 #' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))

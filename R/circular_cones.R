@@ -20,6 +20,8 @@
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq_circ}}
 #'
+#' Package: \code{\link[conivol]{conivol}}
+#'
 #' @examples
 #' circ_ivol(5, pi/4)
 #' circ_ivol(c(5,5), c(pi/4,pi/8))
@@ -83,6 +85,8 @@ circ_ivol <- function(d, alpha, product = FALSE) {
 #' \code{\link[conivol]{circ_ivol}}, \code{\link[conivol]{rbichibarsq_polyh}},
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rchibarsq}},
 #' \code{\link[stats]{rchisq}},
+#'
+#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
 #' rbichibarsq_circ(20,5,pi/3)
