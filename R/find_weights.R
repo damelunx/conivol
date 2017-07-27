@@ -59,6 +59,13 @@ prepare_data <- function(d, m_samp) {
 #'
 #' @param v vector of mixing weights (conic intrinsic volumes).
 #' @param data output of \code{prepare_data(d, m_samp)}.
+#' @param mode specifies whether the first and last values should be taken into account:
+#'             \describe{
+#'               \item{\code{init_mode==0}:}{take all into account}
+#'               \item{\code{init_mode==1}:}{leave out the estimate of the dth intrinsic volume}
+#'               \item{\code{init_mode==2}:}{leave out the estimate of the 0th intrinsic volume}
+#'               \item{\code{init_mode==3}:}{leave out both estimates of the 0th and dth intrinsic volume}
+#'             }
 #'
 #' @return The output of \code{comp_loglike} is the value of the normalized
 #'         log-likelihood of the mixing weights \code{v} with respect to the
@@ -96,16 +103,23 @@ prepare_data <- function(d, m_samp) {
 #'
 #' @export
 #'
-comp_loglike <- function(v, data){
+comp_loglike <- function(v, data, mode=0){
     conivol:::.test_vector(v)
     d <- length(v)-1
     if (dim(data$dens)[1]!=d-1)
         stop("Wrong format.")
-    return(
-        data$prop_pol  * log(v[1]) +
-            sum( 1/data$n * log( colSums( data$dens * v[2:d] ) ) ) +
-            data$prop_prim * log(v[d+1])
-    )
+    if (mode==1)
+        return(data$prop_pol  * log(v[1]) +
+                   sum( 1/data$n * log( colSums( data$dens * v[2:d] ) ) ) )
+    else if (mode==2)
+        return(sum( 1/data$n * log( colSums( data$dens * v[2:d] ) ) ) +
+                   data$prop_prim * log(v[d+1]))
+    else if (mode==3)
+        return( sum( 1/data$n * log( colSums( data$dens * v[2:d] ) ) ) )
+    else
+        return(data$prop_pol  * log(v[1]) +
+                   sum( 1/data$n * log( colSums( data$dens * v[2:d] ) ) ) +
+                   data$prop_prim * log(v[d+1]) )
 }
 
 
