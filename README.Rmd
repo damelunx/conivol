@@ -227,7 +227,6 @@ ggplot(tib_plot_log4,aes(x=k,y=value,color=step)) +
 ```
 
 We can see that the estimate after 200 iterations is quite accurate for the bigger values, but still comparably poor for the smaller values. If we increase the sample size to 10^6, we can see that the algorithm converges well.
-<!--
 ```{r}
 # set sample size
 n <- 10^6
@@ -259,7 +258,6 @@ ggplot(tib_plot_log,aes(x=k,y=value,color=step)) +
           axis.title.x=element_blank(),
           axis.title.y=element_blank())
 ```
--->
 
 As a final remark, the algorithm uses some bias, which strictly speaking relies (in the general case) on some open conjecture ([log-concavity](https://en.wikipedia.org/wiki/Logarithmically_concave_function) of the intrinsic volumes). The amount to which the algorithm relies on this conjecture can be tuned through the function parameters (it can be completely abandoned). See [this vignette](vignettes/estim-conic-intrinsic-volumes-with-EM.html) for a more exhaustive example, which goes into more details of this parameter tuning.
 

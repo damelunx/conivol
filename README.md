@@ -185,9 +185,9 @@ ggplot(tib_plot0,aes(x=k,y=value,color=step)) +
 
 To see the other end of the spectrum we also look at the iterates of the logarithms. ![](README-unnamed-chunk-9-1.png)![](README-unnamed-chunk-9-2.png)![](README-unnamed-chunk-9-3.png)
 
-We can see that the estimate after 200 iterations is quite accurate for the bigger values, but still comparably poor for the smaller values. If we increase the sample size to 10^6, we can see that the algorithm converges well. <!--
+We can see that the estimate after 200 iterations is quite accurate for the bigger values, but still comparably poor for the smaller values. If we increase the sample size to 10^6, we can see that the algorithm converges well.
 
-```r
+``` r
 # set sample size
 n <- 10^6
 # obtain sample of the specified size
@@ -196,7 +196,7 @@ m_samp <- rbichibarsq_circ(n,D,alpha)
 EM <- find_ivols_EM( d, m_samp, N=200 )
 # [...]
 ```
+
 ![](README-unnamed-chunk-11-1.png)![](README-unnamed-chunk-11-2.png)
--->
 
 As a final remark, the algorithm uses some bias, which strictly speaking relies (in the general case) on some open conjecture ([log-concavity](https://en.wikipedia.org/wiki/Logarithmically_concave_function) of the intrinsic volumes). The amount to which the algorithm relies on this conjecture can be tuned through the function parameters (it can be completely abandoned). See [this vignette](vignettes/estim-conic-intrinsic-volumes-with-EM.html) for a more exhaustive example, which goes into more details of this parameter tuning.
