@@ -76,7 +76,7 @@ ggplot(tibble(k=0:d, v=v), aes(x=k,y=v)) +
     theme_bw()
 ```
 
-![](README-unnamed-chunk-3-1.png)
+![](README_figures/unnamed-chunk-3-1.png)
 
 ``` r
 ggplot(tibble(k=0:d, `log(v)`=log(v)), aes(x=k,y=`log(v)`)) +
@@ -84,7 +84,7 @@ ggplot(tibble(k=0:d, `log(v)`=log(v)), aes(x=k,y=`log(v)`)) +
     theme_bw()
 ```
 
-![](README-unnamed-chunk-3-2.png)
+![](README_figures/unnamed-chunk-3-2.png)
 
 The goal is to reconstruct these values from samples from the bivariate chi-bar-squared distribution with the above intrinsic volumes as weights.
 
@@ -100,7 +100,7 @@ ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
     theme(axis.title.x=element_blank(),axis.title.y=element_blank())
 ```
 
-![](README-unnamed-chunk-4-1.png)
+![](README_figures/unnamed-chunk-4-1.png)
 
 The first and second moment of the intrinsic volumes are given by 9.997 and 2.6516, and estimated from the sample data as 9.9948 and 2.813, respectively. These estimates are used to find a first estimate for the intrinsic volumes.
 
@@ -123,7 +123,7 @@ ggplot(tib_plot, aes(x=k, y=value, color=mode)) +
     theme_bw()
 ```
 
-![](README-unnamed-chunk-5-1.png)
+![](README_figures/unnamed-chunk-5-1.png)
 
 ``` r
 ggplot(tib_plot, aes(x=k, y=log(value), color=mode)) +
@@ -132,7 +132,7 @@ ggplot(tib_plot, aes(x=k, y=log(value), color=mode)) +
     theme_bw()
 ```
 
-![](README-unnamed-chunk-5-2.png)
+![](README_figures/unnamed-chunk-5-2.png)
 
 We can look at the log-likelihood of these initial estimates. And since we know the exact values of the underlying intrinsic volumes, we can normalize these values (just to get a convenient y-axis).
 
@@ -151,7 +151,7 @@ ggplot(tib_loglike, aes(init_mode, norm_loglike)) +
     theme_bw()
 ```
 
-![](README-unnamed-chunk-6-1.png)
+![](README_figures/unnamed-chunk-6-1.png)
 
 We will take the initial modes 0, 1, 4, and compare the results after 200 iterates of of the expectation maximization (EM) algorithm.
 
@@ -174,16 +174,16 @@ ggplot(tib_plot0,aes(x=k,y=value,color=step)) +
           axis.title.y=element_blank())
 ```
 
-![](README-unnamed-chunk-7-1.png)
+![](README_figures/unnamed-chunk-7-1.png)
 
 ``` r
 # plotting some iterates of initial mode == 1 and 4
 # [...]
 ```
 
-![](README-unnamed-chunk-8-1.png)![](README-unnamed-chunk-8-2.png)
+![](README_figures/unnamed-chunk-8-1.png)![](README_figures/unnamed-chunk-8-2.png)
 
-To see the other end of the spectrum we also look at the iterates of the logarithms. ![](README-unnamed-chunk-9-1.png)![](README-unnamed-chunk-9-2.png)![](README-unnamed-chunk-9-3.png)
+To see the other end of the spectrum we also look at the iterates of the logarithms. ![](README_figures/unnamed-chunk-9-1.png)![](README_figures/unnamed-chunk-9-2.png)![](README_figures/unnamed-chunk-9-3.png)
 
 We can see that the estimate after 200 iterations is quite accurate for the bigger values, but still comparably poor for the smaller values. If we increase the sample size to 10^6, we can see that the algorithm converges well.
 
@@ -197,6 +197,6 @@ EM <- find_ivols_EM( d, m_samp, N=200 )
 # [...]
 ```
 
-![](README-unnamed-chunk-11-1.png)![](README-unnamed-chunk-11-2.png)
+![](README_figures/unnamed-chunk-11-1.png)![](README_figures/unnamed-chunk-11-2.png)
 
 As a final remark, the algorithm uses some bias, which strictly speaking relies (in the general case) on some open conjecture ([log-concavity](https://en.wikipedia.org/wiki/Logarithmically_concave_function) of the intrinsic volumes). The amount to which the algorithm relies on this conjecture can be tuned through the function parameters (it can be completely abandoned). See [this vignette](vignettes/estim-conic-intrinsic-volumes-with-EM.html) for a more exhaustive example, which goes into more details of this parameter tuning.
