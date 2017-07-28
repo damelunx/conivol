@@ -1,6 +1,6 @@
 ---
-title: "Vignette Title"
-author: "Vignette Author"
+title: "Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution"
+author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -9,50 +9,130 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+This note introduces the conic intrinsic volumes and the associated (bivariate) chi-bar-squared distributions. The focus is on algorithmic considerations; pointers to the literature for theoretic background will be given within the text.
 
-- Never uses retina figures
-- Has a smaller default figure size
-- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+## Closed convex cones
 
-## Vignette Info
+As the name suggests, a closed convex cone $C\subseteq\text{R}^d$ satisfies the following three properties:  
 
-Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+1. $C$ is **closed**:  
+the limit of any convergent sequence is an element of $C$,
+$$\forall x_1,x_2,\ldots\in C \text{ such that } \lim_{i\to\infty} x_i \text{ exists}: \lim_{i\to\infty} x_i\in C$$
+2. $C$ is **convex**:  
+any convex combination of elements in $C$ lies in $C$,  
+$$ \forall x,y\in C,\; 0\leq \lambda\leq 1 : \lambda x+(1-\lambda) y\in C$$
+3. $C$ is a **cone**:  
+any positive scaling of an element in $C$ lies in $C$,
+$$\forall x\in C\;,\lambda>0 : \lambda x\in C$$
 
-## Styles
+Properties 1. and 3. imply that every nonzero closed cone contains the origin, $0\in C$. Furthermore, if $0\in C$, then properties 2. and 3. taken together are equivalent to the property
+$$\forall x,y\in C,\; \lambda,\mu\geq0 : \lambda x+\mu y\in C$$
+In the following we will always assume that a closed convex cone is nonempty, that is, it contains at least the origin.
 
-The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+Note that if $C\subseteq\text{R}^d$ and $D\subseteq\text{R}^e$ are closed convex cones, then their direct product is a closed convex cone, $C\times D\subseteq\text{R}^{d+e}$.
 
-    output: 
-      rmarkdown::html_vignette:
-        css: mystyles.css
+### Polar cones
 
-## Figures
+Every closed convex cone $C\subseteq\text{R}^d$ defines a natural counterpart, its polar cone
+$$ C^\circ := \{y\in\text{R}^d\mid \forall x\in C: x^Ty\leq 0\} . $$
+The polar cone is also a closed convex cone, and the polar of the polar cone is the original cone, which in this context is also called the primal cone, $(C^\circ)^\circ = C$. It thus makes sense to think about the primal cone and its polar cone as a primal-polar pair of cones. A cone is called self-dual, if $C^\circ=-C$.  
 
-The figure sizes have been customised so that you can easily put two images side-by-side. 
+Note that $(\text{R}^d)^\circ=\{0\}$. Also, polarity behaves well with direct products, $(C\times D)^\circ = C^\circ\times D^\circ$.  
 
-```{r, fig.show='hold'}
-plot(1:10)
-plot(10:1)
-```
+The polar cone depends on the ambient space, i.e., if we embed $C\subseteq\text{R}^d$ in $\text{R}^e$, $e\geq d$, by formally identifying $C$ with $C\times\{0\}\subseteq\text{R}^e$, then the polar of the embedded cone is given by $(C\times\{0\})^\circ = C^\circ\times\text{R}^{e-d}$.
 
-You can enable figure captions by `fig_caption: yes` in YAML:
+### Examples: linear subspaces
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+A trivial yet important class of examples of closed convex cones are the linear subspaces. It is easily seen that the polar cone of a linear subspace is just its orthogonal complement.  
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+The intrinsic volumes and (bivariate) chi-bar-squared distributions are in this case equivalent to the dimension of the subspace (see below for more precise statements).  
 
-## More Examples
+Furthermore, for cones which are not linear subspaces the intrinsic volumes satisfy an additional linear relation, which is why the algorithms in `conivol` assume that the underlying closed convex cone is **not** a linear subspace.
 
-You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+### Examples: polyhedral cones
 
-```{r, echo=FALSE, results='asis'}
-knitr::kable(head(mtcars, 10))
-```
+Polyhedral cones are a straightforward generalization of linear subspaces and can be described in two ways, which are related via polarity:
 
-Also a quote using `>`:
+1. as conic convex combinations of a finite number of vectors,
+$$ C = \{Az \mid z\in\text{R}^n, z\geq 0\} ,\quad A\in\text{R}^{d\times n} , $$
+where the inequality $z\geq0$ is meant componentwise,
+2. as the intersection of finitely many closed linear half-spaces,
+$$ C^\circ = \{y\in\text{R}^d \mid A^Ty\leq 0\} . $$
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
+Although the set of polyhedral cones does not exhaust the set of closed convex cones, it can be shown (and it is intuitively clear) that every closed convex cone can be arbitrarily well approximated by polyhedral cones. 
+
+
+### Examples: circular cones
+
+Circular cones consist of all points that lie below a certain angle towards a given semi-axis. Choosing this semi-axis to be the $d$th coordinate axis, we define the $d$-dimensional circular cone of angle $0<\alpha\leq\frac{\pi}{2}$ via
+$$ \text{Circ}_d(\alpha) := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\} , $$
+where $\|\cdot\|$ denotes the Euclidean norm.  
+
+The circular cones form a class of cones, which is interesting for both theoretical and practical purposes. For theoretical purposes because circular cones are known to satisfy certain extreme inequalities, and are suspected to satisfy even more; and for practical purposes because they, and products of them, provide a reasonably large, yet accessible, class of cones which is easy to analyze with respect to the intrinsic volumes.
+
+## Conic intrinsic volumes
+
+The conic intrinsic volumes of a closed convex cone $C\subseteq\text{R}^d$ form a $(d+1)$-element vector,
+$$ v(C) = (v_0(C),\ldots,v_d(C)) \geq 0 ,\quad \sum_{k=0}^d v_k(C) = 1 . $$
+If $C=L$ is a linear subspace, then
+$$ v_k(L) = \begin{cases} 1 & \text{if } k=\dim(L) \\ 0 & \text{else} . \end{cases} $$
+It can be shown that if $C$ is *not* a linear subspace, then
+$$ v_0(C)+v_2(C)+v_4(C)+\cdots = v_1(C)+v_3(C)+v_5(C)+\cdots = \tfrac{1}{2} . $$
+This linear relation is the reason why in the computations in `conivol` the underlying closed convex cone is always assumed to be not a linear subspace.  
+
+The intrinsic volumes of the polar cone are the same as those of the primal cone, but the index gets reversed,
+$$ v_k(C^\circ) = v_{d-k}(C) . $$
+The intrinsic volumes of a product of cones arise as the convolution of the intrinsic volumes of its components,
+$$ v_k(C\times D) = \sum_{i+j=k} v_i(C) v_j(D) . $$
+Closed formulas for the intrinsic volumes of circular cones are known, see for example [here](insert.link.here).
+
+## (Bivariate) chi-bar-squared distribution
+
+For $k\geq0$ let $F_k$ denote the cumulative distribution function (cdf) of the $\chi_k^2$ distribution, where $F_0(t)=1$ if $t\geq0$ and $F_0(t)=0$ if $t<0$. The chi-bar-squared distribution with weight vector $\lambda=(\lambda_0,\ldots,\lambda_d)$, where $\lambda\geq0$ and $\sum_{k=0}^d\lambda_k=1$, can be characterized through its cdf via
+$$ F_\lambda(t) = \sum_{k=0}^d \lambda_k F_k(t) . $$
+In terms of random variables, one can think of sampling from the chi-bar-squared distribution as a two-step procedure,
+
+1. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $\lambda$,
+2. sample an element from the $\chi_k^2$ distribution.
+
+The bivariate chi-bar-squared distribution with weight vector $\lambda$ can similarly be characterized through its cdf via
+$$ \Phi_\lambda(s,t) = \sum_{k=0}^d \lambda_k F_k(s) F_{d-k}(t) . $$
+In terms of random variables, one can think of sampling $(x,y)$ from the chi-bar-squared distribution as a two-step procedure,
+
+1. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $\lambda$,
+2. sample an element $s$ from the $\chi_k^2$ distribution and, independently, sample an element $t$ from the $\chi_{d-k}^2$ distribution.
+
+This sampling procedure is useful for the understanding of the EM algorithm in `conivol::find_weights_EM` but for the relation to closed convex cones the following sampling procedure of the chi-bar-squared distribution is more intuitive,
+
+1. sample $d$ iid $\chi_1^2$ distributed random variables, say, $a_1,\ldots,a_d$,
+2. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $\lambda$,
+3. take $s=a_1+\cdots+a_k$ and $t=a_{k+1}+\cdots+a_d$.
+
+
+### Relation to closed convex cones
+
+The (bivariate) chi-bar-squared distribution corresponding to a closed convex cone $C$ is of course the one arising from taking the conic intrinsic volumes as weights; in terms of cdf,
+$$ F_C(t) = \sum_{k=0}^d v_k(C) F_k(t) ,\qquad \Phi_C(s,t) = \sum_{k=0}^d v_k(C) F_k(s) F_{d-k}(t) . $$
+A natural sampling for these distributions involves the projection function
+$$ \Pi_C\colon\text{R}^d\to C ,\qquad \Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\} . $$
+Denoting by $g\sim N(0,I_d)$ a Gaussian vector, we get the chi-bar-squared and the bivariate chi-bar-squared distributions as the distributions of the random variables
+$$ \|\Pi_C(g)\|^2 \quad\text{and}\quad (\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2) . $$
+
+
+## Statistical applications
+
+[TBD]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
