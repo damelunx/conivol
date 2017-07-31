@@ -123,7 +123,9 @@ $$ \|\Pi_C(g)\|^2 \quad\text{and}\quad (\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2) .
 
 [TBD]
 
+## Inequalities, known and conjectured
 
+[TBD]
 
 
 
