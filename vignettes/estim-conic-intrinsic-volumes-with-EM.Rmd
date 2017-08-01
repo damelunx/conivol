@@ -53,7 +53,7 @@ We propose the following ways to choose a starting point for the iterative algor
 
 0. *uniform distribution:* $v^{(0)}=\frac{1}{d+1}(1,\ldots,1)$.
 1. *normal distribution:* match a normal distribution to the first and second moments of $Z$ and discretize:
-$$ v^{(0)}_k = \begin{cases} \text{Prob}\{\nu\leq 0.5\} & \text{if } k=0 , \\ \text{Prob}\{k-0.5\leq \nu\leq k+0.5\} & \text{if } 0<k<d , \\ \text{Prob}\{\nu\geq k-0.5\} & \text{if } k=d , \end{cases} $$
+$$ v^{(0)}_k = \frac{\text{Prob}\{k-0.5\leq \nu\leq k+0.5\}}{\text{Prob}\{-0.5\leq \nu\leq d+0.5\}} $$
 where $\nu\sim N(\hat\delta,\widehat{\text{var}})$.
 2. *circular cones*: $d$-dimensional cones of angle $\alpha$ have an approximate statistical dimension of $d\sin^2\alpha$ and an approximate variance of $(d/2-1)\sin^2(2\alpha)$. We can thus choose $\alpha$ to match either the statistical dimension, or the variance, or take an average of both fits:
     (a) *match first moment*: take $\alpha=\text{arcsin}\sqrt{\hat\delta/d}$ and take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circlar cone with an angle of $\alpha$.
@@ -74,22 +74,22 @@ Moreover, if $Y=0$, then the value of $X$ is just a draw from the $\chi_d^2$ dis
 * *estimate of $v_0$*: $q = |\{i\mid x_i=0\}|/N$
 * *remaining samples*: without loss of generality we may use the notation $(x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})$ for the remaining sample points, $\bar N\leq N$, or shortly $\mathbf{x},\mathbf{y}$ for the sample vectors.
 
-In fact, as it turns out we use the remaining sample points through the density values
-$$ f_k(x_i)f_{d-k}(y_i) ,\quad k=1,\ldots,d-1,\; i=1,\ldots,\bar N , $$
-where $f_k$ denotes the density of the chi-squared distribution,
-$$ f_k(t)=\frac{1}{2^{k/2}\Gamma(k/2)}x^{k/2-1}e^{-x/2} . $$
+In fact, it turns out that the sample data enters the computation only through the density values
+$$ f_{ik} := f_k(x_i)f_{d-k}(y_i) ,\quad k=1,\ldots,d-1,\; i=1,\ldots,\bar N , $$
+where $f_k(t)$ denotes the density of the chi-squared distribution,
+$$ f_k(t)=\frac{1}{2^{k/2}\Gamma(k/2)}t^{k/2-1}e^{-t/2} . $$
 The function `conivol::prepare_data` evaluates the sample data in this regard; calling this function outside the EM algorithm allows to skip this step on multiple evaluations of the EM algorithm or related functions.
 
 We obtain the following formula for the likelihood of the given data:
-$$ L(v\mid \mathbf{x},\mathbf{y}) = v_0^{|\{i\mid x_i=0\}|} v_d^{|\{i\mid y_i=0\}|} \prod_{i=1}^{\bar N}\sum_{k=1}^{d-1} v_k f_k(x_i) f_{d-k}(y_i) . $$
+$$ L(v\mid \mathbf{x},\mathbf{y}) = v_0^{|\{i\mid x_i=0\}|} v_d^{|\{i\mid y_i=0\}|} \prod_{i=1}^{\bar N}\sum_{k=1}^{d-1} v_k f_{ik} . $$
 This likelihood function does not take the latent variable $Z$ into account, which is crucial for the EM algorithm. Assuming that we have sample values $\mathbf{z}=(z_1,\ldots,z_{\bar N})$ for the latent variables, we arrive at the likelihood function
-$$ L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) = v_0^{|\{i\mid x_i=0\}|} v_d^{|\{i\mid y_i=0\}|} \prod_{i=1}^{\bar N}\prod_{k=1}^{d-1} (v_k f_k(x_i) f_{d-k}(y_i))^{(z_i=k)} , $$
+$$ L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) = v_0^{|\{i\mid x_i=0\}|} v_d^{|\{i\mid y_i=0\}|} \prod_{i=1}^{\bar N}\prod_{k=1}^{d-1} (v_k f_{ik})^{(z_i=k)} , $$
 where $(z_i=k)=1$ if $z_i=k$ and zero else.
 
 For numerical reasons we work with the rescaled log-likelihood functions
 $$\begin{align*}
-\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \log\Big(\sum_{k=1}^{d-1} v_k f_k(x_i) f_{d-k}(y_i)\Big) ,
-\\ \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1} (z_i=k) \big( \log v_k + \log f_k(x_i) + \log f_{d-k}(y_i) \big) .
+\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \log\Big(\sum_{k=1}^{d-1} v_k f_{ik}\Big) ,
+\\ \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1} (z_i=k) \big( \log v_k + \log f_{ik} \big) .
 \end{align*}$$
 The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y})$ is implemented in `conivol::comp_loglike`.
 
@@ -97,7 +97,7 @@ The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathb
 
 The log-concavity inequalities are the inequalities $v_k^2\geq v_{k-1}v_{k+1}$ for $k=1,\ldots,d-1$, or equivalently,
 $$ 2\log v_k - \log v_{k-1} - \log v_{k+1} \geq 0 . $$
-The validity of these inequalities is an open conjecture for general cones at this moment. But there is strong evidence that they hold in general, and assuming their validity greatly helps the EM algorithm to converge to a sensible estimate.
+At this moment, the validity of these inequalities is an open conjecture for general closed convex cones. But for subclasses, like products of circular cones, they are known to hold, and there is some evidence that they hold in general.^[The euclidean intrinsic volumes satisfy the log-concavity inequalities by the Alexandrov-Fenchel inequality for the mixed volumes. In small dimensions ($\leq10$) this partly implies log-concavity for the conic intrinsic volumes. But in fact the implication goes the other way: log-concavity of conic intrinsic volumes easily implies log-concavity of euclidean intrinsic volumes.] Assuming log-concavity of the conic intrinsic volumes greatly helps the EM algorithm to converge to a sensible estimate.
 
 There are two natural ways in which log-concavity may be exploited:
 
@@ -105,36 +105,13 @@ There are two natural ways in which log-concavity may be exploited:
 $$ F_\lambda(v) := \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y}) + \sum_{k=1}^{d-1} \lambda_k (2\log v_k - \log v_{k-1} - \log v_{k+1})$$
    and
 $$ G_\lambda(v,\mathbf{z}) := \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) + \sum_{k=1}^{d-1} \lambda_k (2\log v_k - \log v_{k-1} - \log v_{k+1}) , $$
-   where $\lambda_1,\ldots,\lambda_{d-1}\geq0$ and $\lambda_0:=\lambda_d:=0$ (setting all $\lambda_k$ to zero eliminates this restriction).
+   where $\lambda_1,\ldots,\lambda_{d-1}\geq0$ and $\lambda_0:=\lambda_d:=0$ (setting all $\lambda_k$ to zero yields the original log-likelihood functions).  
+It should be noted that these "penalty terms" may cancel out, effectively rendering them useless. A true log-concavity penalty would have a form like $\min\{0,2\log v_k - \log v_{k-1} - \log v_{k+1}\}$; we use the simple (albeit potentially useless) penalty as it allows for easy implementation in the EM step.
 2. projecting the logarithms of the iterates onto the polyhedral set
 $$ \big\{ u\in\text{R}^{d+1}\mid 2 u_k - u_{k-1} - u_{k+1} \geq c_k \big\} . $$
-   for some $c_1,\ldots,c_{d-1} (\geq0)$ (letting all $c_k$ go to $-\infty$ eliminates this restriction).
+   for some $c_1,\ldots,c_{d-1} (\geq0)$ (setting all $c_k$ to $-\infty$ eliminates this restriction).
 
 Both of these methods are supported in `conivol::find_ivols_EM`.
-
-### Gradient and Hessian
-
-Gradient descent and Newton's method both seem to be inappropriate for the task of reconstructing the intrinsic volumes from sample data as described above. However, analyzing the gradient and the Hessian might still be instructive to decide whether the maximum likelihood estimate has been achieved.
-
-We compute the gradient and Hessian in the the affine-linear subspace $\{v\in\text{R}^{d+1}\mid v_0 + v_2 + \dots = v_1 + v_3 + \dots = \frac12\}$. The negative of the gradient of the penalized log-likelihood function in $\mathbf x$ and $\mathbf y$ is given by
-$$\begin{align}
-  -\nabla F_\lambda(v) & = \frac{1}{N} \sum_{i=1}^{\bar N} \frac{ \text{diag}(v) \Bigg(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - \begin{pmatrix} 0 \\ f_i \\ 0 \end{pmatrix} \Bigg) }{ \sum_{k=1}^{d-1} v_kf_{ik} } -\begin{pmatrix} q-\lambda_1 \\ 2\lambda-\lambda_{-1}-\lambda_{+1} \\ p-\lambda_{d-1} \end{pmatrix}
-\\[2mm] & \quad + (2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1})\frac{\text{diag}(v) \mathbf1_{\text{even}}}{v_{k_0}} + (2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1})\frac{\text{diag}(v)\mathbf1_{\text{odd}}}{v_{k_1}} ,
-\end{align}$$
-where
-
-* $f_{ik}=f_k(x_i)f_{d-k}(y_i)$, $f_i = (f_{i1},\ldots,f_{i,d-1})^T$,
-* $\mathbf1_{\text{even}} = (1, 0, 1, 0, 1, \ldots)^T$, $\mathbf1_{\text{odd}} = (0, 1, 0, 1, 0, 1, \ldots)^T$,
-* $\lambda=(\lambda_1,\ldots,\lambda_{d-1})^T$, $\lambda_{-1}=(1,\lambda_1,\ldots,\lambda_{d-2})^T$, $\lambda_{+1}=(\lambda_2,\ldots,\lambda_{d-1},1)^T$
-
-The negative Hessian is given by
-$$\begin{align}
-  -HF_\lambda(v) & = \frac{1}{N} \sum_{i=1}^{\bar N} \frac{ \text{diag}(v) \Bigg(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - \begin{pmatrix} 0 \\ f_i \\ 0 \end{pmatrix} \Bigg) \Bigg(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - \begin{pmatrix} 0 \\ f_i \\ 0 \end{pmatrix} \Bigg)^T \text{diag}(v)}{ \big(\sum_{k=1}^{d-1} v_kf_{ik}\big)^2 }
-\\ & \qquad + \text{diag} \begin{pmatrix} p-\lambda_1 \\ 2\lambda_j-\lambda_{j-1}-\lambda_{j+1} \\ q-\lambda_{d-1} \end{pmatrix} + (2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1})\text{diag}(\tfrac{v}{v_{k_0}}) \mathbf1_{\text{even}}\mathbf1_{\text{even}}^T\text{diag}(\tfrac{v}{v_{k_0}})
-\\ & \qquad + (2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1})\text{diag}(\tfrac{v}{v_{k_1}}) \mathbf1_{\text{odd}}\mathbf1_{\text{odd}}^T\text{diag}(\tfrac{v}{v_{k_1}})
-\end{align}$$
-
-These formulas are implemented in `conivol::find_ivols_gradient` and `conivol::find_ivols_Hessian`.(TBD)
 
 ## Expectation maximization (EM) algorithm
 
@@ -158,7 +135,7 @@ The log-concavity inequalities $2\log v_k-\log v_{k-1}-\log v_{k+1}\geq c_k\;(\g
 (TBD) (Martin's example)
 
 
-## Addendum: SOCP formulation of projection maps and MOSEK implementation
+## Appendix A: SOCP formulation of projection maps and MOSEK implementation
 
 The problem of finding the projection of a point $z\in\text{R}^d$ onto a polyhedral cone $\{Au\mid u\geq0\}$, $A\in\text{R}^{d\times n}$, also known as *nonnegative least squares*, can be formulated as a second order cone program (SOCP):
 $$\begin{align}
@@ -176,11 +153,46 @@ The projection of a point $z\in\text{R}^n$ onto the polar cone, and more general
 \\ \iff & \text{minimize } \tfrac12\|y\|^2 - z^Ty \quad\text{subject to}\quad A^Ty\leq c
 \\ \iff & \text{minimize } (-z)^Ty+r \quad\text{subject to}\quad u\geq 0, A^Ty+u=c, s=1, \|y\|^2\leq 2rs
 \end{align*}
-Again, this last formulation is solved with MOSEK, using the rotated quadratic cone constraint, to enforce the log-concavity constraints.
+This last formulation is solved with MOSEK, using the rotated quadratic cone constraint, to enforce the log-concavity constraints in the EM algorithm.
 
 
 
 
+### Appendix B: Gradient and Hessian
+
+Gradient descent and Newton's method both seem to be inappropriate for the task of reconstructing the intrinsic volumes from sample data as described above. However, analyzing the gradient and the Hessian might still be instructive to decide whether the maximum likelihood estimate has been reached.
+
+We compute the gradient and Hessian in the affine-linear subspace
+$$ V:=\big\{v\in\text{R}^{d+1}\mid v_0 + v_2 + \dots = v_1 + v_3 + \dots = \tfrac12\big\} . $$
+For this we change coordinates in the following way: let $k_0,k_1\in\{1,\ldots,d-1\}$, $k_0$ even, $k_1$ odd, and parametrize the neighborhood of the vector $v$ through
+$$ v + \sum_{k\text{ even}} a_k (e_k-e_{k_0}) + \sum_{k\text{ odd}} a_k (e_k-e_{k_1}) . $$
+Changing coordinates in $F_\lambda$ by defining
+$$ \tilde F_\lambda(a) := F_\lambda \Big( v + \sum_{k\text{ even}} a_k (e_k-e_{k_0}) + \sum_{k\text{ odd}} a_k (e_k-e_{k_1})\Big) , $$
+one obtains the following gradient in zero:
+$$\begin{align}
+  \nabla \tilde F_\lambda(0) & = -\frac{1}{N} \sum_{i=1}^{\bar N} \frac{ f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i}{ \sum_{k=1}^{d-1} v_kf_{ik} } + \text{diag}(v)^{-1} \begin{pmatrix} q-\lambda_1 \\ 2\lambda-\lambda_{-1}-\lambda_{+1} \\ p-\lambda_{d-1} \end{pmatrix}
+\\[2mm] & \quad - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}{v_{k_0}} \mathbf1_{\text{even}} - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}} \mathbf1_{\text{odd}} ,
+\end{align}$$
+where
+
+* $f_i = (0,f_{i1},\ldots,f_{i,d-1},0)^T$,
+* $\mathbf1_{\text{even}} = (1, 0, 1, 0, 1, \ldots)^T$, $\mathbf1_{\text{odd}} = (0, 1, 0, 1, 0, 1, \ldots)^T$,
+* $\lambda=(\lambda_1,\ldots,\lambda_{d-1})^T$, $\lambda_{-1}=(1,\lambda_1,\ldots,\lambda_{d-2})^T$, $\lambda_{+1}=(\lambda_2,\ldots,\lambda_{d-1},1)^T$
+
+Note that $\tilde F_\lambda$ is constant in $a_{k_0}$ and $a_{k_1}$, and the gradient is correspondingly zero in these points; the gradient of $F_\lambda$ projected to the affine subspace $V$ is thus (up to rescaling) given by
+$$ \bar\nabla F_\lambda(v)_k = \begin{cases}
+                          \nabla\tilde F_\lambda(0)_k & \text{if } k\not\in\{k_0.k_1\}
+                       \\ -\sum_{j\text{ even}} \nabla\tilde F_\lambda(0)_j & \text{if } k=k_0
+                       \\ -\sum_{j\text{ odd}} \nabla\tilde F_\lambda(0)_j & \text{if } k=k_1
+                       \end{cases} $$
+The Hessian of $\tilde F_\lambda$ in zero is given by
+$$\begin{align}
+  H\tilde F_\lambda(0) & = -\frac{1}{N} \sum_{i=1}^{\bar N} \frac{ \big(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i \big) \big(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i \big)^T}{ \big(\sum_{k=1}^{d-1} v_kf_{ik}\big)^2 }
+\\ & \qquad - \text{diag}(v)^{-2}\text{diag} \begin{pmatrix} q-\lambda_1 \\ 2\lambda_j-\lambda_{j-1}-\lambda_{j+1} \\ p-\lambda_{d-1} \end{pmatrix} - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}{v_{k_0}^2} \mathbf1_{\text{even}}\mathbf1_{\text{even}}^T
+\\ & \qquad - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}^2} \mathbf1_{\text{odd}}\mathbf1_{\text{odd}}^T
+\end{align}$$
+
+<!-- These formulas are implemented in `conivol::find_ivols_gradient` and `conivol::find_ivols_Hessian`. -->
 
 
 
