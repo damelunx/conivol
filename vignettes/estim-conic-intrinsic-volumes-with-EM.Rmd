@@ -7,47 +7,60 @@ vignette: >
   %\VignetteIndexEntry{Estimating conic intrinsic volumes via EM algorithm}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+bibliography: references.bib
 ---
 
-This vignette describes the details of the algorithm to find the intrinsic volumes of closed convex cones from samples from the associated bivariate chi-bar-squared distribution. A general knowledge of the theory of conic intrinsic volumes is assumed, see [this vignette](conic-intrinsic-volumes.html) for a short introduction.
+This vignette describes the details of the algorithm to find the intrinsic volumes of closed convex cones from samples from the associated bivariate chi-bar-squared distribution. A general knowledge of the theory of conic intrinsic volumes is assumed, see [this vignette](conic-intrinsic-volumes.html) for a short introduction. In a [third vignette](goodness-of-fit.html) we will have another look at the statistical implications and discuss the goodness of fit.
 
-## The setup
+## The setup {#link_setup}
 
 We use the following notation:
 
 * $C\subseteq\text{R}^d$ denotes a closed convex cone, $C^\circ$ the polar cone, and $\Pi_C\colon\text{R}^d\to C$ denotes the orthogonal projection map,
 $$\Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\}.$$
-  We will assume in the following that both $C$ and $C^\circ$ have nonempty interior, or equivalently, $C^\circ$ and $C$ both do not contain a nonzero linear subspace. These linear algebraic conditions are easily checked/established so there is no serious restriction in assuming this.  
+We will assume in the following that both $C$ and $C^\circ$ have nonempty interior, $\text{int}(C)\neq\emptyset$ and $\text{int}(C^\circ)\neq\emptyset$, or equivalently, $C^\circ$ and $C$ both do not contain a nonzero linear subspace, or equivalently, $\text{lin}(C)=0$ and $\text{dim}(C)=d$ (see [here](conic-intrinsic-volumes.html#link_dim_lin) for a definition of these terms). These conditions are easily established using the canonical orthogonal decomposition of a cone, so there is no serious restriction in assuming this.  
   In particular, we assume that $C$ is not a linear subspace so that the intrinsic volumes with even and with odd indices each add up to $\frac12$.
-* $v = v(C) = (v_0(C),\ldots,v_d(C))$ denotes the vector of intrinsic volumes. Under the (primal and polar) nonempty interior assumption we have $v_k>0$ for all $k=0,\ldots,d$.^[This actually requires a proof in the nonpolyhedral case (and without having log-concavity); one can deduce this from the kinematic formula by projecting the cone on a uniformly random linear subspace and looking at the volume of the (relative) boundary of the projection.]
+  
+* $v = v(C) = (v_0(C),\ldots,v_d(C))$ denotes the vector of intrinsic volumes. Under the (primal and polar) nonempty interior assumption we have $v_k>0$ for all $k=0,\ldots,d$.
+
 * We work with the two main random variables
 $$ X=\|\Pi_C(g)\|^2 ,\quad Y=\|\Pi_{C^°}(g)\|^2, $$
-  where $g\sim N(0,I_d)$. So $X$ and $Y$ are chi-bar-squared distributed with reference cones $C$ and $C^\circ$, respectively, and the pair $(X,Y)$ distributed according to the bivariate chi-bar-squared distribution with reference cone $C$.
+  where $g\sim N(0,I_d)$. So $X$ and $Y$ are chi-bar-squared distributed with reference cones $C$ and $C^\circ$, respectively, and the pair $(X,Y)$ is distributed according to the bivariate chi-bar-squared distribution with reference cone $C$.
+  
 * For later use in the EM algorithm we also define the latent variable $Z\in\{0,1,\ldots,d\}$, $\text{Prob}\{Z=k\}=v_k$.
 
-Concretely, if $C$ is a polyhedral cone then we define $Z$ as the dimension of the face of $C$ such that $\Pi_C(g)$ lies in its relative interior. This is well-defined, as $C$ decomposes into a disjoint union of the relative interiors of its faces. We may assume without loss of generality that the underlying cone is polyhedral, as any closed convex cone can be arbitrarily well approximated by polyhedral cones.
+Concretely, if $C$ is a [polyhedral cone](conic-intrinsic-volumes.html#link_polyh_cones) then we define $Z$ as the dimension of the face of $C$ such that $\Pi_C(g)$ lies in its relative interior. This is well-defined, as $C$ decomposes into a disjoint union of the relative interiors of its faces. We may assume without loss of generality that the underlying cone is polyhedral, as any closed convex cone can be arbitrarily well approximated by polyhedral cones.
 
 Conditioning $X$ and $Y$ on $Z$ yields independent random variables $X\mid Z$ and $Y\mid Z$, which are $\chi^2$-distributed with $Z$ and $d-Z$ degrees of freedom, respectively. Here and in the following we use the convention that $\chi_0^2$ denotes the Dirac measure supported in $0$.
 
-We assume to have sampled data: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of $(X,Y)$ and we assume that they took the sample values: $(x_1,y_1),\ldots,(x_N,y_N)$. The general goal is to reconstruct $v$ from these sample values.
+We assume to have sampled data: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of $(X,Y)$ and we assume that they took the sample values $(x_1,y_1),\ldots,(x_N,y_N)$. The general goal is to reconstruct the vector of intrinsic volumes $v=(v_0,\ldots,v_d)$ from this data.
 
+### Remark on the edge cases {#link_rem_edge}
+
+The latent variable $Z$ is not entirely "latent", or hidden. Indeed, we have the following equivalences
+$$ Z=d\iff g\in \text{int}(C) \iff Y=0 ,\qquad Z=0\iff g\in \text{int}(C^\circ) \iff X=0 , $$
+which hold almost surely (with probability one). Moreover, if $Y=0$, then the value of $X$ is just a draw from the $\chi_d^2$ distribution, and similarly for $X=0$. What this shows is that those sample data $(x_i,y_i)$ with $x_i=0$ or $y_i=0$ should be regarded as noise, and hence should be discarded.
+
+Formally, by doing this we are replacing the bivariate chi-bar-squared distribution by a slightly modified distribution. From a practical perspective this is not a big problem, and indeed we will continue with the presentation of the EM algorithm without worrying about this fact too much. But when analyzing the goodness of fit one has to be careful, which is why this modification will be described in more detail [here](goodness-of-fit.html#link_mod_bivchibarsq).
 
 ## Choosing a starting point
 
-We need to find a starting point for the iterative algorithms to reconstruct $v$. This can of course be the uniform distribution on $\{0,\ldots,d\}$, but we may as well use a more elaborated first guess. The first and second moment of $v$, more precisely, of the latent variable $Z$, can be conveniently estimated from the sample data, as
-$$ \delta := \sum_{k=0}^d k v_k(C) = \text{E}[X] = d-\text{E}[Y] , $$
+We need to find a starting point for the iterative algorithms to reconstruct $v$. This can of course be the uniform distribution on $\{0,\ldots,d\}$, but we may as well use a more elaborated first guess. The mean and variance of $v$, more precisely, of the latent variable $Z$, can be conveniently estimated from the sample data, as
+$$ \delta = \delta(C) = \sum_{k=0}^d k v_k(C) = \text{E}[X] = d-\text{E}[Y] , $$
 and
-$$ \text{var} := \sum_{k=0}^d (k-\delta)^2 v_k(C) = \text{E}[X^2]-(\delta+1)^2+1 = \text{E}[Y^2]-(d-\delta+1)^2+1 . $$
+$$ \text{var} = \text{var}(C) = \sum_{k=0}^d (k-\delta)^2 v_k(C) = \text{E}[X^2]-(\delta+1)^2+1 = \text{E}[Y^2]-(d-\delta+1)^2+1 . $$
 The sample data of $X$ and $Y$ thus yield two natural estimates for both $\delta$ and $\text{var}$, which we combine as follows:
+
 $$ \left.\begin{array}{c}
    \displaystyle\hat\delta_{\text{prim}} = \frac{1}{N}\sum_{i=1}^N x_i
 \\ \displaystyle\hat\delta_{\text{pol}} = d-\frac{1}{N}\sum_{i=1}^N y_i
    \end{array} \right\} \quad\hat\delta := \frac{\hat\delta_{\text{prim}}+\hat\delta_{\text{pol}}}{2} , $$
+
 $$ \left.\begin{array}{c}
    \displaystyle\widehat{\text{var}}_{\text{prim}} = \frac{1}{N}\sum_{i=1}^N x_i^2 - (\hat\delta+1)^2+1
 \\ \displaystyle\widehat{\text{var}}_{\text{pol}} = \frac{1}{N}\sum_{i=1}^N y_i^2 - (d-\hat\delta+1)^2+1
    \end{array} \right\} \quad \widehat{\text{var}} = \sqrt{ \widehat{\text{var}}_{\text{prim}} \widehat{\text{var}}_{\text{pol}} } . $$
-These formulas are implemented in `conivol::estimate_statdim_var`.
+These formulas are implemented in `estimate_statdim_var`.
 
 We propose the following ways to choose a starting point for the iterative algorithms to find the intrinsic volumes:
 
@@ -60,14 +73,14 @@ where $\nu\sim N(\hat\delta,\widehat{\text{var}})$.
     (b) *match second moment*: if $\hat\delta<d/2$ then take $\beta=\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$ else take $\beta=\frac{\pi}{2}-\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$ and take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circlar cone with an angle of $\beta$.
     (c) *average both fits*: take $v^{(0)}$ as the geometric mean of the intrinsic volumes obtained in (a) and (b).
 
-These formulas are implemented in `conivol::init_v`.
+These formulas are implemented in `init_v`.
 
 
 ## The likelihood function
 
-The likelihood function is straightforward to derive, but one has to be cautious about the "edge cases", i.e., the cases where $g\in C\cup C^\circ$. Notice that this event is visible in the sample data, as
-$$ g\in C \iff Y=0 ,\qquad g\in C^\circ \iff X=0 . $$
-Moreover, if $Y=0$, then the value of $X$ is just a draw from the $\chi_d^2$ distribution, and similarly for $X=0$. This shows that those sample values $(x_i,y_i)$ with $x_i=0$ or $y_i=0$ are just noise and should be discarded. The non-noisy part is of course the *proportion* of points with $Y=0$ and $X=0$, which form point estimates for $v_d(C)$ and $v_0(C)$, respectively. The data on which we base our estimation thus has the following form:
+The likelihood function is straightforward to derive, but, as mentioned [above](#link_rem_edge), one has to be careful about the "edge cases", i.e., the cases where $g\in C\cup C^\circ$. We discard those sample values $(x_i,y_i)$ with $x_i=0$ or $y_i=0$, while keeping the "non-noisy part" of this discarded data, which is of course the *proportion* of points with $Y=0$ and $X=0$,
+$$ p = \frac{\left|\{i\mid y_i=0\}\right|}{N} ,\quad q = \frac{\left|\{i\mid x_i=0\}\right|}{N} . $$
+Note that $p$ and $q$ are point estimates for $v_d(C)$ and $v_0(C)$, respectively. The data on which we base our estimation thus has the following form:
 
 * *general data*: dimension $d$ and sample size $N$
 * *estimate of $v_d$*: $p = |\{i\mid y_i=0\}|/N$
@@ -76,9 +89,9 @@ Moreover, if $Y=0$, then the value of $X$ is just a draw from the $\chi_d^2$ dis
 
 In fact, it turns out that the sample data enters the computation only through the density values
 $$ f_{ik} := f_k(x_i)f_{d-k}(y_i) ,\quad k=1,\ldots,d-1,\; i=1,\ldots,\bar N , $$
-where $f_k(t)$ denotes the density of the chi-squared distribution,
-$$ f_k(t)=\frac{1}{2^{k/2}\Gamma(k/2)}t^{k/2-1}e^{-t/2} . $$
-The function `conivol::prepare_data` evaluates the sample data in this regard; calling this function outside the EM algorithm allows to skip this step on multiple evaluations of the EM algorithm or related functions.
+where $f_k(x)$ denotes the density of the chi-squared distribution,
+$$ f_k(x)=\frac{1}{2^{k/2}\Gamma(k/2)}x^{k/2-1}e^{-x/2} . $$
+The function `prepare_data` evaluates the sample data in this regard; calling this function outside the EM algorithm allows to skip this step on multiple evaluations of the EM algorithm or related functions.
 
 We obtain the following formula for the likelihood of the given data:
 $$ L(v\mid \mathbf{x},\mathbf{y}) = v_0^{|\{i\mid x_i=0\}|} v_d^{|\{i\mid y_i=0\}|} \prod_{i=1}^{\bar N}\sum_{k=1}^{d-1} v_k f_{ik} . $$
@@ -87,19 +100,21 @@ $$ L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) = v_0^{|\{i\mid x_i=0\}|} v_d^{|\{i
 where $(z_i=k)=1$ if $z_i=k$ and zero else.
 
 For numerical reasons we work with the rescaled log-likelihood functions
-$$\begin{align*}
+
+$$\begin{align}
 \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \log\Big(\sum_{k=1}^{d-1} v_k f_{ik}\Big) ,
 \\ \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1} (z_i=k) \big( \log v_k + \log f_{ik} \big) .
-\end{align*}$$
-The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y})$ is implemented in `conivol::comp_loglike`.
+\end{align}$$
+The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y})$ is implemented in `comp_loglike`.
 
 ### Log-concavity
 
 The log-concavity inequalities are the inequalities $v_k^2\geq v_{k-1}v_{k+1}$ for $k=1,\ldots,d-1$, or equivalently,
 $$ 2\log v_k - \log v_{k-1} - \log v_{k+1} \geq 0 . $$
-At this moment, the validity of these inequalities is an open conjecture for general closed convex cones. But for subclasses, like products of circular cones, they are known to hold, and there is some evidence that they hold in general.^[The euclidean intrinsic volumes satisfy the log-concavity inequalities by the Alexandrov-Fenchel inequality for the mixed volumes. In small dimensions ($\leq10$) this partly implies log-concavity for the conic intrinsic volumes. But in fact the implication goes the other way: log-concavity of conic intrinsic volumes easily implies log-concavity of euclidean intrinsic volumes.] Assuming log-concavity of the conic intrinsic volumes greatly helps the EM algorithm to converge to a sensible estimate.
+At this moment, the validity of these inequalities is an open conjecture for general closed convex cones. But for subclasses, like products of circular cones, they are known to hold, and there is some evidence that they hold in general. See [here](conic-intrinsic-volumes.htmnl#link_inequs) for a discussion.  
+Assuming log-concavity of the conic intrinsic volumes greatly helps the EM algorithm to converge to a sensible estimate.
 
-There are two natural ways in which log-concavity may be exploited:
+There are two natural ways in which log-concavity may be enforced:
 
 1. soft enforcement through a penalty term in the log-likelihood functions:
 $$ F_\lambda(v) := \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y}) + \sum_{k=1}^{d-1} \lambda_k (2\log v_k - \log v_{k-1} - \log v_{k+1})$$
@@ -111,11 +126,13 @@ It should be noted that these "penalty terms" may cancel out, effectively render
 $$ \big\{ u\in\text{R}^{d+1}\mid 2 u_k - u_{k-1} - u_{k+1} \geq c_k \big\} . $$
    for some $c_1,\ldots,c_{d-1} (\geq0)$ (setting all $c_k$ to $-\infty$ eliminates this restriction).
 
-Both of these methods are supported in `conivol::find_ivols_EM`.
+Both of these methods are supported in `find_ivols_EM`.
 
 ## Expectation maximization (EM) algorithm
 
-The expectation maximization (EM) algorithm works by maximizing the conditional expectation with respect to the latent variable of the maximum likelihood method, given the current iterate for the parameter that is to be found. In the situation under review, we seek to maximize the function
+The expectation maximization (EM) algorithm works by maximizing the conditional expectation with respect to the latent variable of the maximum likelihood method, given the current iterate for the parameter that is to be found.
+
+In the situation at hand, we seek to maximize the function
 $$\begin{align}
    & \underset{\mathbf{Z}\mid \mathbf{x},\mathbf{y},v^{(t)}}{\text{E}} \big[\tfrac{1}{N}\log L(v\mid\mathbf{x},\mathbf{y},\mathbf{Z})\big]
 \\ & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1} \frac{v_k^{(t)}f_{ik}}{\sum_{j=1}^{d-1} v_j^{(t)}f_{ij}} \big( \log v_k + \log f_k(x_i) + \log f_{d-k}(y_i) \big)
@@ -124,20 +141,19 @@ as a function in $v$. Apparently, the final summands can be dropped as they only
 $$ \text{maximize}\quad (q-\lambda_1) \log v_0 + (p-\lambda_{d+1}) \log v_d + \sum_{k=1}^{d-1} \frac{1}{N}\sum_{i=1}^{\bar N} \Bigg( \frac{v_k^{(t)}f_{ik}}{\sum_{j=1}^{d-1} v_j^{(t)}f_{ij}} + 2\lambda_k-\lambda_{k-1}-\lambda_{k+1}\Bigg) \log v_k $$
 subject to $v_0,\ldots,v_d\geq0$, $v_0+v_2+\dots=v_1+v_3+\dots=\frac12$. As long as the coefficients of $\log v_k$ are nonnegative, this is a convex problem and, as a *separable convex program*, can be easily solved by MOSEK.
 
-As a side note, the implementation of this method in `conivol::find_ivols_EM` is such that MOSEK is called with the user-defined values for $\lambda$, but then reduced if the program turns out to be nonconvex so that MOSEK will return an error, and eventually dropped (in which case the program becomes convex and is solved by MOSEK). It thus could happen that although the penalty terms $\lambda$ have positive values, they are being ignored by the algorithm.
-
-## Enforcing log-concavity
+As a side note, the implementation of this method in `find_ivols_EM` is such that MOSEK is called with the user-defined values for $\lambda$, but then reduced if the program turns out to be nonconvex so that MOSEK will return an error, and eventually dropped (in which case the program becomes convex and is solved by MOSEK). It thus could happen that although the penalty terms $\lambda$ have positive values, they are being ignored by the algorithm.
 
 The log-concavity inequalities $2\log v_k-\log v_{k-1}-\log v_{k+1}\geq c_k\;(\geq0)$ could be modelled as constraints in the above separable optimization problem. But including these will violate the convexity assumptions right away, so the current implementation of the algorithm does not proceed in this way. Instead, after computing the iterate in the normal way, the algorithm will project the vector of the logarithms onto the polyhedral set $\{ u\in\text{R}^{d+1}\mid 2 u_k - u_{k-1} - u_{k+1} \geq c_k \}$ and then rescale the resulting vector so that $v_0^{(t+1)}+v_2^{(t+1)}+\dots=v_1^{(t+1)}+v_3^{(t+1)}+\dots=\frac12$.
 
 ## A moderate-sized example
 
 (TBD) (Martin's example)
-
+[@Aetal13]
 
 ## Appendix A: SOCP formulation of projection maps and MOSEK implementation
 
 The problem of finding the projection of a point $z\in\text{R}^d$ onto a polyhedral cone $\{Au\mid u\geq0\}$, $A\in\text{R}^{d\times n}$, also known as *nonnegative least squares*, can be formulated as a second order cone program (SOCP):
+
 $$\begin{align}
    & \underset{u\geq0}{\text{argmin}}\, \|Au-z\|_2
 \\ \iff & \text{minimize } \tfrac12 \|Au\|^2 - z^T A u \quad\text{subject to}\quad u\geq0
@@ -145,14 +161,15 @@ $$\begin{align}
 \end{align}$$
 This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint (see the [Rmosek userguide](http://rmosek.r-forge.r-project.org/)).
 
-This is the approach taken in the function `conivol::rbichibarsq_polyh`. (STILL NEED TO COMPLETE DIMENSION REDUCTION THERE..)
+This is the approach taken in the function `rbichibarsq_polyh`.
 
 The projection of a point $z\in\text{R}^n$ onto the polar cone, and more generally, the projection onto the polyhedral set $\{y\mid A^Ty\leq c\}$, $A\in\text{R}^{d\times n}$, can be formulated as SOCP in a similar way:
-\begin{align*}
+
+$$\begin{align}
    & \underset{A^Ty\leq c}{\text{argmin}}\, \|y-z\|_2
 \\ \iff & \text{minimize } \tfrac12\|y\|^2 - z^Ty \quad\text{subject to}\quad A^Ty\leq c
 \\ \iff & \text{minimize } (-z)^Ty+r \quad\text{subject to}\quad u\geq 0, A^Ty+u=c, s=1, \|y\|^2\leq 2rs
-\end{align*}
+\end{align}$$
 This last formulation is solved with MOSEK, using the rotated quadratic cone constraint, to enforce the log-concavity constraints in the EM algorithm.
 
 
@@ -169,6 +186,7 @@ $$ v + \sum_{k\text{ even}} a_k (e_k-e_{k_0}) + \sum_{k\text{ odd}} a_k (e_k-e_{
 Changing coordinates in $F_\lambda$ by defining
 $$ \tilde F_\lambda(a) := F_\lambda \Big( v + \sum_{k\text{ even}} a_k (e_k-e_{k_0}) + \sum_{k\text{ odd}} a_k (e_k-e_{k_1})\Big) , $$
 one obtains the following gradient in zero:
+
 $$\begin{align}
   \nabla \tilde F_\lambda(0) & = -\frac{1}{N} \sum_{i=1}^{\bar N} \frac{ f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i}{ \sum_{k=1}^{d-1} v_kf_{ik} } + \text{diag}(v)^{-1} \begin{pmatrix} q-\lambda_1 \\ 2\lambda-\lambda_{-1}-\lambda_{+1} \\ p-\lambda_{d-1} \end{pmatrix}
 \\[2mm] & \quad - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}{v_{k_0}} \mathbf1_{\text{even}} - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}} \mathbf1_{\text{odd}} ,
@@ -180,20 +198,22 @@ where
 * $\lambda=(\lambda_1,\ldots,\lambda_{d-1})^T$, $\lambda_{-1}=(1,\lambda_1,\ldots,\lambda_{d-2})^T$, $\lambda_{+1}=(\lambda_2,\ldots,\lambda_{d-1},1)^T$
 
 Note that $\tilde F_\lambda$ is constant in $a_{k_0}$ and $a_{k_1}$, and the gradient is correspondingly zero in these points; the gradient of $F_\lambda$ projected to the affine subspace $V$ is thus (up to rescaling) given by
+
 $$ \bar\nabla F_\lambda(v)_k = \begin{cases}
                           \nabla\tilde F_\lambda(0)_k & \text{if } k\not\in\{k_0.k_1\}
                        \\ -\sum_{j\text{ even}} \nabla\tilde F_\lambda(0)_j & \text{if } k=k_0
                        \\ -\sum_{j\text{ odd}} \nabla\tilde F_\lambda(0)_j & \text{if } k=k_1
                        \end{cases} $$
 The Hessian of $\tilde F_\lambda$ in zero is given by
+
 $$\begin{align}
   H\tilde F_\lambda(0) & = -\frac{1}{N} \sum_{i=1}^{\bar N} \frac{ \big(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i \big) \big(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i \big)^T}{ \big(\sum_{k=1}^{d-1} v_kf_{ik}\big)^2 }
 \\ & \qquad - \text{diag}(v)^{-2}\text{diag} \begin{pmatrix} q-\lambda_1 \\ 2\lambda_j-\lambda_{j-1}-\lambda_{j+1} \\ p-\lambda_{d-1} \end{pmatrix} - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}{v_{k_0}^2} \mathbf1_{\text{even}}\mathbf1_{\text{even}}^T
 \\ & \qquad - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}^2} \mathbf1_{\text{odd}}\mathbf1_{\text{odd}}^T
 \end{align}$$
 
-<!-- These formulas are implemented in `conivol::find_ivols_gradient` and `conivol::find_ivols_Hessian`. -->
 
+## References
 
 
 

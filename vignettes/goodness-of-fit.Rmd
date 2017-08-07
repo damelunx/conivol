@@ -1,0 +1,100 @@
+---
+title: "Goodness of fit for bivariate chi-bar-squared distribution"
+author: "Dennis Amelunxen"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: references.bib
+---
+
+In this vignette we analyze more rigorously the distribution used in the EM algorithm, described [here](estim-conic-intrinsic-volumes-with-EM.html), and analyze the goodness of fit of the resulting estimate of the conic intrinsic volumes with respect to the sample data. See [this vignette](conic-intrinsic-volumes.html) for a short introduction to conic intrinsic volumes.
+
+## The modified bivariate chi-bar-squared distribution {#link_mod_bivchibarsq}
+
+[Recall](estim-conic-intrinsic-volumes-with-EM.html#link_setup) that we assumed to have sampled data: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of $(X,Y)$ and we assume that they took the sample values $(x_1,y_1),\ldots,(x_N,y_N)$. Furthermore, we defined the two proportions
+$$ p = \frac{\left|\{i\mid y_i=0\}\right|}{N} ,\quad q = \frac{\left|\{i\mid x_i=0\}\right|}{N} , $$
+and dropped those sample values $(x_i,y_i)$ with $x_i=0$ or $y_i=0$. Without loss of generality, we used the notation $(x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})$ for the remaining sample points, $\bar N\leq N$.
+
+We can formalize these steps by considering the following mixed continuous-discrete distribution: for given weight vector $v=(v_0,\ldots,v_d)$, $v\geq0$, $\sum_{k=0}^d v_k=1$, consider the distribution
+$$ f_v(x,y) = v_d\, \delta(-1,0) + v_0\, \delta(0,-1) + \sum_{k=1}^{d-1} v_k f_k(x) f_{d-k}(y) , $$
+where $\delta$ denotes the (bivariate) Dirac delta, and $f_k(x)$ denotes the density of the chi-squared distribution.
+
+The cumulative distribution function (cdf) is thus given by
+$$ F_v(x,y) = \begin{cases}
+      v_d & \text{if } -1\leq x<0\leq y ,
+   \\ v_0 & \text{if } -1\leq y<0\leq x ,
+   \\ v_0 + v_d + \sum_{k=1}^{d-1} v_k F_k(x)F_{d-k}(y) & \text{if } (x,y)\geq0 ,
+   \\ 0 & \text{else} ,
+   \end{cases} $$
+where $F_k(x)$ denotes the cdf of the chi-squared distribution.
+
+### The empirical distribution function
+
+In the above described formal setting of the modified bivariate chi-bar-squared distribution we can describe the sample data as having $pN$ times drawn the point $(0,-1)$, $qN$ times drawn the point $(-1, 0)$, and $\bar N$ times drawn samples in the first quadrant, $(x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})$.
+
+The empirical distribution function is thus given by
+$$ \hat F_N(x,y) = \begin{cases}
+      p & \text{if } -1\leq x<0\leq y ,
+   \\ q & \text{if } -1\leq y<0\leq x ,
+   \\ p + q + \frac{1}{N}\sum_{i=1}^{\bar N} 1_{(x_i,y_i)\leq(x,y)} & \text{if } (x,y)\geq0 ,
+   \\ 0 & \text{else} .
+   \end{cases} $$
+
+## Assessing the goodness of fit via Kolmogorov-Smirnov statistic
+
+For univariate distributions the Kolmogorov-Smirnov statistic of a distribution with respect to a given sample is defined as the maximum absolute difference of the hypothesized cdf $F(T)$ and the empirical cdf $F_N(x)$,
+$$ \sup_{x\in \text{R}} \left|\hat F_N(x)-F(x)\right| . $$
+The straightforward bivariate generalization,
+$$ \sup_{(x,y)\in \text{R}^2} \left|\hat F_N(x,y)-F(x,y)\right| , $$
+is not distribution-free. This is why [@JPZ97] define the bivariate^[The authors define this statistic in the general multivariate case; we restrict the discussion to the bivariate case to simplify notation.] Kolmogorov-Smirnov statistic in the following way: denoting the distribution by $f(x,y)$ and using the transformations $(x,y)\mapsto(a^{(1)},b^{(1)})$ and $(x,y)\mapsto(a^{(2)},b^{(2)})$,
+$$\begin{align}
+   a^{(1)} & = \int_{-\infty}^x\int_{-\infty}^\infty f(s,t)\,dt\,ds , & b^{(1)} & = \frac{\int_{-\infty}^y f(x,t)\,dt}{\int_{-\infty}^\infty f(x,t)\,dt}
+\\[1mm] a^{(2)} & = \int_{-\infty}^y\int_{-\infty}^\infty f(s,t)\,ds\,dt , & b^{(2)} & = \frac{\int_{-\infty}^x f(s,y)\,ds}{\int_{-\infty}^\infty f(s,y)\,ds}
+\end{align}$$
+the distribution of both transformed pairs, according to a theorem by [@R52], is the uniform distribution on $[0,1]^2$. Denoting the transformed sample points by $(a^{(j)}_1,b^{(j)}_1),\ldots,(a^{(j)}_N,b^{(j)}_N)$, $j=1,2$, the bivariate Kolmogorov-Smirnov statistic is defined by
+$$ D^{\text{KS}} = \max_{j\in\{1,2\}, (a,b)\in[0,1]^2}\left| \frac{1}{N}\sum_{i=1}^N 1_{(a_i^{(j)},b_i^{(j)})\leq(a,b)} - ab \right| . $$
+
+### Remark on other statistics
+
+Apart from the Kolmogorov-Smirnov statistic, many other statistics for assessing the goodness of fit of univariate distributions or multivariate normal distributions have been proposed. The specific case of multivariate non-normal distributions is less well-established, but a multivariate version of the Cram&eacute;r-von Mises statistic can be found in [@CL09].
+
+### Concrete formulas for the transformed sample points
+
+We compute the transformed samples for the continuous-discrete distribution given by $F_v$:
+$$ \begin{align}
+   a^{(1)} & = \begin{cases}
+      v_d & \text{if } (x,y) = (-1,0)
+   \\ v_d+v_0 & \text{if } (x,y) = (0,-1)
+   \\ v_d+v_0+\sum_{k=1}^{d-1} v_k F_k(x) & \text{if } (x,y) \geq (0,0)
+   \end{cases} ,
+\\ b^{(1)} & = \begin{cases}
+      v_d & \text{if } (x,y) = (-1,0)
+   \\ v_d+v_0 & \text{if } (x,y) = (0,-1)
+   \\ v_d+v_0+\sum_{k=1}^{d-1} v_k F_k(x) & \text{if } (x,y) \geq (0,0)
+   \end{cases} ,
+   \end{align} $$
+following way
+
+## An algorithm to compute the bivariate Kolmogorov-Smirnov statistic
+
+[@JPZ97] give the following algorithm for computing the bivariate Kolmogorov-Smirnov statistic $D^{\text{KS}}$:
+
+## References
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

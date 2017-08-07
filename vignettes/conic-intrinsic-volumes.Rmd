@@ -7,9 +7,11 @@ vignette: >
   %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+bibliography: references.bib
 ---
 
-This note introduces the conic intrinsic volumes and the associated (bivariate) chi-bar-squared distributions. The focus is on algorithmic considerations; pointers to the literature for theoretic background will be given within the text.
+This note introduces the conic intrinsic volumes and the associated (bivariate) chi-bar-squared distributions. The focus is on algorithmic considerations; see [@AL17] and the references therein for more background on the conic intrinsic volumes, further pointers to the literature will be given within the text.  
+See [this vignette](estim-conic-intrinsic-volumes-with-EM.html) for a description of the algorithm for estimating the conic intrinsic volumes, and see [this vignette](goodness-of-fit.html) for another look at the statistical implications and a discussion of the goodness of fit.
 
 ## Closed convex cones
 
@@ -27,7 +29,7 @@ $$\forall x\in C\;,\lambda>0 : \lambda x\in C$$
 
 Properties 1. and 3. imply that every nonzero closed cone contains the origin, $0\in C$. Furthermore, if $0\in C$, then properties 2. and 3. taken together are equivalent to the property
 $$\forall x,y\in C,\; \lambda,\mu\geq0 : \lambda x+\mu y\in C$$
-In the following we will always assume that a closed convex cone is nonempty, that is, it contains at least the origin.
+In other words, a (nonempty) closed convex cone is a closed set, which is closed under taking nonnegative linear combinations. Below we will always assume that closed convex cones are nonempty, hence, they contain at least the origin.
 
 Note that if $C\subseteq\text{R}^d$ and $D\subseteq\text{R}^e$ are closed convex cones, then their direct product is a closed convex cone, $C\times D\subseteq\text{R}^{d+e}$.
 
@@ -41,15 +43,29 @@ Note that $(\text{R}^d)^\circ=\{0\}$. Also, polarity behaves well with direct pr
 
 The polar cone depends on the ambient space, i.e., if we embed $C\subseteq\text{R}^d$ in $\text{R}^e$, $e\geq d$, by formally identifying $C$ with $C\times\{0\}\subseteq\text{R}^e$, then the polar of the embedded cone is given by $(C\times\{0\})^\circ = C^\circ\times\text{R}^{e-d}$.
 
+### Dimension and lineality {#link_dim_lin}
+
+The smallest linear space containing a cone $C$ is given by $C+(-C)$, and the largest linear space contained in $C$, called the lineality space of $C$, is given by $C\cap (-C)$. Linear hull and lineality space are related by polarity, as
+
+$$ C^\circ+(-C^\circ) = (C\cap (-C))^\bot ,\quad C^\circ\cap(-C^\circ) = (C+(-C))^\bot , $$
+where $L^\bot$ denotes the orthogonal complement of a linear space. Every closed convex cone has the natural orthogonal decomposition
+$$ C = L + \bar C , $$
+where $L=C\cap (-C)$ denotes the lineality space, and $\bar C=\Pi_{L^\bot}(C)$ the image of the projection of $C$ onto the orthogonal complement of $L$.
+
+The (linear) dimension of a cone is the dimension of its linear hull, and the lineality of a cone is the dimension of its lineality space,
+
+$$ \text{dim}(C) = \text{dim}(C+(-C)) ,\quad \text{lin}(C) = \text{dim}(C\cap(-C)) . $$
+Note that by the above polarity statement we have $\text{dim}(C)=d-\text{lin}(C^\circ)$ and $\text{lin}(C)=d-\text{dim}(C^\circ)$.
+
 ### Examples: linear subspaces
 
-A trivial yet important class of examples of closed convex cones are the linear subspaces. It is easily seen that the polar cone of a linear subspace is just its orthogonal complement.  
+A trivial yet important class of examples of closed convex cones are the linear subspaces. It is easily seen that the polar cone of a linear subspace is just its orthogonal complement. Clearly, a cone is a linear space iff $\text{dim}(C)=\text{lin}(C)$.  
 
-The intrinsic volumes and (bivariate) chi-bar-squared distributions are in this case equivalent to the dimension of the subspace (see below for more precise statements).  
+The intrinsic volumes and (bivariate) chi-bar-squared distributions (see [below](#link_bivchibarsq)) are in this case equivalent to the dimension of the subspace (see [below](#link_bivchibars_cone) for more precise statements).  
 
 Furthermore, for cones which are not linear subspaces the intrinsic volumes satisfy an additional linear relation, which is why the algorithms in `conivol` assume that the underlying closed convex cone is **not** a linear subspace.
 
-### Examples: polyhedral cones
+### Examples: polyhedral cones {#link_polyh_cones}
 
 Polyhedral cones are a straightforward generalization of linear subspaces and can be described in two ways, which are related via polarity:
 
@@ -59,8 +75,18 @@ where the inequality $z\geq0$ is meant componentwise,
 2. as the intersection of finitely many closed linear half-spaces,
 $$ C^\circ = \{y\in\text{R}^d \mid A^Ty\leq 0\} . $$
 
-Although the set of polyhedral cones does not exhaust the set of closed convex cones, it can be shown (and it is intuitively clear) that every closed convex cone can be arbitrarily well approximated by polyhedral cones. 
+Although the set of polyhedral cones does not exhaust the set of closed convex cones, it can be shown (and it is intuitively clear) that every closed convex cone can be arbitrarily well approximated by polyhedral cones.
 
+For later use we recall that a face of a polyhedral cone is the intersection of a linear hyperplane (linear subspace of codimension one) with the cone, where the cone has to lie entirely in one of the two closed half-spaces defined by the hyperplane. Every polyhedral cone has a finite number of faces, and decomposes into the disjoint union of the relative interiors of its faces,
+$$ C = \dot{\bigcup_{F\text{ face of } C}} \text{relint}(F) .  $$
+
+On a practical note, given a polyhedral cone in the form $C = \{Az \mid z\in\text{R}^n, z\geq 0\}$, $A\in\text{R}^{d\times n}$, the following simple algorithm computes the orthogonal decomposition $C=L+\bar C$, where $L$ denotes lineality space of $C$, and gives $\bar C = \{\bar A\bar z \mid \bar z\geq 0\}$ with a minimum number of columns of $\bar A$:
+
+* For $j=1,\ldots,n$, test if $-v_j\in C_j$, where $v_j$ denotes the $j$th column of $A$ and $C_j=\{A_j z\mid z\in\text{R}^n, z\geq 0\}$ with $A_j\in\text{R}^{d\times (n-1)}$ denoting the matrix $A$ with the $j$th column deleted. The lineality space $L=C\cap (-C)$ is given by the linear hull of $\{v_j\mid -v_j\in C_j\}$.
+* Use the QR-decomposition of the matrix with columns $\{v_j\mid -v_j\in C_j\}$ to compute a basis of $L$. Project the remaining $v_j$ onto the orthogonal complement $L^\bot$ to obtain, say, $w_1,\ldots,w_m$.
+* For $j=1,\ldots,m$, test if $w_j$ lies in the cone generated by the remaining vectors, which have not been dropped; drop $w_j$ if it lies in that cone. Those vectors remaining after the last step generate $\bar C$ in a minimal way; none may be dropped.
+
+This simple algorithm is described in [@WW67]; there are more efficient algorithms, see [@DL06] and there references therein, but in small and medium sized dimensions the simple algorithm should be sufficient. This algorithm is implemented in `rbichibarsq_polyh`; the samples of the bivariate chi-bar-squared distribution (see [below](#link_bivchibarsq)) are with respect to $\bar C$, which up to index shift has the same intrinsic volumes as $C$.
 
 ### Examples: circular cones
 
@@ -68,12 +94,18 @@ Circular cones consist of all points that lie below a certain angle towards a gi
 $$ \text{Circ}_d(\alpha) := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\} , $$
 where $\|\cdot\|$ denotes the Euclidean norm.  
 
-The circular cones form a class of cones, which is interesting for both theoretical and practical purposes. For theoretical purposes because circular cones are known to satisfy certain extreme inequalities, and are suspected to satisfy even more; and for practical purposes because they, and products of them, provide a reasonably large, yet accessible, class of cones which is easy to analyze with respect to the intrinsic volumes.
+The circular cones form a class of cones, which is interesting for both theoretical and practical purposes. For theoretical purposes because circular cones are known to satisfy certain extreme inequalities (see [below](#link_inequs)), and are suspected to satisfy even more; and for practical purposes because they, and products of them, provide a reasonably large, yet accessible, class of cones which is easy to analyze with respect to the intrinsic volumes.
 
 ## Conic intrinsic volumes
 
 The conic intrinsic volumes of a closed convex cone $C\subseteq\text{R}^d$ form a $(d+1)$-element vector,
 $$ v(C) = (v_0(C),\ldots,v_d(C)) \geq 0 ,\quad \sum_{k=0}^d v_k(C) = 1 . $$
+If $C$ is a polyhedral cone, then the intrinsic volumes can be characterized in the following way: letting $g\sim N(0,I_d)$ a Gaussian vector and $\Pi_C$ denoting the projection map onto $C$,
+$$ \Pi_C\colon\text{R}^d\to C ,\qquad \Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\} , $$
+the $k$th intrinsic volume is the probability that $\Pi_C(g)$ lies in the relative interior of a $k$-dimensional face of $C$,
+$$ v_k(C) = \text{Prob}\big\{\Pi_C(g)\in \text{relint}(F), F \text{ face of }C, \dim(F)=k\big\} . $$
+Note that this characterization holds exclusively for polyhedral cones.
+
 If $C=L$ is a linear subspace, then
 $$ v_k(L) = \begin{cases} 1 & \text{if } k=\dim(L) \\ 0 & \text{else} . \end{cases} $$
 It can be shown that if $C$ is *not* a linear subspace, then
@@ -84,51 +116,78 @@ The intrinsic volumes of the polar cone are the same as those of the primal cone
 $$ v_k(C^\circ) = v_{d-k}(C) . $$
 The intrinsic volumes of a product of cones arise as the convolution of the intrinsic volumes of its components,
 $$ v_k(C\times D) = \sum_{i+j=k} v_i(C) v_j(D) . $$
-Closed formulas for the intrinsic volumes of circular cones are known, see for example [here](insert.link.here).
+This convolution is conveniently implemented in `comp_ivols_product`.
 
-## (Bivariate) chi-bar-squared distribution
+Closed formulas for the intrinsic volumes of circular cones are known, see for example [here](insert.link.here), and implemented in `circ_ivol`.
 
-For $k\geq0$ let $F_k$ denote the cumulative distribution function (cdf) of the $\chi_k^2$ distribution, where $F_0(t)=1$ if $t\geq0$ and $F_0(t)=0$ if $t<0$. The chi-bar-squared distribution with weight vector $\lambda=(\lambda_0,\ldots,\lambda_d)$, where $\lambda\geq0$ and $\sum_{k=0}^d\lambda_k=1$, can be characterized through its cdf via
-$$ F_\lambda(t) = \sum_{k=0}^d \lambda_k F_k(t) . $$
+From the orthogonal decomposition $C = L + \bar C$, where $L=C\cap (-C)$ and $\bar C=\Pi_{L^\bot}(C)$, one can show that $v_k(C)=0$ if $k<\text{lin}(C)$ or $k>\text{dim}(C)$ and^[The strictly positive inequalities actually require a proof in the nonpolyhedral case (and without having log-concavity); one can deduce this from the kinematic formula by projecting the cone on a uniformly random linear subspace and looking at the volume of the (relative) boundary of the projection.]
+$$v_k(C)=v_{k-\text{lin}(C)}(\bar C)>0 \text{ for } \text{lin}(C)\leq k\leq\text{dim}(C) . $$
+
+### Statistical dimension and variance
+
+The first moment of the discrete random variable defined by the conic intrinsic volumes of a cone is called its statistical dimension,
+$$ \delta(C) = \sum_{k=0}^d k v_k(C) . $$
+Note that the statistical dimension coincides with the (linear) dimension if $C$ is a linear subspace. It also generalizes some other properties, such as $\delta(C^\circ)=d-\delta(C)$ and  $\delta(C\times D)=\delta(C)+\delta(D)$.
+
+For later use we also define the variance of the cone via
+$$ \text{var}(C) = \sum_{k=0}^d (k-\delta(C))^2 v_k(C) . $$
+
+
+## (Bivariate) chi-bar-squared distribution {#link_bivchibarsq}
+
+For $k\geq0$ let $F_k$ denote the cumulative distribution function (cdf) of the $\chi_k^2$ distribution, where $F_0(t)=1$ if $t\geq0$ and $F_0(t)=0$ if $t<0$. The chi-bar-squared distribution with weight vector $v=(v_0,\ldots,v_d)$, where $v\geq0$ and $\sum_{k=0}^dv_k=1$, can be characterized through its cdf via
+$$ F_v(t) = \sum_{k=0}^d v_k F_k(t) . $$
 In terms of random variables, one can think of sampling from the chi-bar-squared distribution as a two-step procedure,
 
-1. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $\lambda$,
+1. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $v$,
 2. sample an element from the $\chi_k^2$ distribution.
 
-The bivariate chi-bar-squared distribution with weight vector $\lambda$ can similarly be characterized through its cdf via
-$$ \Phi_\lambda(s,t) = \sum_{k=0}^d \lambda_k F_k(s) F_{d-k}(t) . $$
+The bivariate chi-bar-squared distribution with weight vector $v$ can similarly be characterized through its cdf via
+$$ \Phi_v(s,t) = \sum_{k=0}^d v_k F_k(s) F_{d-k}(t) . $$
 In terms of random variables, one can think of sampling $(x,y)$ from the chi-bar-squared distribution as a two-step procedure,
 
-1. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $\lambda$,
+1. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $v$,
 2. sample an element $s$ from the $\chi_k^2$ distribution and, independently, sample an element $t$ from the $\chi_{d-k}^2$ distribution.
 
-This sampling procedure is useful for the understanding of the EM algorithm in `conivol::find_weights_EM` but for the relation to closed convex cones the following sampling procedure of the chi-bar-squared distribution is more intuitive,
+This sampling procedure is useful for the understanding of the EM algorithm in `find_weights_EM` but for the relation to closed convex cones the following sampling procedure of the chi-bar-squared distribution is more intuitive,
 
 1. sample $d$ iid $\chi_1^2$ distributed random variables, say, $a_1,\ldots,a_d$,
-2. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $\lambda$,
+2. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $v$,
 3. take $s=a_1+\cdots+a_k$ and $t=a_{k+1}+\cdots+a_d$.
 
 
-### Relation to closed convex cones
+### Relation to closed convex cones {#link_bivchibars_cone}
 
-The (bivariate) chi-bar-squared distribution corresponding to a closed convex cone $C$ is of course the one arising from taking the conic intrinsic volumes as weights; in terms of cdf,
+The (bivariate) chi-bar-squared distribution corresponding to a closed convex cone $C$ is of course the one arising from taking the conic intrinsic volumes as weights; in terms of the cdf,
 $$ F_C(t) = \sum_{k=0}^d v_k(C) F_k(t) ,\qquad \Phi_C(s,t) = \sum_{k=0}^d v_k(C) F_k(s) F_{d-k}(t) . $$
-A natural sampling for these distributions involves the projection function
-$$ \Pi_C\colon\text{R}^d\to C ,\qquad \Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\} . $$
-Denoting by $g\sim N(0,I_d)$ a Gaussian vector, we get the chi-bar-squared and the bivariate chi-bar-squared distributions as the distributions of the random variables
-$$ \|\Pi_C(g)\|^2 \quad\text{and}\quad (\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2) . $$
+A natural sampling for these distributions involves the projection map $\Pi_C$. Denoting by $g\sim N(0,I_d)$ a Gaussian vector, one can show that the chi-bar-squared and the bivariate chi-bar-squared distributions are given by the distributions of the random variables
+$$ \|\Pi_C(g)\|^2 \quad\text{and}\quad \big(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2\big) . $$
+The fact that these random variables have the (bivariate) chi-bar-squared distribution with weights given by the conic intrinsic volumes is one form of the Conic Steiner Theorem, see [@McCT14].
 
+The moments of the continuous random variables $\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2$ are closely related with those of the discrete random variable defined by the intrinsic volumes. In fact, for the first and second moment we obtain the following:
+$$ \begin{align}
+  \delta(C) & = \text{E}\big[\|\Pi_C(g)\|^2\big]
+\\ & = d-\text{E}\big[\|\Pi_{C^\circ}(g)\|^2\big] ,
+\\ \text{var}(C) & = \text{var}\big(\|\Pi_C(g)\|^2\big)-2\delta(C)
+\\ & = \text{var}\big(\|\Pi_{C^\circ}(g)\|^2\big)-2(d-\delta(C)) .
+\end{align}
+$$
+
+
+
+## Inequalities, known and conjectured {#link_inequs}
+
+* isoperimetric inequalities and extensions [@MS16]
+* conjecture: variance/entropy is maximum for Lorentz cone
+* conjecture: log-concavity inequalities (mention Alexandrov-Fenchel)^[The euclidean intrinsic volumes satisfy the log-concavity inequalities by the Alexandrov-Fenchel inequality for the mixed volumes. In small dimensions ($\leq10$) this partly implies log-concavity for the conic intrinsic volumes. But in fact the implication goes the other way: log-concavity of conic intrinsic volumes easily implies log-concavity of euclidean intrinsic volumes.]
 
 ## Statistical applications
 
 [TBD]
 
-## Inequalities, known and conjectured
+(say a few words on the statistical applications of the chi-bar-squared distribution with links to the literature)
 
-[TBD]
-
-
-
+## References
 
 
 
