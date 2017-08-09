@@ -12,9 +12,9 @@
 
 <meta name="author" content="Dennis Amelunxen" />
 
-<meta name="date" content="2017-08-04" />
+<meta name="date" content="2017-08-08" />
 
-<title>General (polyhedral) cones and goodness of fit for conic intrinsic volumes</title>
+<title>Goodness of fit for bivariate chi-bar-squared distribution</title>
 
 
 
@@ -30,23 +30,83 @@
 
 
 
-<h1 class="title toc-ignore">General (polyhedral) cones and goodness of fit for conic intrinsic volumes</h1>
+<h1 class="title toc-ignore">Goodness of fit for bivariate chi-bar-squared distribution</h1>
 <h4 class="author"><em>Dennis Amelunxen</em></h4>
-<h4 class="date"><em>2017-08-04</em></h4>
+<h4 class="date"><em>2017-08-08</em></h4>
 
 
 
-<p>In this vignette we describe two procedures in more detail:</p>
-<ol style="list-style-type: decimal">
-<li><code>rbichibarsq_polyh</code>: generating projection data for general polyhedral cones,</li>
-<li><code>bichibarsq_goodness_of_fit</code>: computing the bivariate Kolmogorov-Smirnov statistic for assessing the goodness of fit.</li>
-</ol>
-<div id="generating-projection-data-for-general-polyhedral-cones" class="section level2">
-<h2>Generating projection data for general polyhedral cones</h2>
+<p>In this vignette we analyze more rigorously the distribution used in the EM algorithm, described <a href="estim-conic-intrinsic-volumes-with-EM.html">here</a>, and analyze the goodness of fit of the resulting estimate of the conic intrinsic volumes with respect to the sample data. See <a href="conic-intrinsic-volumes.html">this vignette</a> for a short introduction to conic intrinsic volumes.</p>
+<div id="mod_bivchibarsq" class="section level2">
+<h2>The modified bivariate chi-bar-squared distribution</h2>
+<p><a href="estim-conic-intrinsic-volumes-with-EM.html#setup">Recall</a> that we assumed to have sampled data: <span class="math inline">\((X_1,Y_1),\ldots,(X_N,Y_N)\)</span> denote iid copies of <span class="math inline">\((X,Y)\)</span> and we assume that they took the sample values <span class="math inline">\((x_1,y_1),\ldots,(x_N,y_N)\)</span>. Furthermore, we defined the two proportions <span class="math display">\[ p = \frac{\left|\{i\mid y_i=0\}\right|}{N} ,\quad q = \frac{\left|\{i\mid x_i=0\}\right|}{N} , \]</span> and dropped those sample values <span class="math inline">\((x_i,y_i)\)</span> with <span class="math inline">\(x_i=0\)</span> or <span class="math inline">\(y_i=0\)</span>. Without loss of generality, we used the notation <span class="math inline">\((x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})\)</span> for the remaining sample points, <span class="math inline">\(\bar N\leq N\)</span>.</p>
+<p>We can formalize these steps by considering the following mixed continuous-discrete distribution: for given weight vector <span class="math inline">\(v=(v_0,\ldots,v_d)\)</span>, <span class="math inline">\(v\geq0\)</span>, <span class="math inline">\(\sum_{k=0}^d v_k=1\)</span>, consider the distribution <span class="math display">\[ f_v(x,y) = v_d\, \delta(-1,0) + v_0\, \delta(0,-1) + \sum_{k=1}^{d-1} v_k f_k(x) f_{d-k}(y) , \]</span> where <span class="math inline">\(\delta\)</span> denotes the (bivariate) Dirac delta, and <span class="math inline">\(f_k(x)\)</span> denotes the density of the chi-squared distribution.</p>
+<p>The cumulative distribution function (cdf) is thus given by <span class="math display">\[ F_v(x,y) = \begin{cases}
+      v_d &amp; \text{if } -1\leq x&lt;0\leq y ,
+   \\ v_0 &amp; \text{if } -1\leq y&lt;0\leq x ,
+   \\ v_0 + v_d + \sum_{k=1}^{d-1} v_k F_k(x)F_{d-k}(y) &amp; \text{if } (x,y)\geq0 ,
+   \\ 0 &amp; \text{else} ,
+   \end{cases} \]</span> where <span class="math inline">\(F_k(x)\)</span> denotes the cdf of the chi-squared distribution.</p>
+<div id="the-empirical-distribution-function" class="section level3">
+<h3>The empirical distribution function</h3>
+<p>In the above described formal setting of the modified bivariate chi-bar-squared distribution we can describe the sample data as having <span class="math inline">\(pN\)</span> times drawn the point <span class="math inline">\((0,-1)\)</span>, <span class="math inline">\(qN\)</span> times drawn the point <span class="math inline">\((-1, 0)\)</span>, and <span class="math inline">\(\bar N\)</span> times drawn samples in the first quadrant, <span class="math inline">\((x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})\)</span>.</p>
+<p>The empirical distribution function is thus given by <span class="math display">\[ \hat F_N(x,y) = \begin{cases}
+      p &amp; \text{if } -1\leq x&lt;0\leq y ,
+   \\ q &amp; \text{if } -1\leq y&lt;0\leq x ,
+   \\ p + q + \frac{1}{N}\sum_{i=1}^{\bar N} 1_{(x_i,y_i)\leq(x,y)} &amp; \text{if } (x,y)\geq0 ,
+   \\ 0 &amp; \text{else} .
+   \end{cases} \]</span></p>
 </div>
-<div id="assessing-the-goodnoess-of-fit" class="section level2">
-<h2>Assessing the goodnoess of fit</h2>
-<p>We follow “A multivariate Kolmogorov-Smirnov test of goodness of fit” (insert appropriate link to literature). Recall that <span class="math inline">\(f_k(t)\)</span> denotes the density of the chi-squared distribution, <span class="math display">\[ f_k(t)=\frac{1}{2^{k/2}\Gamma(k/2)}t^{k/2-1}e^{-t/2} . \]</span> As explained in <a href="conic-intrinsic-volumes.html">this vignette</a></p>
+</div>
+<div id="assessing-the-goodness-of-fit-via-kolmogorov-smirnov-statistic" class="section level2">
+<h2>Assessing the goodness of fit via Kolmogorov-Smirnov statistic</h2>
+<p>For univariate distributions the Kolmogorov-Smirnov statistic of a distribution with respect to a given sample is defined as the maximum absolute difference of the hypothesized cdf <span class="math inline">\(F(T)\)</span> and the empirical cdf <span class="math inline">\(F_N(x)\)</span>, <span class="math display">\[ \sup_{x\in \text{R}} \left|\hat F_N(x)-F(x)\right| . \]</span> The straightforward bivariate generalization, <span class="math display">\[ \sup_{(x,y)\in \text{R}^2} \left|\hat F_N(x,y)-F(x,y)\right| , \]</span> is not distribution-free. This is why <span class="citation">(Justel, Peña, and Zamar 1997)</span> define the bivariate<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> Kolmogorov-Smirnov statistic in the following way: denoting the distribution by <span class="math inline">\(f(x,y)\)</span> and using the transformations <span class="math inline">\((x,y)\mapsto(a^{(1)},b^{(1)})\)</span> and <span class="math inline">\((x,y)\mapsto(a^{(2)},b^{(2)})\)</span>, <span class="math display">\[\begin{align}
+   a^{(1)} &amp; = \int_{-\infty}^x\int_{-\infty}^\infty f(s,t)\,dt\,ds , &amp; b^{(1)} &amp; = \frac{\int_{-\infty}^y f(x,t)\,dt}{\int_{-\infty}^\infty f(x,t)\,dt}
+\\[1mm] a^{(2)} &amp; = \int_{-\infty}^y\int_{-\infty}^\infty f(s,t)\,ds\,dt , &amp; b^{(2)} &amp; = \frac{\int_{-\infty}^x f(s,y)\,ds}{\int_{-\infty}^\infty f(s,y)\,ds}
+\end{align}\]</span> the distribution of both transformed pairs, according to a theorem by <span class="citation">(Rosenblatt 1952)</span>, is the uniform distribution on <span class="math inline">\([0,1]^2\)</span>. Denoting the transformed sample points by <span class="math inline">\((a^{(j)}_1,b^{(j)}_1),\ldots,(a^{(j)}_N,b^{(j)}_N)\)</span>, <span class="math inline">\(j=1,2\)</span>, the bivariate Kolmogorov-Smirnov statistic is defined by <span class="math display">\[ D^{\text{KS}} = \max_{j\in\{1,2\}, (a,b)\in[0,1]^2}\left| \frac{1}{N}\sum_{i=1}^N 1_{(a_i^{(j)},b_i^{(j)})\leq(a,b)} - ab \right| . \]</span></p>
+<div id="remark-on-other-statistics" class="section level3">
+<h3>Remark on other statistics</h3>
+<p>Apart from the Kolmogorov-Smirnov statistic, many other statistics for assessing the goodness of fit of univariate distributions or multivariate normal distributions have been proposed. The specific case of multivariate non-normal distributions is less well-established, but a multivariate version of the Cramér-von Mises statistic can be found in <span class="citation">(Chiu and Liu 2009)</span>.</p>
+</div>
+<div id="concrete-formulas-for-the-transformed-sample-points" class="section level3">
+<h3>Concrete formulas for the transformed sample points</h3>
+<p>We compute the transformed samples for the continuous-discrete distribution given by <span class="math inline">\(F_v\)</span>: <span class="math display">\[ \begin{align}
+   a^{(1)} &amp; = \begin{cases}
+      v_d &amp; \text{if } (x,y) = (-1,0)
+   \\ v_d+v_0 &amp; \text{if } (x,y) = (0,-1)
+   \\ v_d+v_0+\sum_{k=1}^{d-1} v_k F_k(x) &amp; \text{if } (x,y) \geq (0,0)
+   \end{cases} ,
+\\ b^{(1)} &amp; = \begin{cases}
+      v_d &amp; \text{if } (x,y) = (-1,0)
+   \\ v_d+v_0 &amp; \text{if } (x,y) = (0,-1)
+   \\ v_d+v_0+\sum_{k=1}^{d-1} v_k F_k(x) &amp; \text{if } (x,y) \geq (0,0)
+   \end{cases} ,
+   \end{align} \]</span> following way</p>
+</div>
+</div>
+<div id="an-algorithm-to-compute-the-bivariate-kolmogorov-smirnov-statistic" class="section level2">
+<h2>An algorithm to compute the bivariate Kolmogorov-Smirnov statistic</h2>
+<p><span class="citation">(Justel, Peña, and Zamar 1997)</span> give the following algorithm for computing the bivariate Kolmogorov-Smirnov statistic <span class="math inline">\(D^{\text{KS}}\)</span>:</p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references">
+<div id="ref-CL09">
+<p>Chiu, Sung Nok, and Kwong Ip Liu. 2009. “Generalized Cramér-von Mises Goodness-of-Fit Tests for Multivariate Distributions.” <em>Comput. Statist. Data Anal.</em> 53 (11): 3817–34. doi:<a href="https://doi.org/10.1016/j.csda.2009.04.004">10.1016/j.csda.2009.04.004</a>.</p>
+</div>
+<div id="ref-JPZ97">
+<p>Justel, Ana, Daniel Peña, and Rubén Zamar. 1997. “A Multivariate Kolmogorov-Smirnov Test of Goodness of Fit.” <em>Statist. Probab. Lett.</em> 35 (3): 251–59. doi:<a href="https://doi.org/10.1016/S0167-7152(97)00020-5">10.1016/S0167-7152(97)00020-5</a>.</p>
+</div>
+<div id="ref-R52">
+<p>Rosenblatt, Murray. 1952. “Remarks on a Multivariate Transformation.” <em>Ann. Math. Statistics</em> 23: 470–72.</p>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The authors define this statistic in the general multivariate case; we restrict the discussion to the bivariate case to simplify notation.<a href="#fnref1">↩</a></p></li>
+</ol>
 </div>
 
 

@@ -54,93 +54,193 @@
 }
 
 
-#' Sample from bivariate chi-bar-squared distribution of polyhedral cones
+#' Sample from bivariate chi-bar-squared distribution of a polyhedral cone given by generators
 #'
-#' \code{rbichibarsq_polyh} generates an \code{n} by \code{2} matrix
+#' \code{rbichibarsq_polyh_gen} generates an \code{n} by \code{2} matrix
 #' such that the rows form iid samples from the bivariate chi-bar-squared
-#' distribution of the polyhedral cone \code{{Ax|x>=0}}. If input parameter
-#' \code{reduce==TRUE} then output will contain further elements (in form of a list),
-#' see below.
+#' distribution of the polyhedral cone given by generators, that is, in the
+#' form \code{{Ax|x>=0}}. If \code{reduce==TRUE}, which is the default, then a
+#' reduced form of the cone will be computed and the bivariate chi-bar-squared
+#' distribution will correspond to the reduced form, and the output will contain
+#' further elements (in form of a list), see below.
 #'
 #' @param n number of samples
 #' @param A matrix
-#' @param reduce logical; if \code{TRUE}, \code{A} will be replaced by a smaller
-#'               matrix if possible
+#' @param reduce logical; if \code{TRUE}, the cone defined by \code{A} will be
+#'               decomposed orthogonally w.r.t. its lineality space
 #'
-#' @return If \code{reduce==TRUE} then the output of \code{rbichibarsq_polyh(n,A)}
-#'         is a list containing an \code{n} by \code{2} matrix \code{samples},
-#'         a logical \code{replaced}, and, if \code{replaced==TRUE}, another
-#'         matrix \code{A_reduced}; if \code{reduce==FALSE} then the output
-#'         is only the \code{n} by \code{2} matrix. The rows of the matrix form
+#' @return The output of \code{rbichibarsq_polyh_gen(n,A)}, with the default value
+#'         \code{reduce==TRUE}, is a list containing the following elements:
+#' \itemize{
+#'   \item \code{dim}: the dimension of the linear span of \code{C},
+#'   \item \code{lin}: the lineality of the cone \code{C},
+#'   \item \code{QL}: an orthogonal basis of the lineality space of \code{C},
+#'                    set to \code{NA} if lineality space is zero-dimensional,
+#'   \item \code{QC}: an orthogonal basis of the projection of \code{C} onto
+#'                    the orthogonal complement of the lineality space of \code{C},
+#'                    set to \code{NA} if \code{C} is a linear space,
+#'   \item \code{A_reduced}: a matrix defining the reduced cone,
+#'   \item \code{samples}: an \code{n} by \code{2} matrix rows of the matrix form
 #'         iid samples from the bivariate chi-bar-squared distribution with
-#'         weights given by the intrinsic volumes of the polyhedral cone \code{{Ax|x>=0}}.
+#'         weights given by the intrinsic volumes of the reduced cone \code{{A_reduced x|x>=0}};
+#'         set to \code{NA} if \code{C} is a linear space.
+#' }
+#'         If \code{reduce==FALSE} then the output is only an
+#'         \code{n} by \code{2} matrix such that its rows form
+#'         iid samples from the bivariate chi-bar-squared distribution with
+#'         weights given by the intrinsic volumes of the cone \code{{Ax|x>=0}}.
 #'
-#' @note See \href{link.to.vignette/TBD}{this vignette}
-#'       for further info; in particular, info about how
-#'       to work with polyhedral cones given in the form \code{{x|Ax>=0}}.
+#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}}
+#' \code{\link[conivol]{rbichibarsq_polyh_ineq}}, \code{\link[conivol]{rbichibarsq}},
+#' \code{\link[conivol]{rbichibarsq_circ}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' rbichibarsq_polyh(20,matrix(1:12,4,3)
+#' rbichibarsq_polyh_gen(20,matrix(1:12,4,3)
 #'
 #' @export
 #'
-rbichibarsq_polyh <- function(n, A, reduce=TRUE) {
+rbichibarsq_polyh_gen <- function(n, A, reduce=TRUE) {
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop("\n Could not find package 'Rmosek'.")
     if (!requireNamespace("Matrix", quietly = TRUE))
         stop("\n Could not find package 'Matrix'.")
     opts <- list(verbose=0)
-    replaced <- FALSE
     if (reduce) {
-        # test if cone lies in lower-dimensional space
-        QR <- qr(A)
-        d <- QR$rank
-        if ( d<dim(A)[1] ) {
-            A <- qr.R(QR)[1:d, ]
-            replaced <- TRUE
-        }
-        # test whether columns of A lie in the cone spanned by the other columns
-        m <- dim(A)[1]
+        d <- dim(A)[1]
+        dimA <- qr(A)$rank
+        if (dimA==0)
+            return( list( dim=0, lin=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
+        else if (dimA==d)
+            return( list( dim=d, lin=d, QL=diag(1,d), QC=NA, A_reduced=diag(1,d), samples=NA) )
+
+        # find lineality space L
         nn <- dim(A)[2]
-        is_superfluous <- rep(0,nn)
+        is_in_L <- vector("logical",nn)
         for (j in 1:nn) {
+            mos_inp <- .create_mosek_input_polyh_prim(A[ ,-j], -A[ ,j])
+            is_in_L[j] <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+m+1)]^2 ) == sum(A[ ,j]^2)
+        }
+        linA <- qr(A[ , is_in_L ])$rank
+        if (linA==0)
+            QL = NA
+        else {
+            if (linA==1)
+                QL = matrix( svd(A[ , is_in_L ])$u[ , 1] )
+            else
+                QL = svd(A[ , is_in_L ])$u[ , 1:linA]
+
+            if (dimA==linA)
+                return( list( dim=dimA, lin=linA, QL=QL, QC=NA, A_reduced=cbind(QL,-QL), samples=NA) )
+
+            A <- A[ , !is_in_L ]
+            A <- A - QL %*% (t(QL) %*% A)
+        }
+        if (dimA-linA == d)
+            QC <- diag(1,d)
+        else if (dimA-linA == 1)
+            QC <- matrix( svd(A)$u[ , 1] )
+        else
+            QC <- svd(A)$u[ , 1:(dimA-linA)]
+
+        A <- t(QC) %*% A
+
+        # test whether columns of A lie in the cone spanned by the other columns
+        e <- dim(A)[1]
+        m <- dim(A)[2]
+        is_superfluous <- vector("logical",m)
+        for (j in 1:m) {
             mos_inp <- .create_mosek_input_polyh_prim(A[ ,-j],A[ ,j])
-            is_superfluous[j] <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+m+1)]^2 ) == sum(A[ ,j]^2)
+            is_superfluous[j] <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(m+2):(m+e+1)]^2 ) == sum(A[ ,j]^2)
         }
-        if (any(is_superfluous>0)) {
-            A <- A[ ,-is_superfluous]
-            replaced = TRUE
-        }
+        A <- A[ ,!is_superfluous]
     }
 
-    m <- dim(A)[1]
+    d <- dim(A)[1]
     nn <- dim(A)[2]
-    mos_inp <- .create_mosek_input_polyh_prim(A,rep(0,m))
+    mos_inp <- .create_mosek_input_polyh_prim(A,rep(0,d))
     out <- matrix(0,n,2)
     for (i in 1:n) {
-        y <- rnorm(m)
+        y <- rnorm(d)
         mos_inp <- .update_mosek_input_polyh_prim(mos_inp,y)
-        p <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+3):(nn+m+2)]^2 )
+        p <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+3):(nn+d+2)]^2 )
         out[i, ] <- c(p,sum(y^2)-p)
     }
     if (!reduce)
         return(out)
-    else {
-        if (replaced)
-            return(list(replaced=TRUE,  A_reduced=A, samples=out))
-        else
-            return(list(replaced=FALSE, samples=out))
-    }
+    else
+        return( list( dim=dimA, lin=linA, QL=QL, QC=QC, A_reduced=A, samples=out) )
 }
 
 
 
+#' Sample from bivariate chi-bar-squared distribution of a polyhedral cone given by inequalities
+#'
+#' \code{rbichibarsq_polyh_ineq} generates an \code{n} by \code{2} matrix
+#' such that the rows form iid samples from the bivariate chi-bar-squared
+#' distribution of the polyhedral cone given by inequalities, that is, in the
+#' form \code{{y|A^Ty<=0}}. If \code{reduce==TRUE}, which is the default, then a
+#' reduced form of the cone will be computed and the bivariate chi-bar-squared
+#' distribution will correspond to the reduced form, and the output will contain
+#' further elements (in form of a list), see below.
+#'
+#' @param n number of samples
+#' @param A matrix
+#' @param reduce logical; if \code{TRUE}, the cone defined by \code{A} will be
+#'               decomposed orthogonally w.r.t. its lineality space
+#'
+#' @return The output of \code{rbichibarsq_polyh_ineq(n,A)}, with the default value
+#'         \code{reduce==TRUE}, is a list containing the following elements:
+#' \itemize{
+#'   \item \code{dim}: the dimension of the linear span of \code{C},
+#'   \item \code{lin}: the lineality of the cone \code{C},
+#'   \item \code{QL}: an orthogonal basis of the orthogonal complement of the
+#'                    linear span of \code{C},
+#'                    set to \code{NA} if \code{dim(C)==d},
+#'   \item \code{QC}: an orthogonal basis of the projection of \code{C} onto
+#'                    the orthogonal complement of the lineality space of \code{C},
+#'                    set to \code{NA} if \code{C} is a linear space,
+#'   \item \code{A_reduced}: a matrix defining the reduced cone,
+#'   \item \code{samples}: an \code{n} by \code{2} matrix rows of the matrix form
+#'         iid samples from the bivariate chi-bar-squared distribution with
+#'         weights given by the intrinsic volumes of the reduced cone \code{{y|A_reduced^T y<=0}}.
+#' }
+#'         If \code{reduce==FALSE} then the output is only an
+#'         \code{n} by \code{2} matrix such that its rows form
+#'         iid samples from the bivariate chi-bar-squared distribution with
+#'         weights given by the intrinsic volumes of the cone \code{{y|A^Ty<=0}},
+#'         set to \code{NA} if \code{C} is a linear space.
+#'
+#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#'       for further info.
+#'
+#' @section See also:
+#' \code{\link[conivol]{rbichibarsq_polyh_gen}}, \code{\link[conivol]{rbichibarsq}},
+#' \code{\link[conivol]{rbichibarsq_circ}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
+#'
+#' @examples
+#' rbichibarsq_polyh_ineq(20,matrix(1:12,4,3)
+#'
+#' @export
+#'
+rbichibarsq_polyh_ineq <- function(n, A, reduce=TRUE) {
+    if (reduce) {
+        d <- dim(A)[1]
+        out <- rbichibarsq_polyh_gen(n, A, TRUE)
+        dimCpol <- out$dim
+        linCpol <- out$lin
 
-
-
+        out$dim <- d-linCpol
+        out$lin <- d-dimCpol
+        out$samples <- out$samples[ , c(2,1) ]
+        return(out)
+    } else
+        return( rbichibarsq_polyh_gen(n, A, FALSE)[ , c(2,1) ] )
+}
 

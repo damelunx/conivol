@@ -10,15 +10,15 @@ vignette: >
 bibliography: references.bib
 ---
 
-This vignette describes the details of the algorithm to find the intrinsic volumes of closed convex cones from samples from the associated bivariate chi-bar-squared distribution. A general knowledge of the theory of conic intrinsic volumes is assumed, see [this vignette](conic-intrinsic-volumes.html) for a short introduction. In a [third vignette](goodness-of-fit.html) we will have another look at the statistical implications and discuss the goodness of fit.
+This vignette describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples from the associated bivariate chi-bar-squared distribution. A general knowledge of the theory of conic intrinsic volumes is assumed, see [this vignette](conic-intrinsic-volumes.html) for a short introduction. In a [third vignette](goodness-of-fit.html) we will have another look at the statistical implications and discuss the goodness of fit.
 
-## The setup {#link_setup}
+## The setup {#setup}
 
 We use the following notation:
 
 * $C\subseteq\text{R}^d$ denotes a closed convex cone, $C^\circ$ the polar cone, and $\Pi_C\colon\text{R}^d\to C$ denotes the orthogonal projection map,
 $$\Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\}.$$
-We will assume in the following that both $C$ and $C^\circ$ have nonempty interior, $\text{int}(C)\neq\emptyset$ and $\text{int}(C^\circ)\neq\emptyset$, or equivalently, $C^\circ$ and $C$ both do not contain a nonzero linear subspace, or equivalently, $\text{lin}(C)=0$ and $\text{dim}(C)=d$ (see [here](conic-intrinsic-volumes.html#link_dim_lin) for a definition of these terms). These conditions are easily established using the canonical orthogonal decomposition of a cone, so there is no serious restriction in assuming this.  
+We will assume in the following that both $C$ and $C^\circ$ have nonempty interior, $\text{int}(C)\neq\emptyset$ and $\text{int}(C^\circ)\neq\emptyset$, or equivalently, $C^\circ$ and $C$ both do not contain a nonzero linear subspace, or equivalently, $\text{lin}(C)=0$ and $\text{dim}(C)=d$ (see [here](conic-intrinsic-volumes.html#dim_lin) for a definition of these terms). These conditions are easily established using the canonical orthogonal decomposition of a cone, so there is no serious restriction in assuming this.  
   In particular, we assume that $C$ is not a linear subspace so that the intrinsic volumes with even and with odd indices each add up to $\frac12$.
   
 * $v = v(C) = (v_0(C),\ldots,v_d(C))$ denotes the vector of intrinsic volumes. Under the (primal and polar) nonempty interior assumption we have $v_k>0$ for all $k=0,\ldots,d$.
@@ -29,19 +29,19 @@ $$ X=\|\Pi_C(g)\|^2 ,\quad Y=\|\Pi_{C^°}(g)\|^2, $$
   
 * For later use in the EM algorithm we also define the latent variable $Z\in\{0,1,\ldots,d\}$, $\text{Prob}\{Z=k\}=v_k$.
 
-Concretely, if $C$ is a [polyhedral cone](conic-intrinsic-volumes.html#link_polyh_cones) then we define $Z$ as the dimension of the face of $C$ such that $\Pi_C(g)$ lies in its relative interior. This is well-defined, as $C$ decomposes into a disjoint union of the relative interiors of its faces. We may assume without loss of generality that the underlying cone is polyhedral, as any closed convex cone can be arbitrarily well approximated by polyhedral cones.
+Concretely, if $C$ is a [polyhedral cone](conic-intrinsic-volumes.html#polyh_cones) then we define $Z$ as the dimension of the face of $C$ such that $\Pi_C(g)$ lies in its relative interior. This is well-defined, as $C$ decomposes into a disjoint union of the relative interiors of its faces. We may assume without loss of generality that the underlying cone is polyhedral, as any closed convex cone can be arbitrarily well approximated by polyhedral cones.
 
 Conditioning $X$ and $Y$ on $Z$ yields independent random variables $X\mid Z$ and $Y\mid Z$, which are $\chi^2$-distributed with $Z$ and $d-Z$ degrees of freedom, respectively. Here and in the following we use the convention that $\chi_0^2$ denotes the Dirac measure supported in $0$.
 
 We assume to have sampled data: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of $(X,Y)$ and we assume that they took the sample values $(x_1,y_1),\ldots,(x_N,y_N)$. The general goal is to reconstruct the vector of intrinsic volumes $v=(v_0,\ldots,v_d)$ from this data.
 
-### Remark on the edge cases {#link_rem_edge}
+### Remark on the edge cases {#rem_edge}
 
 The latent variable $Z$ is not entirely "latent", or hidden. Indeed, we have the following equivalences
 $$ Z=d\iff g\in \text{int}(C) \iff Y=0 ,\qquad Z=0\iff g\in \text{int}(C^\circ) \iff X=0 , $$
 which hold almost surely (with probability one). Moreover, if $Y=0$, then the value of $X$ is just a draw from the $\chi_d^2$ distribution, and similarly for $X=0$. What this shows is that those sample data $(x_i,y_i)$ with $x_i=0$ or $y_i=0$ should be regarded as noise, and hence should be discarded.
 
-Formally, by doing this we are replacing the bivariate chi-bar-squared distribution by a slightly modified distribution. From a practical perspective this is not a big problem, and indeed we will continue with the presentation of the EM algorithm without worrying about this fact too much. But when analyzing the goodness of fit one has to be careful, which is why this modification will be described in more detail [here](goodness-of-fit.html#link_mod_bivchibarsq).
+Formally, by doing this we are replacing the bivariate chi-bar-squared distribution by a slightly modified distribution. From a practical perspective this is not a big problem, and indeed we will continue with the presentation of the EM algorithm without worrying about this fact too much. But when analyzing the goodness of fit one has to be careful, which is why this modification will be described in more detail [here](goodness-of-fit.html#mod_bivchibarsq).
 
 ## Choosing a starting point
 
@@ -78,7 +78,7 @@ These formulas are implemented in `init_v`.
 
 ## The likelihood function
 
-The likelihood function is straightforward to derive, but, as mentioned [above](#link_rem_edge), one has to be careful about the "edge cases", i.e., the cases where $g\in C\cup C^\circ$. We discard those sample values $(x_i,y_i)$ with $x_i=0$ or $y_i=0$, while keeping the "non-noisy part" of this discarded data, which is of course the *proportion* of points with $Y=0$ and $X=0$,
+The likelihood function is straightforward to derive, but, as mentioned [above](#rem_edge), one has to be careful about the "edge cases", i.e., the cases where $g\in C\cup C^\circ$. We discard those sample values $(x_i,y_i)$ with $x_i=0$ or $y_i=0$, while keeping the "non-noisy part" of this discarded data, which is of course the *proportion* of points with $Y=0$ and $X=0$,
 $$ p = \frac{\left|\{i\mid y_i=0\}\right|}{N} ,\quad q = \frac{\left|\{i\mid x_i=0\}\right|}{N} . $$
 Note that $p$ and $q$ are point estimates for $v_d(C)$ and $v_0(C)$, respectively. The data on which we base our estimation thus has the following form:
 
@@ -111,7 +111,7 @@ The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathb
 
 The log-concavity inequalities are the inequalities $v_k^2\geq v_{k-1}v_{k+1}$ for $k=1,\ldots,d-1$, or equivalently,
 $$ 2\log v_k - \log v_{k-1} - \log v_{k+1} \geq 0 . $$
-At this moment, the validity of these inequalities is an open conjecture for general closed convex cones. But for subclasses, like products of circular cones, they are known to hold, and there is some evidence that they hold in general. See [here](conic-intrinsic-volumes.htmnl#link_inequs) for a discussion.  
+At this moment, the validity of these inequalities is an open conjecture for general closed convex cones. But for subclasses, like products of circular cones, they are known to hold, and there is some evidence that they hold in general. See [here](conic-intrinsic-volumes.htmnl#inequs) for a discussion.  
 Assuming log-concavity of the conic intrinsic volumes greatly helps the EM algorithm to converge to a sensible estimate.
 
 There are two natural ways in which log-concavity may be enforced:

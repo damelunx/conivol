@@ -44,10 +44,14 @@
 #'
 #' @section General polyhedral cones:
 #' \itemize{
-#'   \item \code{\link[conivol]{rbichibarsq_polyh}}: produces samples from the bivariate
+#'   \item \code{\link[conivol]{rbichibarsq_polyh_gen}}: produces samples from the bivariate
 #'                                   chi-bar-squared distribution with weights
 #'                                   given by the conic intrinsic volumes of
-#'                                   general polyhedral cones
+#'                                   a polyhedral cones given by generators
+#'   \item \code{\link[conivol]{rbichibarsq_polyh_ineq}}: produces samples from the bivariate
+#'                                   chi-bar-squared distribution with weights
+#'                                   given by the conic intrinsic volumes of
+#'                                   a polyhedral cones given by inequalities
 #' }
 #'
 #' @section Estimating the weights of the bivariate chi-bar-squared distribution:
@@ -71,7 +75,17 @@
 #'                               and thus improve the estimate
 #' }
 #'
-#' See the corresponding help functions for more information.
+#' See the corresponding object documentation for more information. See also the following vignettes:
+#' \itemize{
+#'   \item \href{../doc/conic-intrinsic-volumes.html}{conic-intrinsic-volumes}:
+#'         introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions
+#'   \item \href{../doc/estim-conic-intrinsic-volumes-with-EM.html}{estim-conic-intrinsic-volumes-with-EM}:
+#'         describes the details of the algorithm for finding the intrinsic volumes of closed
+#'         convex cones from samples of the associated bivariate chi-bar-squared distribution
+#'   \item \href{../doc/goodness-of-fit.html}{goodness-of-fit}:
+#'         analyzes the goodness of fit of a vector of intrinsic volumes for given sample
+#'         data from a bivariate chi-bar-squared distribution
+#' }
 #'
 #' @docType package
 #' @name conivol

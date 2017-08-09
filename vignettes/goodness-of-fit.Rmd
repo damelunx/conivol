@@ -12,9 +12,9 @@ bibliography: references.bib
 
 In this vignette we analyze more rigorously the distribution used in the EM algorithm, described [here](estim-conic-intrinsic-volumes-with-EM.html), and analyze the goodness of fit of the resulting estimate of the conic intrinsic volumes with respect to the sample data. See [this vignette](conic-intrinsic-volumes.html) for a short introduction to conic intrinsic volumes.
 
-## The modified bivariate chi-bar-squared distribution {#link_mod_bivchibarsq}
+## The modified bivariate chi-bar-squared distribution {#mod_bivchibarsq}
 
-[Recall](estim-conic-intrinsic-volumes-with-EM.html#link_setup) that we assumed to have sampled data: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of $(X,Y)$ and we assume that they took the sample values $(x_1,y_1),\ldots,(x_N,y_N)$. Furthermore, we defined the two proportions
+[Recall](estim-conic-intrinsic-volumes-with-EM.html#setup) that we assumed to have sampled data: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of $(X,Y)$ and we assume that they took the sample values $(x_1,y_1),\ldots,(x_N,y_N)$. Furthermore, we defined the two proportions
 $$ p = \frac{\left|\{i\mid y_i=0\}\right|}{N} ,\quad q = \frac{\left|\{i\mid x_i=0\}\right|}{N} , $$
 and dropped those sample values $(x_i,y_i)$ with $x_i=0$ or $y_i=0$. Without loss of generality, we used the notation $(x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})$ for the remaining sample points, $\bar N\leq N$.
 
