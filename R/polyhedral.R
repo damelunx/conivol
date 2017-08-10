@@ -112,10 +112,10 @@ rbichibarsq_polyh_gen <- function(n, A, reduce=TRUE) {
     opts <- list(verbose=0)
     if (reduce) {
         d <- dim(A)[1]
-        dimA <- qr(A)$rank
-        if (dimA==0)
+        dimC <- qr(A)$rank
+        if (dimC==0)
             return( list( dim=0, lin=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
-        else if (dimA==d)
+        else if (dimC==d)
             return( list( dim=d, lin=d, QL=diag(1,d), QC=NA, A_reduced=diag(1,d), samples=NA) )
 
         # find lineality space L
@@ -123,29 +123,30 @@ rbichibarsq_polyh_gen <- function(n, A, reduce=TRUE) {
         is_in_L <- vector("logical",nn)
         for (j in 1:nn) {
             mos_inp <- .create_mosek_input_polyh_prim(A[ ,-j], -A[ ,j])
-            is_in_L[j] <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+m+1)]^2 ) == sum(A[ ,j]^2)
+            # is_in_L[j] <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+d+1)]^2 ) == sum(A[ ,j]^2)
+            is_in_L[j] <- all.equal( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+d+1)] , A[ ,j] ) == TRUE
         }
-        linA <- qr(A[ , is_in_L ])$rank
-        if (linA==0)
+        linC <- qr(A[ , is_in_L ])$rank
+        if (linC==0)
             QL = NA
         else {
-            if (linA==1)
+            if (linC==1)
                 QL = matrix( svd(A[ , is_in_L ])$u[ , 1] )
             else
-                QL = svd(A[ , is_in_L ])$u[ , 1:linA]
+                QL = svd(A[ , is_in_L ])$u[ , 1:linC]
 
-            if (dimA==linA)
-                return( list( dim=dimA, lin=linA, QL=QL, QC=NA, A_reduced=cbind(QL,-QL), samples=NA) )
+            if (dimC==linC)
+                return( list( dim=dimC, lin=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL), samples=NA) )
 
             A <- A[ , !is_in_L ]
             A <- A - QL %*% (t(QL) %*% A)
         }
-        if (dimA-linA == d)
+        if (dimC-linC == d)
             QC <- diag(1,d)
-        else if (dimA-linA == 1)
+        else if (dimC-linC == 1)
             QC <- matrix( svd(A)$u[ , 1] )
         else
-            QC <- svd(A)$u[ , 1:(dimA-linA)]
+            QC <- svd(A)$u[ , 1:(dimC-linC)]
 
         A <- t(QC) %*% A
 
@@ -155,7 +156,8 @@ rbichibarsq_polyh_gen <- function(n, A, reduce=TRUE) {
         is_superfluous <- vector("logical",m)
         for (j in 1:m) {
             mos_inp <- .create_mosek_input_polyh_prim(A[ ,-j],A[ ,j])
-            is_superfluous[j] <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(m+2):(m+e+1)]^2 ) == sum(A[ ,j]^2)
+            # is_superfluous[j] <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(m+2):(m+e+1)]^2 ) == sum(A[ ,j]^2)
+            is_superfluous[j] <- all.equal( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(m+2):(m+e+1)] , A[ ,j] ) == TRUE
         }
         A <- A[ ,!is_superfluous]
     }
@@ -173,7 +175,7 @@ rbichibarsq_polyh_gen <- function(n, A, reduce=TRUE) {
     if (!reduce)
         return(out)
     else
-        return( list( dim=dimA, lin=linA, QL=QL, QC=QC, A_reduced=A, samples=out) )
+        return( list( dim=dimC, lin=linC, QL=QL, QC=QC, A_reduced=A, samples=out) )
 }
 
 
