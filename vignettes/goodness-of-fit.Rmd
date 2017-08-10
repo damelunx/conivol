@@ -10,6 +10,8 @@ vignette: >
 bibliography: references.bib
 ---
 
+**After a second thought, this goodness of fit test seems to be impractical and not very powerful. Instead we should pursue Bayesian estimates.**
+
 In this vignette we analyze more rigorously the distribution used in the EM algorithm, described [here](estim-conic-intrinsic-volumes-with-EM.html), and analyze the goodness of fit of the resulting estimate of the conic intrinsic volumes with respect to the sample data. See [this vignette](conic-intrinsic-volumes.html) for a short introduction to conic intrinsic volumes.
 
 ## The modified bivariate chi-bar-squared distribution {#mod_bivchibarsq}
@@ -43,7 +45,18 @@ $$ \hat F_N(x,y) = \begin{cases}
    \\ 0 & \text{else} .
    \end{cases} $$
 
-## Assessing the goodness of fit via Kolmogorov-Smirnov statistic
+## Assessing the goodness of fit
+
+To assess the goodness of fit we decompose the mixed coninuous-discrete distribution into a discrete distribution corresponding to the edge values $v_0, v_d$, and an absolutely continuous distribution corresponding to the bulk values $v_k$, $k=1,\ldots,d-1$. More precisely, the chi-squared test measures the goodness of fit of the observed probabilities $(q,p,1-q-p)$ with the theoretical probabilities $(v_0,v_d,1-v_0-v_d)$, whereas for the absolutely continuous part of the distribution we compare
+$$ G_v(x,y) \sum_{k=1}^{d-1} \frac{v_k}{1-v_0-v_d} f_k(x) f_{d-k}(y) \quad\text{and}\quad \hat G_{\bar N}(x,y) = \frac{1}{\bar N}\sum_{i=1}^{\bar N} 1_{(x_i,y_i)\leq(x,y)} . $$
+
+### Pearson's chi squared test for the edge values
+
+We compute the chi-squared statistic
+$$ \chi^2 = N\Big( \frac{(q-v_0)^2}{v_0} + \frac{(p-v_d)^2}{v_d} + \frac{(q-v_0+p-v_d)^2}{1-v_0-v_d} \Big) . $$
+The p-values returned with this statistic correspond to two degrees of freedom.
+
+### Bivariate Kolmogorov-Smirnov statistic
 
 For univariate distributions the Kolmogorov-Smirnov statistic of a distribution with respect to a given sample is defined as the maximum absolute difference of the hypothesized cdf $F(T)$ and the empirical cdf $F_N(x)$,
 $$ \sup_{x\in \text{R}} \left|\hat F_N(x)-F(x)\right| . $$
@@ -57,30 +70,32 @@ $$\begin{align}
 the distribution of both transformed pairs, according to a theorem by [@R52], is the uniform distribution on $[0,1]^2$. Denoting the transformed sample points by $(a^{(j)}_1,b^{(j)}_1),\ldots,(a^{(j)}_N,b^{(j)}_N)$, $j=1,2$, the bivariate Kolmogorov-Smirnov statistic is defined by
 $$ D^{\text{KS}} = \max_{j\in\{1,2\}, (a,b)\in[0,1]^2}\left| \frac{1}{N}\sum_{i=1}^N 1_{(a_i^{(j)},b_i^{(j)})\leq(a,b)} - ab \right| . $$
 
-### Remark on other statistics
-
 Apart from the Kolmogorov-Smirnov statistic, many other statistics for assessing the goodness of fit of univariate distributions or multivariate normal distributions have been proposed. The specific case of multivariate non-normal distributions is less well-established, but a multivariate version of the Cram&eacute;r-von Mises statistic can be found in [@CL09].
 
-### Concrete formulas for the transformed sample points
+### Goodness of fit for the bulk values
 
-We compute the transformed samples for the continuous-discrete distribution given by $F_v$:
+We compute the transformed samples for the absolutely continuous distribution $G_v$ as follows:
 $$ \begin{align}
-   a^{(1)} & = \begin{cases}
-      v_d & \text{if } (x,y) = (-1,0)
-   \\ v_d+v_0 & \text{if } (x,y) = (0,-1)
-   \\ v_d+v_0+\sum_{k=1}^{d-1} v_k F_k(x) & \text{if } (x,y) \geq (0,0)
-   \end{cases} ,
-\\ b^{(1)} & = \begin{cases}
-      v_d & \text{if } (x,y) = (-1,0)
-   \\ v_d+v_0 & \text{if } (x,y) = (0,-1)
-   \\ v_d+v_0+\sum_{k=1}^{d-1} v_k F_k(x) & \text{if } (x,y) \geq (0,0)
-   \end{cases} ,
+   a^{(1)} & = \sum_{k=1}^{d-1} \frac{v_k}{1-v_0-v_d} F_k(x) ,
+ & b^{(1)} & = \frac{\sum_{k=1}^{d-1} v_k f_k(x)F_{d-k}(y)}{\sum_{k=1}^{d-1} v_kf_k(x)} ,
+\\ a^{(2)} & = \sum_{k=1}^{d-1} \frac{v_k}{1-v_0-v_d} F_{d-k}(y) ,
+ & b^{(2)} & = \frac{\sum_{k=1}^{d-1} v_k F_k(x)f_{d-k}(y)}{\sum_{k=1}^{d-1} v_k f_{d-k}(y)} .
    \end{align} $$
-following way
-
-## An algorithm to compute the bivariate Kolmogorov-Smirnov statistic
-
+So we assume to have the transformed sample points $\big(a^{(1)}_1, b^{(1)}_1\big),\ldots,\big(a^{(1)}_{\bar N}, b^{(1)}_{\bar N}\big)$ and $\big(a^{(2)}_1, b^{(2)}_1\big),\ldots,\big(a^{(2)}_{\bar N}, b^{(2)}_{\bar N}\big)$. We define the functions
+$$ D^{(j)}(a,b) = \frac{1}{\bar N}\sum_{i=1}^{\bar N} 1_{(a,b)\leq (a^{(j)}_i,b^{(j)}_i)} - ab ,\quad j=1,2 . $$
 [@JPZ97] give the following algorithm for computing the bivariate Kolmogorov-Smirnov statistic $D^{\text{KS}}$:
+
+* For $j=1,2$ compute $D_i^{(j)}$, $i=1,\ldots,5$:  
+(we drop the superscript $(j)$ in the following to ease readability)
+$$\begin{align}
+   D_1 & = \max\{D(a_i,b_i)\mid 1\leq i\leq \bar N\} ,
+\\ D_2 & = \max\{D(a_\ell,b_i)\mid 1\leq i,\ell\leq \bar N, a_\ell>a_i, b_\ell<b_i \} ,
+\\ D_3 & = \tfrac{2}{\bar N} - \min\{D(a_\ell,b_i)\mid 1\leq i,\ell\leq \bar N, a_\ell>a_i, b_\ell<b_i \} ,
+\\ D_4 & = \tfrac{1}{\bar N} - \min\{D(1,b_i)\mid 1\leq i\leq \bar N \} ,
+\\ D_5 & = \tfrac{1}{\bar N} - \min\{D(a_i,1)\mid 1\leq i\leq \bar N \} .
+\end{align}$$
+* The Kolmogorov-Smirnov statistic is given by
+$$ D^{\text{KS}} = \max\big\{ D^{(j)}_i\mid i\in\{1,\ldots,5\}, j\in\{1,2\}\big\} . $$
 
 ## References
 
