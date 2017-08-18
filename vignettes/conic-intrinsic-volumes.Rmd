@@ -3,6 +3,7 @@ title: "Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution
 author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
+# output: rmarkdown::pdf_document
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
@@ -89,7 +90,7 @@ where $\|\cdot\|$ denotes the Euclidean norm.
 
 The circular cones form a class of cones, which is interesting for both theoretical and practical purposes. For theoretical purposes because circular cones are known to satisfy certain extreme inequalities (see [below](#inequs)), and are suspected to satisfy even more; and for practical purposes because they, and products of them, provide a reasonably large, yet accessible, class of cones which is easy to analyze with respect to the intrinsic volumes.
 
-## Conic intrinsic volumes
+## Conic intrinsic volumes {#intro_intrvol}
 
 The conic intrinsic volumes of a closed convex cone $C\subseteq\text{R}^d$ form a $(d+1)$-element vector,
 $$ v(C) = (v_0(C),\ldots,v_d(C)) \geq 0 ,\quad \sum_{k=0}^d v_k(C) = 1 . $$
@@ -158,12 +159,12 @@ $$ \|\Pi_C(g)\|^2 \quad\text{and}\quad \big(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^
 The fact that these random variables have the (bivariate) chi-bar-squared distribution with weights given by the conic intrinsic volumes is one form of the Conic Steiner Theorem, see [@McCT14].
 
 The moments of the continuous random variables $\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2$ are closely related with those of the discrete random variable defined by the intrinsic volumes. In fact, for the first and second moment we obtain the following:
-$$ \begin{align}
+\begin{align*}
   \delta(C) & = \text{E}\big[\|\Pi_C(g)\|^2\big]
 \\ & = d-\text{E}\big[\|\Pi_{C^\circ}(g)\|^2\big] ,
 \\ \text{var}(C) & = \text{var}\big(\|\Pi_C(g)\|^2\big)-2\delta(C)
 \\ & = \text{var}\big(\|\Pi_{C^\circ}(g)\|^2\big)-2(d-\delta(C)) .
-\end{align} $$
+\end{align*}
 
 
 
@@ -219,10 +220,10 @@ $$ C = \{y\in\text{R}^d \mid A^Ty\leq 0\} ,\quad A\in\text{R}^{d\times n} ; $$
 the cone $\tilde C$ will accordingly be given in the form
 $$ \tilde C = \{\tilde y\in\text{R}^e \mid \tilde A^T\tilde y\leq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , $$
 with $e=\text{dim}(C)-\text{lin}(C)$ and $m=\text{(number of facets of $\bar C$)}\leq n$. Moreover, we will specify the orthogonal decomposition of $C$ via the matrices $Q_L\in\text{R}^{d\times(d-\text{dim}(C))}$ and $Q_C\in\text{R}^{d\times e}$, with $Q_L^TQ_L=I_{d-\text{dim}(C)}$ and $Q_C^TQ_C=I_e$, such that
-$$\begin{align}
+\begin{align*}
    L & =\{y\in\text{R}^d\mid Q_L^Ty=0, Q_C^Ty=0\} ,\quad \bar C=Q_C\cdot\tilde C ,
 \\ C & =\{y\in\text{R}^d \mid Q_L^Ty=0, \tilde A^TQ_C^Ty\leq 0\}  .
-\end{align}$$
+\end{align*}
 
 We use polarity to reduce this case to the case of cones given by generators. Calling `rbichibarsq_polyh_gen` with input matrix $A$ produces the list
 $$ [ \text{dim}(C^\circ),\text{lin}(C^\circ),Q_L,Q_C,\tilde A,M'] . $$

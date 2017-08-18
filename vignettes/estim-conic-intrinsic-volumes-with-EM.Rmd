@@ -3,6 +3,7 @@ title: "Estimating conic intrinsic volumes via EM algorithm"
 author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
+# output: rmarkdown::pdf_document
 vignette: >
   %\VignetteIndexEntry{Estimating conic intrinsic volumes via EM algorithm}
   %\VignetteEngine{knitr::rmarkdown}
@@ -24,7 +25,7 @@ We will assume in the following that both $C$ and $C^\circ$ have nonempty interi
 * $v = v(C) = (v_0(C),\ldots,v_d(C))$ denotes the vector of intrinsic volumes. Under the (primal and polar) nonempty interior assumption we have $v_k>0$ for all $k=0,\ldots,d$.
 
 * We work with the two main random variables
-$$ X=\|\Pi_C(g)\|^2 ,\quad Y=\|\Pi_{C^°}(g)\|^2, $$
+$$ X=\|\Pi_C(g)\|^2 ,\quad Y=\|\Pi_{C^\circ}(g)\|^2, $$
   where $g\sim N(0,I_d)$. So $X$ and $Y$ are chi-bar-squared distributed with reference cones $C$ and $C^\circ$, respectively, and the pair $(X,Y)$ is distributed according to the bivariate chi-bar-squared distribution with reference cone $C$.
   
 * For later use in the EM algorithm we also define the latent variable $Z\in\{0,1,\ldots,d\}$, $\text{Prob}\{Z=k\}=v_k$.
@@ -43,7 +44,7 @@ which hold almost surely (with probability one). Moreover, if $Y=0$, then the va
 
 Formally, by doing this we are replacing the bivariate chi-bar-squared distribution by a slightly modified distribution. From a practical perspective this is not a big problem, and indeed we will continue with the presentation of the EM algorithm without worrying about this fact too much. But when analyzing the goodness of fit one has to be careful, which is why this modification will be described in more detail [here](goodness-of-fit.html#mod_bivchibarsq).
 
-## Choosing a starting point
+## Choosing a starting point {#start_EM}
 
 We need to find a starting point for the iterative algorithms to reconstruct $v$. This can of course be the uniform distribution on $\{0,\ldots,d\}$, but we may as well use a more elaborated first guess. The mean and variance of $v$, more precisely, of the latent variable $Z$, can be conveniently estimated from the sample data, as
 $$ \delta = \delta(C) = \sum_{k=0}^d k v_k(C) = \text{E}[X] = d-\text{E}[Y] , $$
@@ -101,10 +102,10 @@ where $(z_i=k)=1$ if $z_i=k$ and zero else.
 
 For numerical reasons we work with the rescaled log-likelihood functions
 
-$$\begin{align}
+\begin{align*}
 \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \log\Big(\sum_{k=1}^{d-1} v_k f_{ik}\Big) ,
 \\ \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1} (z_i=k) \big( \log v_k + \log f_{ik} \big) .
-\end{align}$$
+\end{align*}
 The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y})$ is implemented in `comp_loglike`.
 
 ### Log-concavity
@@ -133,10 +134,10 @@ Both of these methods are supported in `find_ivols_EM`.
 The expectation maximization (EM) algorithm works by maximizing the conditional expectation with respect to the latent variable of the maximum likelihood method, given the current iterate for the parameter that is to be found.
 
 In the situation at hand, we seek to maximize the function
-$$\begin{align}
+\begin{align*}
    & \underset{\mathbf{Z}\mid \mathbf{x},\mathbf{y},v^{(t)}}{\text{E}} \big[\tfrac{1}{N}\log L(v\mid\mathbf{x},\mathbf{y},\mathbf{Z})\big]
 \\ & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1} \frac{v_k^{(t)}f_{ik}}{\sum_{j=1}^{d-1} v_j^{(t)}f_{ij}} \big( \log v_k + \log f_k(x_i) + \log f_{d-k}(y_i) \big)
-\end{align}$$
+\end{align*}
 as a function in $v$. Apparently, the final summands can be dropped as they only contribute as constants. Furthermore, replacing the log-likelihood function by $G_\lambda(v,\mathbf{z})$ to take the log-concavity inequalities into account, we see that the next iterate $v^{(t+1)}$ is found by solving the optimization problem
 $$ \text{maximize}\quad (q-\lambda_1) \log v_0 + (p-\lambda_{d+1}) \log v_d + \sum_{k=1}^{d-1} \frac{1}{N}\sum_{i=1}^{\bar N} \Bigg( \frac{v_k^{(t)}f_{ik}}{\sum_{j=1}^{d-1} v_j^{(t)}f_{ij}} + 2\lambda_k-\lambda_{k-1}-\lambda_{k+1}\Bigg) \log v_k $$
 subject to $v_0,\ldots,v_d\geq0$, $v_0+v_2+\dots=v_1+v_3+\dots=\frac12$. As long as the coefficients of $\log v_k$ are nonnegative, this is a convex problem and, as a *separable convex program*, can be easily solved by MOSEK.
@@ -154,22 +155,22 @@ The log-concavity inequalities $2\log v_k-\log v_{k-1}-\log v_{k+1}\geq c_k\;(\g
 
 The problem of finding the projection of a point $z\in\text{R}^d$ onto a polyhedral cone $\{Au\mid u\geq0\}$, $A\in\text{R}^{d\times n}$, also known as *nonnegative least squares*, can be formulated as a second order cone program (SOCP):
 
-$$\begin{align}
+\begin{align*}
    & \underset{u\geq0}{\text{argmin}}\, \|Au-z\|_2
 \\ \iff & \text{minimize } \tfrac12 \|Au\|^2 - z^T A u \quad\text{subject to}\quad u\geq0
 \\ \iff & \text{minimize } (-A^Tz)^Tu + r \quad\text{subject to}\quad u\geq0, Ax=w, s=1, \|w\|^2\leq 2rs .
-\end{align}$$
+\end{align*}
 This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint (see the [Rmosek userguide](http://rmosek.r-forge.r-project.org/)).
 
 This is the approach taken in the function `rbichibarsq_polyh`.
 
 The projection of a point $z\in\text{R}^n$ onto the polar cone, and more generally, the projection onto the polyhedral set $\{y\mid A^Ty\leq c\}$, $A\in\text{R}^{d\times n}$, can be formulated as SOCP in a similar way:
 
-$$\begin{align}
+\begin{align*}
    & \underset{A^Ty\leq c}{\text{argmin}}\, \|y-z\|_2
 \\ \iff & \text{minimize } \tfrac12\|y\|^2 - z^Ty \quad\text{subject to}\quad A^Ty\leq c
 \\ \iff & \text{minimize } (-z)^Ty+r \quad\text{subject to}\quad u\geq 0, A^Ty+u=c, s=1, \|y\|^2\leq 2rs
-\end{align}$$
+\end{align*}
 This last formulation is solved with MOSEK, using the rotated quadratic cone constraint, to enforce the log-concavity constraints in the EM algorithm.
 
 
@@ -187,10 +188,10 @@ Changing coordinates in $F_\lambda$ by defining
 $$ \tilde F_\lambda(a) := F_\lambda \Big( v + \sum_{k\text{ even}} a_k (e_k-e_{k_0}) + \sum_{k\text{ odd}} a_k (e_k-e_{k_1})\Big) , $$
 one obtains the following gradient in zero:
 
-$$\begin{align}
+\begin{align*}
   \nabla \tilde F_\lambda(0) & = -\frac{1}{N} \sum_{i=1}^{\bar N} \frac{ f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i}{ \sum_{k=1}^{d-1} v_kf_{ik} } + \text{diag}(v)^{-1} \begin{pmatrix} q-\lambda_1 \\ 2\lambda-\lambda_{-1}-\lambda_{+1} \\ p-\lambda_{d-1} \end{pmatrix}
 \\[2mm] & \quad - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}{v_{k_0}} \mathbf1_{\text{even}} - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}} \mathbf1_{\text{odd}} ,
-\end{align}$$
+\end{align*}
 where
 
 * $f_i = (0,f_{i1},\ldots,f_{i,d-1},0)^T$,
@@ -206,11 +207,11 @@ $$ \bar\nabla F_\lambda(v)_k = \begin{cases}
                        \end{cases} $$
 The Hessian of $\tilde F_\lambda$ in zero is given by
 
-$$\begin{align}
+\begin{align*}
   H\tilde F_\lambda(0) & = -\frac{1}{N} \sum_{i=1}^{\bar N} \frac{ \big(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i \big) \big(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i \big)^T}{ \big(\sum_{k=1}^{d-1} v_kf_{ik}\big)^2 }
 \\ & \qquad - \text{diag}(v)^{-2}\text{diag} \begin{pmatrix} q-\lambda_1 \\ 2\lambda_j-\lambda_{j-1}-\lambda_{j+1} \\ p-\lambda_{d-1} \end{pmatrix} - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}{v_{k_0}^2} \mathbf1_{\text{even}}\mathbf1_{\text{even}}^T
 \\ & \qquad - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}^2} \mathbf1_{\text{odd}}\mathbf1_{\text{odd}}^T
-\end{align}$$
+\end{align*}
 
 
 ## References

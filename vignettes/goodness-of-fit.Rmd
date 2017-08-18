@@ -2,7 +2,8 @@
 title: "Goodness of fit for bivariate chi-bar-squared distribution"
 author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+# output: rmarkdown::html_vignette
+output: rmarkdown::pdf_document
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
@@ -63,10 +64,10 @@ $$ \sup_{x\in \text{R}} \left|\hat F_N(x)-F(x)\right| . $$
 The straightforward bivariate generalization,
 $$ \sup_{(x,y)\in \text{R}^2} \left|\hat F_N(x,y)-F(x,y)\right| , $$
 is not distribution-free. This is why [@JPZ97] define the bivariate^[The authors define this statistic in the general multivariate case; we restrict the discussion to the bivariate case to simplify notation.] Kolmogorov-Smirnov statistic in the following way: denoting the distribution by $f(x,y)$ and using the transformations $(x,y)\mapsto(a^{(1)},b^{(1)})$ and $(x,y)\mapsto(a^{(2)},b^{(2)})$,
-$$\begin{align}
+\begin{align*}
    a^{(1)} & = \int_{-\infty}^x\int_{-\infty}^\infty f(s,t)\,dt\,ds , & b^{(1)} & = \frac{\int_{-\infty}^y f(x,t)\,dt}{\int_{-\infty}^\infty f(x,t)\,dt}
 \\[1mm] a^{(2)} & = \int_{-\infty}^y\int_{-\infty}^\infty f(s,t)\,ds\,dt , & b^{(2)} & = \frac{\int_{-\infty}^x f(s,y)\,ds}{\int_{-\infty}^\infty f(s,y)\,ds}
-\end{align}$$
+\end{align*}
 the distribution of both transformed pairs, according to a theorem by [@R52], is the uniform distribution on $[0,1]^2$. Denoting the transformed sample points by $(a^{(j)}_1,b^{(j)}_1),\ldots,(a^{(j)}_N,b^{(j)}_N)$, $j=1,2$, the bivariate Kolmogorov-Smirnov statistic is defined by
 $$ D^{\text{KS}} = \max_{j\in\{1,2\}, (a,b)\in[0,1]^2}\left| \frac{1}{N}\sum_{i=1}^N 1_{(a_i^{(j)},b_i^{(j)})\leq(a,b)} - ab \right| . $$
 
@@ -75,25 +76,25 @@ Apart from the Kolmogorov-Smirnov statistic, many other statistics for assessing
 ### Goodness of fit for the bulk values
 
 We compute the transformed samples for the absolutely continuous distribution $G_v$ as follows:
-$$ \begin{align}
+\begin{align*}
    a^{(1)} & = \sum_{k=1}^{d-1} \frac{v_k}{1-v_0-v_d} F_k(x) ,
  & b^{(1)} & = \frac{\sum_{k=1}^{d-1} v_k f_k(x)F_{d-k}(y)}{\sum_{k=1}^{d-1} v_kf_k(x)} ,
 \\ a^{(2)} & = \sum_{k=1}^{d-1} \frac{v_k}{1-v_0-v_d} F_{d-k}(y) ,
  & b^{(2)} & = \frac{\sum_{k=1}^{d-1} v_k F_k(x)f_{d-k}(y)}{\sum_{k=1}^{d-1} v_k f_{d-k}(y)} .
-   \end{align} $$
+\end{align*}
 So we assume to have the transformed sample points $\big(a^{(1)}_1, b^{(1)}_1\big),\ldots,\big(a^{(1)}_{\bar N}, b^{(1)}_{\bar N}\big)$ and $\big(a^{(2)}_1, b^{(2)}_1\big),\ldots,\big(a^{(2)}_{\bar N}, b^{(2)}_{\bar N}\big)$. We define the functions
 $$ D^{(j)}(a,b) = \frac{1}{\bar N}\sum_{i=1}^{\bar N} 1_{(a,b)\leq (a^{(j)}_i,b^{(j)}_i)} - ab ,\quad j=1,2 . $$
 [@JPZ97] give the following algorithm for computing the bivariate Kolmogorov-Smirnov statistic $D^{\text{KS}}$:
 
 * For $j=1,2$ compute $D_i^{(j)}$, $i=1,\ldots,5$:  
 (we drop the superscript $(j)$ in the following to ease readability)
-$$\begin{align}
+\begin{align*}
    D_1 & = \max\{D(a_i,b_i)\mid 1\leq i\leq \bar N\} ,
 \\ D_2 & = \max\{D(a_\ell,b_i)\mid 1\leq i,\ell\leq \bar N, a_\ell>a_i, b_\ell<b_i \} ,
 \\ D_3 & = \tfrac{2}{\bar N} - \min\{D(a_\ell,b_i)\mid 1\leq i,\ell\leq \bar N, a_\ell>a_i, b_\ell<b_i \} ,
 \\ D_4 & = \tfrac{1}{\bar N} - \min\{D(1,b_i)\mid 1\leq i\leq \bar N \} ,
 \\ D_5 & = \tfrac{1}{\bar N} - \min\{D(a_i,1)\mid 1\leq i\leq \bar N \} .
-\end{align}$$
+\end{align*}
 * The Kolmogorov-Smirnov statistic is given by
 $$ D^{\text{KS}} = \max\big\{ D^{(j)}_i\mid i\in\{1,\ldots,5\}, j\in\{1,2\}\big\} . $$
 

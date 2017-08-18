@@ -1,0 +1,318 @@
+---
+title: "Bayesian estimates for conic intrinsic volumes"
+author: "Dennis Amelunxen"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+# output: rmarkdown::pdf_document
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: references.bib
+---
+
+In this vignette we derive Bayesian estimates of the conic intrinsic volumes: given a prior distribution on the intrinsic volumes, which we describe as well, we derive a sampling procedure for the posterior distribution. We also analyze more rigorously the distribution used in the EM algorithm, described [here](estim-conic-intrinsic-volumes-with-EM.html). See [this vignette](conic-intrinsic-volumes.html) for a short introduction to conic intrinsic volumes.
+
+## The modified bivariate chi-bar-squared distribution {#mod_bivchibarsq}
+
+[Recall](estim-conic-intrinsic-volumes-with-EM.html#setup) that we assumed to have sampled data: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of $(X,Y)$ and we assume that they took the sample values $(x_1,y_1),\ldots,(x_N,y_N)$. Furthermore, we defined the two proportions
+$$ p = \frac{\left|\{i\mid y_i=0\}\right|}{N} ,\quad q = \frac{\left|\{i\mid x_i=0\}\right|}{N} , $$
+and dropped those sample values $(x_i,y_i)$ with $x_i=0$ or $y_i=0$.
+<!-- Without loss of generality, we used the notation $(x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})$ for the remaining sample points, $\bar N\leq N$. -->
+
+We can formalize these steps by considering the following mixed continuous-discrete distribution: for given weight vector $v=(v_0,\ldots,v_d)$, $v\geq0$, $\sum_{k=0}^d v_k=1$, consider the distribution
+$$ f_v(x,y) = v_d\, \delta(-1,0) + v_0\, \delta(0,-1) + \sum_{k=1}^{d-1} v_k f_k(x) f_{d-k}(y) , $$
+where $\delta$ denotes the (bivariate) Dirac delta, and $f_k(x)$ denotes the density of the chi-squared distribution.
+
+The cumulative distribution function (cdf) is thus given by
+$$ F_v(x,y) = \begin{cases}
+      v_d & \text{if } -1\leq x<0\leq y ,
+   \\ v_0 & \text{if } -1\leq y<0\leq x ,
+   \\ v_0 + v_d + \sum_{k=1}^{d-1} v_k F_k(x)F_{d-k}(y) & \text{if } (x,y)\geq0 ,
+   \\ 0 & \text{else} ,
+   \end{cases} $$
+where $F_k(x)$ denotes the cdf of the chi-squared distribution. We will assume this distribution in what follows below.
+
+## Bayesian approach
+
+In a full Bayesian approach we do not consider the intrinsic volumes as parameters but rather as random themselves. So we change notation and introduce the random variable $V=(V_0,\ldots,V_d)^T$ that takes values in the probability simplex
+$$\Delta^d = \big\{v\in\text{R}^{d+1}\mid 0\leq v_k\leq 1 \text{ for all }k, \|v\|_1=1\big\} , $$
+almost surely, where $\|v\|_1\|$ denotes the $\ell_1$-norm.
+
+The intrinsic volumes of cones which are not linear subspaces satisfy the additional equation $V_0+V_2+V_4+\dots=V_1+V_3+V_5+\dots=\frac{1}{2}$, which is why we also use the two random variables $V^e=2(V_0,V_2,V_4,\ldots)^T$ and $V^o=2(V_1,V_3,V_5,\ldots)^T$ both taking values in a probability simplex (of possibly different dimension) with the correlation
+$$ V = \tfrac12 
+% \begin{pmatrix} 1 & 0 & 0 & \dots \\ 0 & 0 & 0 & \dots  \\ 0 & 1 & 0 & \dots \\ 0 & 0 & 0 & \dots \\ \vdots & \vdots & \vdots & \ddots \end{pmatrix}
+(e_0, e_2, e_4,\ldots) V^e  + \tfrac12
+% \begin{pmatrix} 0 & 0 & 0 & \dots \\ 1 & 0 & 0 & \dots  \\ 0 & 0 & 0 & \dots \\ 0 & 1 & 0 & \dots \\ \vdots & \vdots & \vdots & \ddots \end{pmatrix}
+(e_1, e_3, e_5,\ldots) V^o , $$
+where $e_i\in\text{R}^{d+1}$ denotes the $i$th canonical basis vector (indices starting at zero). Notationwise, we define $d^e=\lfloor \frac{d}{2}\rfloor$ and $d^o=\lceil \frac{d}{2}\rceil-1$ so that $V^e\in \Delta^{d^e}$ and $V^o\in \Delta^{d^o}$.
+
+In the following we will explain the issues first in terms of the random vector $V$ before introducing a refinement that takes the split in even and odd indices into account.
+
+## Prior distribution
+
+We use the Dirichlet distribution as a prior, $V\sim \text{Dirichlet}(a)$ with $a=(a_0,\ldots,a_d)$ and $a_k>0$ for all $k$. The density of $V$ is given by
+  \[ p(V=v) = \frac{\Gamma(\|a\|_1)}{\Gamma(a_0)\dots\Gamma(a_d)}\, v_0^{a_0-1}\dots v_d^{a_d-1} \quad\text{for}\quad 0\leq v_k\leq1\text{ for all }k, \|v\|_1=1 . \]
+The expectation of $V$ is given by
+  \[ \text{E}[V] = \frac{1}{\|a\|_1} (a_0,\ldots,a_d) , \]
+and the *prior sample size*, cf. [@GCSDVR14], is given by $\|a\|_1$. Note that the $k$th marginal distribution is concave iff $a_k\geq1$; if $a_k>1$ for all $k$, then the mode of the $k$th marginal distribution is given by
+  \[ \text{mode}(V_k) = \frac{a_k-1}{\|a-1\|_1} . \]
+There are two natural choices for the parameters of the prior distribution, one noninformative, the other (slightly) informative; both using the starting point of the EM algorithm $v^{(0)}$, see [this vignette](estim-conic-intrinsic-volumes-with-EM.html#start_EM):
+
+1. *noninformative:* $a_k = v^{(0)}_k$ for $k=0,\ldots,d$. In this case we have matched the first moment: $\text{E}[V]=v^{(0)}$. The marginal distributions are convex and widely spread; the prior sample size is $\|a\|_1=1$. Note that in this case we must have $v^{(0)}_k>0$ for all $k$, cp. the discussion in [this vignette](conic-intrinsic-volumes.html#intro_intrvol).
+2. *informative:* $a_k = 1 + v^{(0)}_k$ for $k=0,\ldots,d$. In this case we have matched the modes: $\text{mode}(V_k)=v^{(0)}_k$. The marginal distributions are concave; the prior sample size is $\|a\|_1=d+2$.
+
+### Even and odd indices
+
+By the same reasoning we arrive at the following prior distributions for $V^e$ and $V^o$:
+$$ V^e\sim \text{Dirichlet}(b) ,\quad V^o\sim \text{Dirichlet}(c) , $$
+with the constants $b=(b_0,b_2,b_4,\ldots)$ and $c=(c_1,c_3,c_5,\ldots)$ chosen either in the noninformative or in the informative way:
+
+1. *noninformative:* $b_j = 2v^{(0)}_j$, $c_k = 2v^{(0)}_k$, for $j$ even and $k$ odd,
+2. *informative:* $b_j = 1 + 2v^{(0)}_j$, $c_k = 1 + 2v^{(0)}_k$, for $j$ even and $k$ odd.
+
+## Posterior distribution
+
+The posterior distribution for $V$, or $V^e$ and $V^o$, respectively, is easily derived through Bayes' Theorem. What is a bit more complicated is the question how to sample from this distribution, which is crucial for obtaining, for example, credible regions or morginal credible intervals. For this we will describe how to extend the distribution on the probability simplex (or product of probability simplices in the even/odd index decomposition) to a distribution on the positive orthant, so that we can employ a standard Gibbs sampling procedure to sample from the posterior distribution. 
+
+As before we will first describe this for the random vector $V$ before describing the necessary adaptations for the even/odd index decomposition.
+
+### Distribution on probability simplex
+
+We derive the posterior distribution by using the latent variable $Z$. Recall that given the value of the latent variable, the distribution of the sample is independent of the intrinsic volumes. As in [this vignette](estim-conic-intrinsic-volumes-with-EM.html), we use bold letters to denote the vectors collecting the sample points, and we use the notation
+$$ f_{ik} = \begin{cases} f_k(x_i)f_{d-k}(y_i) & \text{if } 0<k<d \\ 1 & \text{if } k\in\{0,d\}\end{cases} $$
+where $f_k$ denotes the density of $\chi_k^2$,
+\begin{align*}
+   & p(V=v\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) = \sum_{\mathbf z\in\{0,\ldots,d\}^N} p(V=v, \mathbf Z=\mathbf z\mid \mathbf X=\mathbf x,\mathbf Y=\mathbf y)
+\\ & \qquad = \sum_{\mathbf z\in\{0,\ldots,d\}^N} \frac{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y\mid \mathbf Z=\mathbf z)\, p(\mathbf Z=\mathbf z\mid V=v)\, p(V=v)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)}
+\\ & \qquad = \frac{p(V=v)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)} \sum_{\mathbf z\in\{0,\ldots,d\}^N} \prod_{i=1}^N v_0^{(z_i=0)} v_d^{(z_i=d)} \big(v_{z_i}\,f_{z_i}(x_i)\,f_{d-z_i}(y_i)\big)^{(0<z_i<d)}
+\\ & \qquad = \frac{p(V=v)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)} \; \prod_{i=1}^N \sum_{k=0}^d v_k\,f_{ik} .
+\end{align*}
+
+### Extended distribution on positive orthant
+
+In order to be able to employ a standard Gibbs sampling procedure to obtain samples from the posterior distribution, we extend the lower-dimensional distribution on the probability simplex to a full-dimensional distribution on the positive orthant. For this we define the random variable $W\in\text{R}^{d+1}$ via
+$$ W = R\cdot V = \frac{R}{\sqrt{d+1}}\sqrt{d+1} V , $$
+where $R\sim \chi_{d+1}$ independent of $V$. By construction, renormalizing $W$ yields $V$,
+$$ \frac{W}{\|W\|_1}=V , $$
+so any sampling of $W$ can easily be converted into a sampling of $V$.
+
+What is missing at this point is the density of $W$. This can be obtained by considering the parametrization of the positive orthant given by
+$$ \Delta_d\times \text{R}_+\to\text{R}_+^{d+1} ,\quad (v,t)\mapsto t\sqrt{d+1} x , $$
+where we introduce the scaling factor $\sqrt{d+1}$ because the probability simplex only contains the scaled diagonal $\frac{1}{d+1}1_{d+1}$, which has length $\frac1{\sqrt{d+1}}$. The normal Jacobian in $w=(w_0,\ldots,w_d)$, that is, the absolute value of the determinant of the Jacobian in $w$, of the inverse map is given by $\|w\|_1^{-d}$; see [below](#proof_normal_jacobian) for a proof. Hence, the density of $W$ can be expressed in the form
+$$ p(W=w) = \|w\|_1^{-d}\; p(R=\|w\|_1)\; p\Big(V=\frac{w}{\|w\|_1}\Big) . $$
+For the posterior distribution we thus obtain
+$$ p(W=w\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) = \frac{p(W=w)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)} \prod_{i=1}^N \frac{\sum_{k=0}^d f_{ik}\, w_k}{\|w\|_1} . $$
+The prior distribution of the extended random variable is given by
+\begin{align*}
+   p(W=w) & = \|w\|_1^{-d}\; p(R=\|w\|_1)\, \frac{\Gamma(\|a\|_1)}{\Gamma(a_0)\dots\Gamma(a_d)}\, \frac{w_0^{a_0-1}\dots w_d^{a_d-1}}{\|w\|_1^{\|a\|_1-d-1}}
+\\ & = \frac{\frac{\Gamma(\|a\|_1)}{\Gamma(a_0)\dots\Gamma(a_d)}}{2^{(d-1)/2}\Gamma((d+1)/2)} \frac{\|w\|_1^{d+1-\|a\|_1}\, w_0^{a_0-1}\dots w_d^{a_d-1}}{\exp(\|w\|_1^2/2)} .
+\end{align*}
+
+### Change to logarithmic scale
+
+For the sampling it makes more sense, numerically, to consider the logarithm of the random variables. Taking into account the normal Jacobian that results from the change of variable, we obtain the posterior density of the random variable $\log W$ as follows:
+\begin{align*}
+   & p(\log W=\log w\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) = \frac{p(\log W=\log w)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)} \prod_{i=1}^N \frac{\sum_{k=0}^d f_{ik}\,w_k}{\|w\|_1} ,
+\\ & p(\log W=\log w) = \frac{\frac{\Gamma(\|a\|_1)}{\Gamma(a_0)\dots\Gamma(a_d)}}{2^{(d-1)/2}\Gamma((d+1)/2)} \frac{\|w\|_1^{d+1-\|a\|_1}\, w_0^{a_0}\dots w_d^{a_d}}{\exp(\|w\|_1^2/2)} .
+\end{align*}
+For the two choices of constants for the prior distribution we obtain
+\begin{align*}
+   & \text{non-informative choice:}
+\\ & \qquad % p(W=w) = \frac{\frac{1}{\Gamma(v_0^{(0)})\dots \Gamma(v_d^{(0)})}}{2^{(d-1)/2}\Gamma((d+1)/2)} \frac{\|w\|_1^d}{\exp(\|w\|_1^2/2)\, w_0^{1-v_0^{(0)}} \dots w_d^{1-v_d^{(0)}}} ,
+            p(\log W=\log w) = \frac{\frac{1}{\Gamma(v_0^{(0)})\dots \Gamma(v_d^{(0)})}}{2^{(d-1)/2}\Gamma((d+1)/2)} \frac{\|w\|_1^d\, w_0^{v_0^{(0)}} \dots w_d^{v_d^{(0)}}}{\exp(\|w\|_1^2/2)} ,
+\\[2mm] & \text{informative choice:}
+\\ & \qquad % p(W=w) = \frac{\frac{\Gamma(d+2)}{\Gamma(1+v_0^{(0)})\dots \Gamma(1+v_d^{(0)})}}{2^{(d-1)/2}\Gamma((d+1)/2)} \frac{w_0^{v_0^{(0)}}\dots w_d^{v_d^{(0)}}}{\|w\|_1\exp(\|w\|_1^2/2)} .
+            p(\log W=\log w) = \frac{\frac{\Gamma(d+2)}{\Gamma(1+v_0^{(0)})\dots \Gamma(1+v_d^{(0)})}}{2^{(d-1)/2}\Gamma((d+1)/2)} \frac{w_0^{1+v_0^{(0)}}\dots w_d^{1+v_d^{(0)}}}{\|w\|_1\exp(\|w\|_1^2/2)} .
+\end{align*}
+
+### Even and odd indices
+
+As for the decomposition of the vectors into even and odd indices, we note that the posterior distribution on the probability simplex is trivially obtained from the observation $V=v\iff (V^e=v^e \text{ and } V^o=v^o)$, where $v=(v_0,v_1,\ldots,v_d)$, $v^e=2(v_0,v_2,v_4,\ldots)$, $v^o=2(v_1,v_3,v_5,\ldots)$, 
+\begin{align*}
+   & p(V^e=v^e, V^o=v^o\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) = \frac{p(V^e=v^e)\; p(V^o=v^o)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)} \; \prod_{i=1}^N \sum_{k=0}^d v_k\,f_{ik} .
+\end{align*}
+Analogous to the above extension of $V$ to $W$, we extend $V^e$ and $V^o$ to $U$ and $Z$, respectively,^[We use the letters $U$ and $Z$ out of lack of better choices; using superscripts makes subsequent formulas unnecessarily complicated.]
+$$ U = R^e\cdot V^e ,\quad Z = R^o\cdot V^o , $$
+where $R^e\sim \chi_{d^e+1}$ and $R^o\sim \chi_{d^o+1}$ independent of each other and of $V^e$ and $V^o$. We use the index notation $U=(U_0,U_2,U_4,\ldots)^T\in\text{R}^{d^e+1}$ and $Z=(Z_1,Z_3,Z_5,\ldots)^T\in\text{R}^{d^o+1}$. As above, we obtain
+\begin{align*}
+   p(U=u, Z=z) & = \|u\|_1^{-d^e}\; \|z\|_1^{-d^o}\; p(R^e=\|u\|_1)\; p(R^o=\|z\|_1)\; p\Big(V^e=\frac{u}{\|u\|_1}, V^o=\frac{z}{\|z\|_1}\Big) ,
+\end{align*}
+so the extended posterior distribution, directly converted to the distribution of the logarithms, is given by
+\begin{align*}
+   p(\log U=\log u, \log Z=\log z\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) & = \frac{p(\log U=\log u)\; p(\log Z=\log z)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)}
+\\ & \quad \prod_{i=1}^N \Big( \frac{\sum_{k\text{ even}}f_{ik}\,u_k}{2\|u\|_1} + \frac{\sum_{k\text{ odd}}f_{ik}\,z_k}{2\|z\|_1}\Big)  ,
+\end{align*}
+and the prior distribution for the even indices,
+\begin{align*}
+%   p(U=u) & = \|u\|_1^{-d^e}\; p(R^e=\|u\|_1)\, \frac{\Gamma(\|b\|_1)}{\Gamma(b_0)\Gamma(b_2)\Gamma(b_4)\dots}\, \frac{u_0^{b_0-1}u_2^{b_2-1}u_4^{b_4-1}\dots}{\|u\|_1^{\|b\|_1-d^e-1}}
+%\\ & = \frac{\frac{\Gamma(\|b\|_1)}{\Gamma(b_0)\Gamma(b_2)\Gamma(b_4)\dots}}{2^{(d^e-1)/2}\Gamma((d^e+1)/2)} \frac{\|u\|_1^{d^e+1-\|b\|_1}\, u_0^{b_0-1}u_2^{b_2-1}u_4^{b_4-1}\dots}{\exp(\|u\|_1^2/2)} ,
+   p(\log U=\log u) & = \frac{\frac{\Gamma(\|b\|_1)}{\Gamma(b_0)\Gamma(b_2)\Gamma(b_4)\dots}}{2^{(d^e-1)/2}\Gamma((d^e+1)/2)} \frac{\|u\|_1^{d^e+1-\|b\|_1}\, u_0^{b_0}u_2^{b_2}u_4^{b_4}\dots}{\exp(\|u\|_1^2/2)} ,
+\end{align*}
+and similarly for the odd indices,
+\begin{align*}
+%   p(Z=z) & = \frac{\frac{\Gamma(\|c\|_1)}{\Gamma(c_1)\Gamma(c_3)\Gamma(c_5)\dots}}{2^{(d^o-1)/2}\Gamma((d^o+1)/2)} \frac{\|z\|_1^{d^o+1-\|c\|_1}\, z_1^{c_1-1}z_3^{c_3-1}z_5^{c_5-1}\dots}{\exp(\|z\|_1^2/2)} .
+   p(\log Z=\log z) & = \frac{\frac{\Gamma(\|c\|_1)}{\Gamma(c_1)\Gamma(c_3)\Gamma(c_5)\dots}}{2^{(d^o-1)/2}\Gamma((d^o+1)/2)} \frac{\|z\|_1^{d^o+1-\|c\|_1}\, z_1^{c_1}z_3^{c_3}z_5^{c_5}\dots}{\exp(\|z\|_1^2/2)} .
+\end{align*}
+For the two choices of constants for the prior distribution we obtain
+\begin{align*}
+   & \text{non-informative choice:}
+\\ & \qquad p(\log U=\log u) = \frac{\frac{1}{\Gamma(2v_0^{(0)})\Gamma(2v_2^{(0)})\Gamma(2v_4^{(0)})\dots}}{2^{(d^e-1)/2}\Gamma((d^e+1)/2)} \frac{\|u\|_1^{d^e}\, u_0^{2v_0^{(0)}}u_2^{2v_2^{(0)}}u_4^{2v_4^{(0)}}\dots}{\exp(\|u\|_1^2/2)} ,
+\\[1mm] & \qquad p(\log Z=\log z) = \frac{\frac{1}{\Gamma(2v_1^{(0)})\Gamma(2v_3^{(0)})\Gamma(2v_5^{(0)})\dots}}{2^{(d^o-1)/2}\Gamma((d^o+1)/2)} \frac{\|z\|_1^{d^o}\, z_1^{2v_1^{(0)}}z_3^{2v_3^{(0)}}z_5^{2v_5^{(0)}}\dots}{\exp(\|z\|_1^2/2)} ,
+\\[3mm] & \text{informative choice:}
+\\ & \qquad p(\log U=\log u) = \frac{\frac{d^e+2}{\Gamma(1+2v_0^{(0)})\Gamma(1+2v_2^{(0)})\Gamma(1+2v_4^{(0)})\dots}}{2^{(d^e-1)/2}\Gamma((d^e+1)/2)} \frac{u_0^{1+2v_0^{(0)}}u_2^{1+2v_2^{(0)}}u_4^{1+2v_4^{(0)}}\dots}{\|u\|_1\exp(\|u\|_1^2/2)} ,
+\\[1mm] & \qquad p(\log Z=\log z) = \frac{\frac{d^o+2}{\Gamma(1+2v_1^{(0)})\Gamma(1+2v_3^{(0)})\Gamma(1+2v_5^{(0)})\dots}}{2^{(d^o-1)/2}\Gamma((d^o+1)/2)} \frac{z_1^{1+2v_1^{(0)}}z_3^{1+2v_3^{(0)}}z_5^{1+2v_5^{(0)}}\dots}{\|z\|_1\exp(\|z\|_1^2/2)} .
+\end{align*}
+
+
+## Gibbs sampling
+
+For the extended distribution we can employ a standard Gibbs sampling method, see for example [@GCSDVR14, Ch. 11] or [@HTF09, Sec. 8.6].
+
+The simple idea of this algorithm is to go from one sample point to the next by going over all coordinates (in a random order that is chosen before each updating round) and replace each, while holding the remaining coordinates fixed, with a sample from the corresponding conditional distribution.
+
+### Conditional distribution
+
+Assuming that the current sample is $w=(w_0,\ldots,w_d)$, we have, up to normalizing constant, the following conditional posterior distribution for the $k$th coordinate of $\log W$:
+\begin{align*}
+   & p(\log W_k=t\mid W_{-k}=w_{-k}, \mathbf X=\mathbf x, \mathbf Y=\mathbf y)\propto
+\\ & \qquad\quad \frac{(e^t+\|w_{-k}\|_1)^{d+1-\|a\|_1}\, e^{t a_k}}{\exp((e^t+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{e^t f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{e^t+\|w_{-k}\|_1} =: F(t) .
+\end{align*}
+We sample from $\log W_k$, in theory, through the following procedure:
+
+1. compute the integral $\int_{-\infty}^\infty F(t)\,dt$ to get the normalizing constant,
+2. sample $u\in(0,1)$ from the uniform distribution,
+3. find the sample $t_w$ by solving the equation $\int_{-\infty}^{t_w} F(t)\,dt=u\int_{-\infty}^\infty F(t)\,dt$ or, equivalently, $\int_{t_w}^\infty F(t)\,dt=(1-u)\int_{-\infty}^\infty F(t)\,dt$.
+
+In order to make this procedure feasible, we must find sensible cut-off points $t_-<t_+$ so that solving the equation $\int_{t_-}^{t_w} F(t)\,dt= u\int_{t_-}^{t_+} F(t)\,dt$ or $\int_{t_w}^{t_+} F(t)\,dt=(1-u)\int_{t_-}^{t_+} F(t)\,dt$ yields a point close enough to the solution of the original equations. More precisely, assuming that
+$$ \int_{-\infty}^{t_-} F(t)\,dt \leq \varepsilon_- ,\quad \int_{t_+}^\infty F(t)\,dt \leq \varepsilon_+ , $$
+we have
+\begin{align*}
+   \int_{t_-}^{t^\ast} F(t)\,dt & \leq u \int_{t_-}^{t_+} F(t)\,dt - \varepsilon_-
+%\\ &
+\;\Rightarrow\; \int_{-\infty}^{t^\ast} F(t)\,dt \leq u \int_{-\infty}^\infty F(t)\,dt 
+% &
+\;\Rightarrow\; t^\ast \leq t^w .
+% \\ \int_{t_\ast}^{t^+} F(t)\,dt & \leq (1-u) \int_{t_-}^{t_+} F(t)\,dt - \varepsilon_+
+% \\ & \;\Rightarrow\; \int_{t^\ast}^\infty F(t)\,dt \leq (1-u) \int_{-\infty}^\infty F(t)\,dt & \;\Rightarrow\; t^\ast \geq t^w ,
+% \\ \int_{t_-}^{t^\ast} F(t)\,dt & \geq u \int_{t_-}^{t_+} F(t)\,dt + u(\varepsilon_-+\varepsilon_+)
+% \\ & \;\Rightarrow\; \int_{-\infty}^{t^\ast} F(t)\,dt \geq u \int_{-\infty}^\infty F(t)\,dt & \;\Rightarrow\; t^\ast \geq t^w ,
+% \\ \int_{t^\ast}^{t_+} F(t)\,dt & \geq (1-u) \int_{t_-}^{t_+} F(t)\,dt + (1-u)(\varepsilon_-+\varepsilon_+)
+% \\ & \;\Rightarrow\; \int_{t^\ast}^\infty F(t)\,dt \geq (1-u) \int_{-\infty}^\infty F(t)\,dt & \;\Rightarrow\; t^\ast \leq t^w .
+\end{align*}
+Similarly,
+\begin{align*}
+   \int_{t^\ast}^{t_+} F(t)\,dt \geq (1-u) \int_{t_-}^{t_+} F(t)\,dt + (1-u)(\varepsilon_-+\varepsilon_+) & \;\Rightarrow\; t^\ast \leq t^w ,
+\\ \int_{t_\ast}^{t^+} F(t)\,dt \leq (1-u) \int_{t_-}^{t_+} F(t)\,dt - \varepsilon_+ & \;\Rightarrow\; t^\ast \geq t^w ,
+\\ \int_{t_-}^{t^\ast} F(t)\,dt \geq u \int_{t_-}^{t_+} F(t)\,dt + u(\varepsilon_-+\varepsilon_+) & \;\Rightarrow\; t^\ast \geq t^w .
+\end{align*}
+For the upper bound of the left tail we assume $t_-\leq0$, so that in the non-informative case
+\begin{align*}
+   \int_{-\infty}^{t_-} F(t)\,dt & = \int_{-\infty}^{t_-} \frac{(e^t+\|w_{-k}\|_1)^d\, e^{t v^{(0)}_k}}{\exp((e^t+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{e^t f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{e^t+\|w_{-k}\|_1} \,dt
+\\ & \leq \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \int_{-\infty}^{t_-} \frac{(1+\|w_{-k}\|_1)^d\, e^{t v^{(0)}_k}}{\exp(\|w_{-k}\|_1^2/2)} \,dt
+\\ & = \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \frac{(1+\|w_{-k}\|_1)^d}{\exp(\|w_{-k}\|_1^2/2)} \frac{e^{v^{(0)}_k t_-}}{v^{(0)}_k} = \varepsilon_- .
+\end{align*}
+Solving for $t_-$ yields
+\begin{align*}
+   t_- = \frac{1}{v^{(0)}_k}\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|w_{-k}\|_1^2}{2} - d\log(1+\|w_{-k}\|_1) - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\} .
+\end{align*}
+Similarly, we obtain in the informative case
+<!-- \begin{align*} -->
+<!--    \int_{-\infty}^{t_-} F(t)\,dt & = \int_{-\infty}^{t_-} \frac{e^{t(1+v^{(0)}_k)}}{(e^t+\|w_{-k}\|_1)\,\exp((e^t+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{e^t f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{e^t+\|w_{-k}\|_1} \,dt -->
+<!-- \\ & \leq \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \int_{-\infty}^{t_-} \frac{e^{t(1+v^{(0)}_k)}}{\|w_{-k}\|_1\, \exp(\|w_{-k}\|_1^2/2)} \,dt -->
+<!-- \\ & = \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \frac{1}{\|w_{-k}\|_1\, \exp(\|w_{-k}\|_1^2/2)} \frac{e^{t_-}}{1+v^{(0)}_k} = \varepsilon_- . -->
+<!-- \end{align*} -->
+<!-- Solving for $t_-$ yields -->
+\begin{align*}
+   t_- = \frac{1}{1+v^{(0)}_k} \max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|w_{-k}\|_1^2}{2} + \log\|w_{-k}\|_1 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\} .
+\end{align*}
+
+For the upper bound of the right tail we denote $s=e^t,s_+=e^{t_+}$, so that
+\begin{align*}
+   \int_{t_+}^\infty F(t)\,dt & = \int_{s_+}^\infty \frac{F(\log s)}{s}\,ds
+% \\ &
+= \int_{s_+}^\infty \frac{(s+\|w_{-k}\|_1)^{d+1-\|a\|_1}\, s^{a_k-1}}{\exp((s+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{s f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{s+\|w_{-k}\|_1} \,ds .
+\end{align*}
+In the non-informative case we obtain, assuming $t_+\geq0$,
+\begin{align*}
+   \int_{t_+}^\infty F(t)\,dt & = \int_{s_+}^\infty \frac{(s+\|w_{-k}\|_1)^d}{s^{1-v^{(0)}_k}\, \exp((s+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{s f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{s+\|w_{-k}\|_1} \,ds
+\\ & \leq \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \int_{s_+ +\|w_{-k}\|_1}^\infty s^d\, e^{-s^2/2} \,ds
+\\ & = \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) 2^{(d-1)/2} \Gamma\Big( \frac{d+1}{2}, \frac{(s_+ +\|w_{-k}\|_1)^2}{2}\Big) = \varepsilon_+ ,
+\end{align*}
+where $\Gamma(\cdot,\cdot)$ denotes the [incomplete gamma function](https://en.wikipedia.org/wiki/Incomplete_gamma_function). Solving for $t_+=\log s_+$ yields
+\begin{align*}
+    t_+ = \log\bigg( \sqrt{ 2\log\Gamma^{-1}\Big( \frac{d+1}{2}, \log\varepsilon_+ - \frac{d-1}{2} \log 2 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) } - \|w_{-k}\|_1 \bigg) .
+\end{align*}
+Similarly, we obtain in the non-informative case
+<!-- \begin{align*} -->
+<!--    \int_{t_+}^\infty F(t)\,dt & = \int_{s_+}^\infty \frac{s^{v^{(0)}_k}}{(s+\|w_{-k}\|_1)\, \exp((s+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{s f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{s+\|w_{-k}\|_1} \,ds -->
+<!-- \\ & \leq \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \int_{s_+ +\|w_{-k}\|_1}^\infty e^{-s^2/2} \,ds -->
+<!-- \\ & = \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \frac{1}{\sqrt{2}} \Gamma\Big( \frac{1}{2}, \frac{(s_+ +\|w_{-k}\|_1)^2}{2}\Big) = \varepsilon_+ , -->
+<!-- \end{align*} -->
+<!-- where $\Gamma(\cdot,\cdot)$ denotes the [incomplete gamma function](https://en.wikipedia.org/wiki/Incomplete_gamma_function). Solving for $t_+=\log s_+$ yields -->
+\begin{align*}
+    t_+ = \log\bigg( \sqrt{ 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) } - \|w_{-k}\|_1 \bigg) .
+\end{align*}
+
+
+### Even and odd indices
+
+TBD
+
+## Implementation
+
+TBD
+
+### Example
+
+TBD
+
+## Appendix: proof of the parameter change formula {#proof_normal_jacobian}
+
+Let $B\in\text{R}^{(d+1)\times d}$ such that its columns form an orthogonal basis of the hyperplane defined by the main diagonal $1_{d+1}=(1,\ldots,1)\in\text{R}^{d+1}$, that is,
+$$ B^TB=I_d ,\quad B^T1_{d+1}=0 ,\quad \text{or equivalently,}\quad \big(B , \tfrac{1}{\sqrt{d+1}}1_{d+1}\big)\in O(d+1) . $$
+We denote the transformed probability simplex by $\tilde\Delta^d=B^T\Delta^d\subset\text{R}^d$, so that
+$$ \Delta^d = \tfrac{1}{d+1}1_{d+1} + B\tilde\Delta^d , $$
+and consider the parametrization
+$$ \psi\colon\tilde\Delta^d\times \text{R}_+\to \text{R}_+^{d+1} ,\quad \psi(\mu,t) = t\sqrt{d+1}(\tfrac{1}{d+1}1_{d+1} + B\mu) . $$
+The inverse of this parametrization is given by
+$$ \psi^{-1}(w) = \Big( \frac{1}{w_0+\dots+w_d}B^Tw ,\; \frac{w_0+\dots+w_d}{\sqrt{d+1}}\Big) , $$
+and its Jacobian matrix is given by
+$$ D\psi^{-1}(w) = \begin{pmatrix} B^T \frac{1}{(w_0+\dots+w_d)^2}\big( (w_0+\dots+w_d) I_{d+1} - w1_{d+1}^T\big) \\ \frac{1}{\sqrt{d+1}}1_{d+1}^T \end{pmatrix} . $$
+We compute the normal determinant of the Jacobian matrix as follows:
+\begin{align*}
+   \big|\det D\psi^{-1}(w)\big| & = \left|\det \big( D\psi^{-1}(w) \big(B , \tfrac{1}{\sqrt{d+1}}1_{d+1}\big)\big) \right|
+\\ & = \left|\det \begin{pmatrix}
+B^T \frac{1}{(w_0+\dots+w_d)^2}\big( (w_0+\dots+w_d) I_{d+1} - w1_{d+1}^T\big) B & *
+\\ 0 & 1
+\end{pmatrix} \right|
+\\ & = \left|\det \big( \tfrac{1}{(w_0+\dots+w_d)^2}\big( (w_0+\dots+w_d) I_d \big) \big) \right|
+\\ & = (w_0+\dots+w_d)^{-d} .
+\end{align*}
+
+
+## References
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

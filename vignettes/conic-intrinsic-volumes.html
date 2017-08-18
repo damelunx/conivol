@@ -12,7 +12,7 @@
 
 <meta name="author" content="Dennis Amelunxen" />
 
-<meta name="date" content="2017-08-09" />
+<meta name="date" content="2017-08-18" />
 
 <title>Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</title>
 
@@ -32,7 +32,7 @@
 
 <h1 class="title toc-ignore">Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</h1>
 <h4 class="author"><em>Dennis Amelunxen</em></h4>
-<h4 class="date"><em>2017-08-09</em></h4>
+<h4 class="date"><em>2017-08-18</em></h4>
 
 
 
@@ -87,7 +87,7 @@ any positive scaling of an element in <span class="math inline">\(C\)</span> lie
 <p>The circular cones form a class of cones, which is interesting for both theoretical and practical purposes. For theoretical purposes because circular cones are known to satisfy certain extreme inequalities (see <a href="#inequs">below</a>), and are suspected to satisfy even more; and for practical purposes because they, and products of them, provide a reasonably large, yet accessible, class of cones which is easy to analyze with respect to the intrinsic volumes.</p>
 </div>
 </div>
-<div id="conic-intrinsic-volumes" class="section level2">
+<div id="intro_intrvol" class="section level2">
 <h2>Conic intrinsic volumes</h2>
 <p>The conic intrinsic volumes of a closed convex cone <span class="math inline">\(C\subseteq\text{R}^d\)</span> form a <span class="math inline">\((d+1)\)</span>-element vector, <span class="math display">\[ v(C) = (v_0(C),\ldots,v_d(C)) \geq 0 ,\quad \sum_{k=0}^d v_k(C) = 1 . \]</span> If <span class="math inline">\(C\)</span> is a polyhedral cone, then the intrinsic volumes can be characterized in the following way: letting <span class="math inline">\(g\sim N(0,I_d)\)</span> a Gaussian vector and <span class="math inline">\(\Pi_C\)</span> denoting the projection map onto <span class="math inline">\(C\)</span>, <span class="math display">\[ \Pi_C\colon\text{R}^d\to C ,\qquad \Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\} , \]</span> the <span class="math inline">\(k\)</span>th intrinsic volume is the probability that <span class="math inline">\(\Pi_C(g)\)</span> lies in the relative interior of a <span class="math inline">\(k\)</span>-dimensional face of <span class="math inline">\(C\)</span>, <span class="math display">\[ v_k(C) = \text{Prob}\big\{\Pi_C(g)\in \text{relint}(F), F \text{ face of }C, \dim(F)=k\big\} . \]</span> Note that this characterization holds exclusively for polyhedral cones.</p>
 <p>If <span class="math inline">\(C=L\)</span> is a linear subspace, then <span class="math display">\[ v_k(L) = \begin{cases} 1 &amp; \text{if } k=\dim(L) \\ 0 &amp; \text{else} . \end{cases} \]</span> It can be shown that if <span class="math inline">\(C\)</span> is <em>not</em> a linear subspace, then <span class="math display">\[ v_0(C)+v_2(C)+v_4(C)+\cdots = v_1(C)+v_3(C)+v_5(C)+\cdots = \tfrac{1}{2} . \]</span> This linear relation is the reason why in the computations in <code>conivol</code> the underlying closed convex cone is always assumed to be not a linear subspace.</p>
@@ -121,12 +121,13 @@ any positive scaling of an element in <span class="math inline">\(C\)</span> lie
 <div id="bivchibars_cone" class="section level3">
 <h3>Relation to closed convex cones</h3>
 <p>The (bivariate) chi-bar-squared distribution corresponding to a closed convex cone <span class="math inline">\(C\)</span> is of course the one arising from taking the conic intrinsic volumes as weights; in terms of the cdf, <span class="math display">\[ F_C(t) = \sum_{k=0}^d v_k(C) F_k(t) ,\qquad \Phi_C(s,t) = \sum_{k=0}^d v_k(C) F_k(s) F_{d-k}(t) . \]</span> A natural sampling for these distributions involves the projection map <span class="math inline">\(\Pi_C\)</span>. Denoting by <span class="math inline">\(g\sim N(0,I_d)\)</span> a Gaussian vector, one can show that the chi-bar-squared and the bivariate chi-bar-squared distributions are given by the distributions of the random variables <span class="math display">\[ \|\Pi_C(g)\|^2 \quad\text{and}\quad \big(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2\big) . \]</span> The fact that these random variables have the (bivariate) chi-bar-squared distribution with weights given by the conic intrinsic volumes is one form of the Conic Steiner Theorem, see <span class="citation">(McCoy and Tropp 2014)</span>.</p>
-<p>The moments of the continuous random variables <span class="math inline">\(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2\)</span> are closely related with those of the discrete random variable defined by the intrinsic volumes. In fact, for the first and second moment we obtain the following: <span class="math display">\[ \begin{align}
+The moments of the continuous random variables <span class="math inline">\(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2\)</span> are closely related with those of the discrete random variable defined by the intrinsic volumes. In fact, for the first and second moment we obtain the following:
+<span class="math display">\[\begin{align*}
   \delta(C) &amp; = \text{E}\big[\|\Pi_C(g)\|^2\big]
 \\ &amp; = d-\text{E}\big[\|\Pi_{C^\circ}(g)\|^2\big] ,
 \\ \text{var}(C) &amp; = \text{var}\big(\|\Pi_C(g)\|^2\big)-2\delta(C)
 \\ &amp; = \text{var}\big(\|\Pi_{C^\circ}(g)\|^2\big)-2(d-\delta(C)) .
-\end{align} \]</span></p>
+\end{align*}\]</span>
 </div>
 </div>
 <div id="inequs" class="section level2">
@@ -165,10 +166,11 @@ The lineality space <span class="math inline">\(L\)</span> is given by the linea
 </div>
 <div id="polyhedral-cones-given-by-inequalities" class="section level3">
 <h3>Polyhedral cones given by inequalities</h3>
-<p>We assume that the polyhedral cone is given in the form <span class="math display">\[ C = \{y\in\text{R}^d \mid A^Ty\leq 0\} ,\quad A\in\text{R}^{d\times n} ; \]</span> the cone <span class="math inline">\(\tilde C\)</span> will accordingly be given in the form <span class="math display">\[ \tilde C = \{\tilde y\in\text{R}^e \mid \tilde A^T\tilde y\leq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , \]</span> with <span class="math inline">\(e=\text{dim}(C)-\text{lin}(C)\)</span> and <span class="math inline">\(m=\text{(number of facets of $\bar C$)}\leq n\)</span>. Moreover, we will specify the orthogonal decomposition of <span class="math inline">\(C\)</span> via the matrices <span class="math inline">\(Q_L\in\text{R}^{d\times(d-\text{dim}(C))}\)</span> and <span class="math inline">\(Q_C\in\text{R}^{d\times e}\)</span>, with <span class="math inline">\(Q_L^TQ_L=I_{d-\text{dim}(C)}\)</span> and <span class="math inline">\(Q_C^TQ_C=I_e\)</span>, such that <span class="math display">\[\begin{align}
+We assume that the polyhedral cone is given in the form <span class="math display">\[ C = \{y\in\text{R}^d \mid A^Ty\leq 0\} ,\quad A\in\text{R}^{d\times n} ; \]</span> the cone <span class="math inline">\(\tilde C\)</span> will accordingly be given in the form <span class="math display">\[ \tilde C = \{\tilde y\in\text{R}^e \mid \tilde A^T\tilde y\leq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , \]</span> with <span class="math inline">\(e=\text{dim}(C)-\text{lin}(C)\)</span> and <span class="math inline">\(m=\text{(number of facets of $\bar C$)}\leq n\)</span>. Moreover, we will specify the orthogonal decomposition of <span class="math inline">\(C\)</span> via the matrices <span class="math inline">\(Q_L\in\text{R}^{d\times(d-\text{dim}(C))}\)</span> and <span class="math inline">\(Q_C\in\text{R}^{d\times e}\)</span>, with <span class="math inline">\(Q_L^TQ_L=I_{d-\text{dim}(C)}\)</span> and <span class="math inline">\(Q_C^TQ_C=I_e\)</span>, such that
+<span class="math display">\[\begin{align*}
    L &amp; =\{y\in\text{R}^d\mid Q_L^Ty=0, Q_C^Ty=0\} ,\quad \bar C=Q_C\cdot\tilde C ,
 \\ C &amp; =\{y\in\text{R}^d \mid Q_L^Ty=0, \tilde A^TQ_C^Ty\leq 0\}  .
-\end{align}\]</span></p>
+\end{align*}\]</span>
 <p>We use polarity to reduce this case to the case of cones given by generators. Calling <code>rbichibarsq_polyh_gen</code> with input matrix <span class="math inline">\(A\)</span> produces the list <span class="math display">\[ [ \text{dim}(C^\circ),\text{lin}(C^\circ),Q_L,Q_C,\tilde A,M'] . \]</span> We compute the corresponding out of <code>rbichibarsq_polyh_ineq</code>, <span class="math display">\[ [ \text{dim}(C),\text{lin}(C),Q_L,Q_C,\tilde A,M ] , \]</span> in the following way:</p>
 <ul>
 <li><span class="math inline">\(\text{dim}(C)=d-\text{lin}(C^\circ)\)</span>, <span class="math inline">\(\text{lin}(C)=d-\text{dim}(C^\circ)\)</span>,</li>
