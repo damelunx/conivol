@@ -67,6 +67,8 @@ There are two natural choices for the parameters of the prior distribution, one 
 1. *noninformative:* $a_k = v^{(0)}_k$ for $k=0,\ldots,d$. In this case we have matched the first moment: $\text{E}[V]=v^{(0)}$. The marginal distributions are convex and widely spread; the prior sample size is $\|a\|_1=1$. Note that in this case we must have $v^{(0)}_k>0$ for all $k$, cp. the discussion in [this vignette](conic-intrinsic-volumes.html#intro_intrvol).
 2. *informative:* $a_k = 1 + v^{(0)}_k$ for $k=0,\ldots,d$. In this case we have matched the modes: $\text{mode}(V_k)=v^{(0)}_k$. The marginal distributions are concave; the prior sample size is $\|a\|_1=d+2$.
 
+We will discuss both cases, noninformative and informative, but eventually we will only [implement](#implementation) the informative case, as the noninformative case involves some inherent numerical difficulties.
+
 ### Even and odd indices
 
 By the same reasoning we arrive at the following prior distributions for $V^e$ and $V^o$:
@@ -200,45 +202,54 @@ We sample from $\log W_k$, in theory, through the following procedure:
 
 1. compute the integral $\int_{-\infty}^\infty F(r)\,dr$ to get the normalizing constant,
 2. sample $u\in(0,1)$ from the uniform distribution,
-3. find the sample $r_w$ by solving the equation $\int_{-\infty}^{r_w} F(r)\,dr=u\int_{-\infty}^\infty F(r)\,dr$ or, equivalently, $\int_{r_w}^\infty F(r)\,dr=(1-u)\int_{-\infty}^\infty F(r)\,dr$.
+3. find the sample $r_u$ by solving the equation $\int_{-\infty}^{r_u} F(r)\,dr=u\int_{-\infty}^\infty F(r)\,dr$ or, equivalently, $\int_{r_u}^\infty F(r)\,dr=(1-u)\int_{-\infty}^\infty F(r)\,dr$.
 
 ### Cut-off points
 
-In order to make the above procedure feasible, we must find sensible cut-off points $r_-<r_+$ so that, broadly speaking, solving the equation $\int_{r_-}^{r_w} F(r)\,dr= u\int_{r_-}^{r_+} F(r)\,dr$ or $\int_{r_w}^{r_+} F(r)\,dr=(1-u)\int_{r_-}^{r_+} F(r)\,dr$ yields a point close enough to the solution of the original equations. More precisely, assuming that
+In order to make the above procedure feasible, we must find sensible cut-off points $r_-<r_+$ so that, broadly speaking, solving the equation $\int_{r_-}^{r_u} F(r)\,dr= u\int_{r_-}^{r_+} F(r)\,dr$ or $\int_{r_u}^{r_+} F(r)\,dr=(1-u)\int_{r_-}^{r_+} F(r)\,dr$ yields a point close enough to the solution of the original equations. More precisely, assuming that
   \[ \int_{-\infty}^{r_-} F(r)\,dr \leq \varepsilon_- ,\quad \int_{r_+}^\infty F(r)\,dr \leq \varepsilon_+ , \]
 we have
 \begin{align*}
-   \int_{r_-}^{r^\ast} F(r)\,dr & \leq u \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_-
+   \int_{r_-}^{r_\ast} F(r)\,dr & \leq u \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_-
 %\\ &
-\;\Rightarrow\; \int_{-\infty}^{r^\ast} F(r)\,dr \leq u \int_{-\infty}^\infty F(r)\,dr 
+\;\Rightarrow\; \int_{-\infty}^{r_\ast} F(r)\,dr \leq u \int_{-\infty}^\infty F(r)\,dr 
 % &
-\;\Rightarrow\; r^\ast \leq r^w .
-% \\ \int_{r_\ast}^{r^+} F(r)\,dr & \leq (1-u) \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_+
-% \\ & \;\Rightarrow\; \int_{r^\ast}^\infty F(r)\,dr \leq (1-u) \int_{-\infty}^\infty F(r)\,dr & \;\Rightarrow\; r^\ast \geq r^w ,
-% \\ \int_{r_-}^{r^\ast} F(r)\,dr & \geq u \int_{r_-}^{r_+} F(r)\,dr + u(\varepsilon_-+\varepsilon_+)
-% \\ & \;\Rightarrow\; \int_{-\infty}^{r^\ast} F(r)\,dr \geq u \int_{-\infty}^\infty F(r)\,dr & \;\Rightarrow\; r^\ast \geq r^w ,
-% \\ \int_{r^\ast}^{r_+} F(r)\,dr & \geq (1-u) \int_{r_-}^{r_+} F(r)\,dr + (1-u)(\varepsilon_-+\varepsilon_+)
-% \\ & \;\Rightarrow\; \int_{r^\ast}^\infty F(r)\,dr \geq (1-u) \int_{-\infty}^\infty F(r)\,dr & \;\Rightarrow\; r^\ast \leq r^w .
+\;\Rightarrow\; r_\ast \leq r_u .
+% \\ \int_{r_\ast}^{r_+} F(r)\,dr & \leq (1-u) \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_+
+% \\ & \;\Rightarrow\; \int_{r_\ast}^\infty F(r)\,dr \leq (1-u) \int_{-\infty}^\infty F(r)\,dr & \;\Rightarrow\; r_\ast \geq r_u ,
+% \\ \int_{r_-}^{r_\ast} F(r)\,dr & \geq u \int_{r_-}^{r_+} F(r)\,dr + u(\varepsilon_-+\varepsilon_+)
+% \\ & \;\Rightarrow\; \int_{-\infty}^{r_\ast} F(r)\,dr \geq u \int_{-\infty}^\infty F(r)\,dr & \;\Rightarrow\; r_\ast \geq r_u ,
+% \\ \int_{r_\ast}^{r_+} F(r)\,dr & \geq (1-u) \int_{r_-}^{r_+} F(r)\,dr + (1-u)(\varepsilon_-+\varepsilon_+)
+% \\ & \;\Rightarrow\; \int_{r_\ast}^\infty F(r)\,dr \geq (1-u) \int_{-\infty}^\infty F(r)\,dr & \;\Rightarrow\; r_\ast \leq r_u .
 \end{align*}
 Similarly,
 \begin{align*}
-   \int_{r^\ast}^{r_+} F(r)\,dr \geq (1-u) \int_{r_-}^{r_+} F(r)\,dr + (1-u)(\varepsilon_-+\varepsilon_+) & \;\Rightarrow\; r^\ast \leq r^w ,
-\\ \int_{r_\ast}^{r^+} F(r)\,dr \leq (1-u) \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_+ & \;\Rightarrow\; r^\ast \geq r^w ,
-\\ \int_{r_-}^{r^\ast} F(r)\,dr \geq u \int_{r_-}^{r_+} F(r)\,dr + u(\varepsilon_-+\varepsilon_+) & \;\Rightarrow\; r^\ast \geq r^w .
+   \int_{r_\ast}^{r_+} F(r)\,dr \geq (1-u) \int_{r_-}^{r_+} F(r)\,dr + (1-u)(\varepsilon_-+\varepsilon_+) & \;\Rightarrow\; r_\ast \leq r_u ,
+\\ \int_{r_-}^{r_\ast} F(r)\,dr \geq u \int_{r_-}^{r_+} F(r)\,dr + u(\varepsilon_-+\varepsilon_+) & \;\Rightarrow\; r_\ast \geq r_u ,
+\\ \int_{r_\ast}^{r_+} F(r)\,dr \leq (1-u) \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_+ & \;\Rightarrow\; r_\ast \geq r_u .
 \end{align*}
+So by finding $r_1,r_2,r_3,r_4$ such that
+\begin{align*}
+   \int_{r_-}^{r_1} F(r)\,dr & = u \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_- ,
+ \quad \int_{r_2}^{r_+} F(r)\,dr = (1-u) \int_{r_-}^{r_+} F(r)\,dr + (1-u)(\varepsilon_-+\varepsilon_+) ,
+\\ \int_{r_-}^{r_3} F(r)\,dr & = u \int_{r_-}^{r_+} F(r)\,dr + u(\varepsilon_-+\varepsilon_+) ,
+ \quad \int_{r_4}^{r_+} F(r)\,dr = (1-u) \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_+ ,
+\end{align*}
+we obtain
+  \[ r_u\in \big[ \max\{r_1,r_2\}, \min\{r_3,r_4\} \big] . \]
 It can be shown, see [below](#proof_cutoff) for a proof, that in the non-informative case we have the following valid formulas for $r_-$ and $r_+$:
 \begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|w_{-k}\|_1^2}{2} - d\log(1+\|w_{-k}\|_1) - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d+1}{2}, \log\varepsilon_+ - \frac{d-1}{2} \log 2 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|w_{-k}\|_1} \Bigg\} ,
+   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|w_{-k}\|_1^2}{2} - d\log(1+\|w_{-k}\|_1) - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} ,
+\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d+1}{2}, \log\varepsilon_+ - \frac{d-1}{2} \log 2 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|w_{-k}\|_1} \Bigg\} ,
 \end{align*}
 where $\Gamma(\cdot,\cdot)$ denotes the [incomplete gamma function](https://en.wikipedia.org/wiki/Incomplete_gamma_function).
 In the informative case we have the following valid cut-off points:
 \begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|w_{-k}\|_1^2}{2} + \log\|w_{-k}\|_1 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|w_{-k}\|_1} \Bigg\} .
+   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|w_{-k}\|_1^2}{2} + \log\|w_{-k}\|_1 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} ,
+\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|w_{-k}\|_1} \Bigg\} .
 \end{align*}
 
-As for the question on how to choose $\varepsilon_-$ and $\varepsilon_+$ so that the corresponding upper and lower interval limits are sufficiently close, we can do this iteratively by starting with $\varepsilon_-=\varepsilon_+=1$ and successively halfing these values until a pre-specified threshold for the interval length has been met; the estimate for $r^w$ can then be chosen as the midpoint of that interval.
+As for the question on how to choose $\varepsilon_-$ and $\varepsilon_+$ so that the corresponding upper and lower interval limits are sufficiently close, we can do this iteratively by starting with $\varepsilon_-=\varepsilon_+=1$ and successively halfing these values until a pre-specified threshold for the interval length has been met; the estimate for $r_u$ can then be chosen as the midpoint of that interval.
 
 ### Even and odd indices
 
@@ -256,34 +267,74 @@ As above, we need to specify cut-off points, for $k$ even,
   \[ \int_{-\infty}^{r_-} G(r)\,dr \leq \varepsilon_- ,\quad \int_{r_+}^\infty G(r)\,dr \leq \varepsilon_+ . \]
 Similarly as above, it can be shown that in the non-informative case we have the following valid formulas for $r_-$ and $r_+$:
 \begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|t_{-k}\|_1^2}{2} - d^e\log(1+\|t_{-k}\|_1) - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d^e+1}{2}, \log\varepsilon_+ - \frac{d^e-1}{2} \log 2 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|t_{-k}\|_1} \Bigg\} .
+   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|t_{-k}\|_1^2}{2} - d^e\log(1+\|t_{-k}\|_1) - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} ,
+\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d^e+1}{2}, \log\varepsilon_+ - \frac{d^e-1}{2} \log 2 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|t_{-k}\|_1} \Bigg\} .
 \end{align*}
 In the informative case we have the following valid cut-off points:
 \begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|t_{-k}\|_1^2}{2} + \log\|t_{-k}\|_1 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|t_{-k}\|_1} \Bigg\} .
+   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|t_{-k}\|_1^2}{2} + \log\|t_{-k}\|_1 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} ,
+\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|t_{-k}\|_1} \Bigg\} .
 \end{align*}
 
 For $k$ odd we need to find cut-offs so that,
   \[ \int_{-\infty}^{r_-} H(r)\,dr \leq \varepsilon_- ,\quad \int_{r_+}^\infty H(r)\,dr \leq \varepsilon_+ . \]
 In the non-informative case we have the following valid formulas for $r_-$ and $r_+$:
 \begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|u_{-k}\|_1^2}{2} - d^o\log(1+\|u_{-k}\|_1) - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d^o+1}{2}, \log\varepsilon_+ - \frac{d^o-1}{2} \log 2 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|u_{-k}\|_1} \Bigg\} .
+   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|u_{-k}\|_1^2}{2} - d^o\log(1+\|u_{-k}\|_1) - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} ,
+\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d^o+1}{2}, \log\varepsilon_+ - \frac{d^o-1}{2} \log 2 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|u_{-k}\|_1} \Bigg\} .
 \end{align*}
 In the informative case we have the following valid cut-off points:
 \begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|u_{-k}\|_1^2}{2} + \log\|u_{-k}\|_1 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|u_{-k}\|_1} \Bigg\} .
+   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|u_{-k}\|_1^2}{2} + \log\|u_{-k}\|_1 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} ,
+\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|u_{-k}\|_1} \Bigg\} .
 \end{align*}
 
 ## Implementation {#implementation}
 
+Judging from the formulas for the lower cut-off point $r_-$, it seems that the non-informative case does not allow an efficient implementation. For this reason we will **only implement the informative case**.
+
 As mentioned [above](#distr_simplex), the extension of the notation $f_{ik}$ to include the edge cases was solely for notational convenience; for the implementation this is of course broken down:
 \begin{align*}
+   F(r) & = \frac{e^{(1+v^{(0)}_k)r}}{(e^r+\|w_{-k}\|_1)^{N+1}\exp((e^r+\|w_{-k}\|_1)^2/2)}
+\\ & \qquad\qquad \cdot\begin{cases}
+      e^{rqN} w_d^{pN} \prod_{i=1}^{\bar N} \sum_{j=1}^{d-1} f_{ij}\, w_j & \text{if } k=0
+   \\ e^{rpN} w_0^{qN} \prod_{i=1}^{\bar N} \sum_{j=1}^{d-1} f_{ij}\, w_j & \text{if } k=d
+   \\ w_0^{qN} w_d^{pN} \prod_{i=1}^{\bar N} \big(e^r f_{ik} + \sum_{j\neq k} f_{ij}\, w_j\big) & \text{if } 0<k<d .
+   \end{cases}
+\end{align*}
+Noticing that these formulas include superfluous constant factors, we will in fact work with the modified function
+\begin{align*}
+   \tilde F(r) & = \begin{cases}
+      \displaystyle \frac{e^{(1+v^{(0)}_k+qN)r}}{(e^r+\|w_{-k}\|_1)^{N+1}\exp((e^r+\|w_{-k}\|_1)^2/2)} & \text{if } k=0
+   \\[1mm] \displaystyle \frac{e^{(1+v^{(0)}_k+pN)r}}{(e^r+\|w_{-k}\|_1)^{N+1}\exp((e^r+\|w_{-k}\|_1)^2/2)} & \text{if } k=d
+   \\[1mm] \displaystyle \frac{e^{(1+v^{(0)}_k)r}\prod_{i=1}^{\bar N} \big(e^r f_{ik} + \sum_{j\neq k} f_{ij}\, w_j\big)}{(e^r+\|w_{-k}\|_1)^{N+1}\exp((e^r+\|w_{-k}\|_1)^2/2)} & \text{if } 0<k<d .
+   \end{cases}
+\end{align*}
+Note that the cutoff points for $\tilde F(r)$ are readily derived from the cutoff points for $F(r)$:
+<!-- as, if $F(r)=c\,\tilde F(r)$, then $\int_{-\infty}^{r_-} \tilde F(r)\leq \varepsilon_-$ if $\int_{-\infty}^{r_-} F(r)\leq c\,\varepsilon_-$. So  -->
+we can compute $r_1,r_2,r_3,r_4$ with $F$ replaced by $\tilde F$ if we compute $r_-$ and $r_+$ with $\varepsilon_-$ and $\varepsilon_+$ replaced by $c\varepsilon_-$ and $c\varepsilon_+$. Concretely, we compute $r_-$ and $r_+$ as follows:
+\begin{align*}
+   \text{if } k\in\{0,d\}: &
+\\ r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|w_{-k}\|_1^2}{2} + \log\|w_{-k}\|_1 \Big\}}{1+v^{(0)}_k} ,
+\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2}\Big) \Big)}{\log \|w_{-k}\|_1} \Bigg\} .
+\end{align*}
+
+asdf
+
+Numerically, the function will be evaluated in $\exp(\log(\cdot))$ form. Note that
+\begin{align*}
+   \log \tilde F(r) & =  a_kr - (\|a\|_1+N-d-1)\log(e^r+\|w_{-k}\|_1) - \frac{(e^r+\|w_{-k}\|_1)^2}{2}
+\\ & \qquad\qquad + \begin{cases}
+      \displaystyle qNr & \text{if } k=0
+   \\[1mm] \displaystyle pNr & \text{if } k=d
+   \\[1mm] \displaystyle \sum_{i=1}^{\bar N} \log\big(e^r f_{ik} + \sum_{j\neq k} f_{ij}\, w_j\big) & \text{if } 0<k<d .
+   \end{cases}
+\end{align*}
+
+The decomposition into even and odd indices makes the situation a bit more complicated:
+\begin{align*}
    G(r) & = \frac{e^{b_kr} \prod_{i=1}^{\bar N} \big( \big(e^r f_{ik} + \sum_{j\neq k \text{ even}} f_{ij}\, t_j\big)/(e^r+\|t_{-k}\|_1) + \sum_{j\text{ odd}} f_{ij}\, u_j/\|u\|_1 \big)}{(e^r+\|t_{-k}\|_1)^{\|b\|_1-d^e-1}\exp((e^r+\|t_{-k}\|_1)^2/2)}
-\\[1mm] & \qquad \cdot \begin{cases}
+\\[1mm] & \qquad\qquad \cdot \begin{cases}
        \displaystyle \frac{e^{rpN}\, t_d^{qN}}{(e^r+\|t_{-0}\|_1)^{N-\bar N}} & \text{if $k=0$, $d$ even}
     \\[1mm] \displaystyle \frac{e^{rpN}\, u_d^{qN}}{(e^r+\|t_{-0}\|_1)^{pN}\, \|u\|_1^{qN}} & \text{if $k=0$, $d$ odd}
     \\[1mm] \displaystyle \frac{t_0^{pN}\, t_d^{qN}}{(e^r+\|t_{-0}\|_1)^{N-\bar N}} & \text{if $0<k<d$, $d$ even}
@@ -331,7 +382,7 @@ For the upper bound of the left tail we assume $r_-\leq0$, so that in the non-in
 \end{align*}
 Solving for $r_-$ yields
 \begin{align*}
-   r_- = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|w_{-k}\|_1^2}{2} - d\log(1+\|w_{-k}\|_1) - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} .
+   r_- = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|w_{-k}\|_1^2}{2} - d\log(1+\|w_{-k}\|_1) - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} .
 \end{align*}
 Similarly, we obtain in the informative case
 <!-- \begin{align*} -->
@@ -341,7 +392,7 @@ Similarly, we obtain in the informative case
 <!-- \end{align*} -->
 <!-- Solving for $r_-$ yields -->
 \begin{align*}
-   r_- = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|w_{-k}\|_1^2}{2} + \log\|w_{-k}\|_1 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} .
+   r_- = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|w_{-k}\|_1^2}{2} + \log\|w_{-k}\|_1 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} .
 \end{align*}
 
 For the upper bound of the right tail we denote $s=e^r,s_+=e^{r_+}$, so that
@@ -358,7 +409,7 @@ In the non-informative case we obtain, assuming $r_+\geq0$,
 \end{align*}
 where $\Gamma(\cdot,\cdot)$ denotes the [incomplete gamma function](https://en.wikipedia.org/wiki/Incomplete_gamma_function). Solving for $r_+=\log s_+$ yields
 \begin{align*}
-    r_+ = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d+1}{2}, \log\varepsilon_+ - \frac{d-1}{2} \log 2 - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|w_{-k}\|_1} \Bigg\} .
+    r_+ = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d+1}{2}, \log\varepsilon_+ - \frac{d-1}{2} \log 2 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|w_{-k}\|_1} \Bigg\} .
 \end{align*}
 Similarly, we obtain in the informative case
 <!-- \begin{align*} -->
@@ -368,7 +419,7 @@ Similarly, we obtain in the informative case
 <!-- \end{align*} -->
 <!-- where $\Gamma(\cdot,\cdot)$ denotes the [incomplete gamma function](https://en.wikipedia.org/wiki/Incomplete_gamma_function). Solving for $r_+=\log s_+$ yields -->
 \begin{align*}
-    r_+ = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^N \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|w_{-k}\|_1} \Bigg\} .
+    r_+ = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|w_{-k}\|_1} \Bigg\} .
 \end{align*}
 
 
