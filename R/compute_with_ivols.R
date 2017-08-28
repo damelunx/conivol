@@ -1,7 +1,7 @@
 #' Compute intrinsic volumes of product cone from intrinsic volumes of components.
 #'
 #' \code{comp_ivols_product} computes the intrinsic volumes of a product cone
-#' from the intrinsic volumes of ites components. That is, it returns the
+#' from the intrinsic volumes of its components. That is, it returns the
 #' convolution of the vectors of intrinsic volumes given in \code{V}.
 #'
 #' @param V list of vectors of intrinsic volumes
