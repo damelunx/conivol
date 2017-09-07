@@ -70,8 +70,8 @@ We propose the following ways to choose a starting point for the iterative algor
 $$ v^{(0)}_k = \frac{\text{Prob}\{k-0.5\leq \nu\leq k+0.5\}}{\text{Prob}\{-0.5\leq \nu\leq d+0.5\}} $$
 where $\nu\sim N(\hat\delta,\widehat{\text{var}})$.
 2. *circular cones*: $d$-dimensional cones of angle $\alpha$ have an approximate statistical dimension of $d\sin^2\alpha$ and an approximate variance of $(d/2-1)\sin^2(2\alpha)$. We can thus choose $\alpha$ to match either the statistical dimension, or the variance, or take an average of both fits:
-    (a) *match first moment*: take $\alpha=\text{arcsin}\sqrt{\hat\delta/d}$ and take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circlar cone with an angle of $\alpha$.
-    (b) *match second moment*: if $\hat\delta<d/2$ then take $\beta=\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$ else take $\beta=\frac{\pi}{2}-\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$ and take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circlar cone with an angle of $\beta$.
+    (a) *match first moment*: take $\alpha=\text{arcsin}\sqrt{\hat\delta/d}$ and take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circular cone with an angle of $\alpha$.
+    (b) *match second moment*: if $\hat\delta<d/2$ then take $\beta=\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$ else take $\beta=\frac{\pi}{2}-\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$ and take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circular cone with an angle of $\beta$.
     (c) *average both fits*: take $v^{(0)}$ as the geometric mean of the intrinsic volumes obtained in (a) and (b).
 
 These formulas are implemented in `init_v`.
@@ -162,7 +162,7 @@ The problem of finding the projection of a point $z\in\text{R}^d$ onto a polyhed
 \end{align*}
 This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint (see the [Rmosek userguide](http://rmosek.r-forge.r-project.org/)).
 
-This is the approach taken in the function `rbichibarsq_polyh`.
+This is the approach taken in the function `polyh_rbichibarsq`.
 
 The projection of a point $z\in\text{R}^n$ onto the polar cone, and more generally, the projection onto the polyhedral set $\{y\mid A^Ty\leq c\}$, $A\in\text{R}^{d\times n}$, can be formulated as SOCP in a similar way:
 

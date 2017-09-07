@@ -48,7 +48,7 @@ based on the expectation maximization (EM) method.
 \itemize{
   \item \code{\link[conivol]{circ_ivol}}: computes the intrinsic volumes of (a product of)
                           circular cones
-  \item \code{\link[conivol]{rbichibarsq_circ}}: produces samples from the bivariate
+  \item \code{\link[conivol]{circ_rbichibarsq}}: produces samples from the bivariate
                                  chi-bar-squared distribution with weights
                                  given by the conic intrinsic volumes of
                                  a product of circular cones
@@ -58,14 +58,22 @@ based on the expectation maximization (EM) method.
 \section{General polyhedral cones}{
 
 \itemize{
-  \item \code{\link[conivol]{rbichibarsq_polyh_gen}}: produces samples from the bivariate
+  \item \code{\link[conivol]{polyh_reduce}}: computes a reduced representation
+                                  of a polyhedral cone given by generators
+  \item \code{\link[conivol]{polyh_samp_ivol_gen}}: produces samples from the
+                                  intrinsic volumes distribution of
+                                  a polyhedral cone given by generators
+  \item \code{\link[conivol]{polyh_samp_ivol_ineq}}: produces samples from the
+                                  intrinsic volumes distribution of
+                                  a polyhedral cone given by inequalities
+  \item \code{\link[conivol]{polyh_rbichibarsq_gen}}: produces samples from the bivariate
                                   chi-bar-squared distribution with weights
                                   given by the conic intrinsic volumes of
-                                  a polyhedral cones given by generators
-  \item \code{\link[conivol]{rbichibarsq_polyh_ineq}}: produces samples from the bivariate
+                                  a polyhedral cone given by generators
+  \item \code{\link[conivol]{polyh_rbichibarsq_ineq}}: produces samples from the bivariate
                                   chi-bar-squared distribution with weights
                                   given by the conic intrinsic volumes of
-                                  a polyhedral cones given by inequalities
+                                  a polyhedral cone given by inequalities
 }
 }
 

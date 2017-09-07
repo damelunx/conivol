@@ -18,7 +18,7 @@
 #'         vectors will be returned.
 #'
 #' @section See also:
-#' \code{\link[conivol]{rbichibarsq_circ}}
+#' \code{\link[conivol]{circ_rbichibarsq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -67,7 +67,7 @@ circ_ivol <- function(d, alpha, product = FALSE) {
 
 #' Sample from bivariate chi-bar-squared distribution of products of circular cones
 #'
-#' \code{rbichibarsq_circ} generates an \code{n} by \code{2} matrix
+#' \code{circ_rbichibarsq} generates an \code{n} by \code{2} matrix
 #' such that the rows form iid samples from the bivariate chi-bar-squared
 #' distribution of products of circular cones.
 #'
@@ -75,26 +75,26 @@ circ_ivol <- function(d, alpha, product = FALSE) {
 #' @param d dimension
 #' @param alpha angle
 #'
-#' @return The output of \code{rbichibarsq_circ(n,d,alpha)} is a
+#' @return The output of \code{circ_rbichibarsq(n,d,alpha)} is a
 #'         \code{n} by \code{2} matrix such that the rows form iid samples from the
 #'         bivariate chi-bar-squared distribution with weights given by the
 #'         intrinsic volumes of a product of circular cones corresponding
 #'         to the vector of dimensions \code{d} and the vector of angles \code{alpha}.
 #'
 #' @section See also:
-#' \code{\link[conivol]{circ_ivol}}, \code{\link[conivol]{rbichibarsq_polyh}},
+#' \code{\link[conivol]{circ_ivol}}, \code{\link[conivol]{polyh_rbichibarsq}},
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rchibarsq}},
 #' \code{\link[stats]{rchisq}},
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' rbichibarsq_circ(20,5,pi/3)
-#' rbichibarsq_circ(20,c(5,3),c(pi/3,pi/4))
+#' circ_rbichibarsq(20,5,pi/3)
+#' circ_rbichibarsq(20,c(5,3),c(pi/3,pi/4))
 #'
 #' @export
 #'
-rbichibarsq_circ <- function(n,d,alpha) {
+circ_rbichibarsq <- function(n,d,alpha) {
     if (length(d)!=length(alpha))
         stop("Inputs d and alpha must be of same length.")
     if (any(d<2) || any(alpha<0) || any(alpha>pi/2))

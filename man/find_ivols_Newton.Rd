@@ -69,7 +69,7 @@ distribution, which may or may not (depending on the starting point) converge
 to the maximum likelihood estimate of the mixing weights of the distribution.
 }
 \examples{
-m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
+m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
 find_ivols_Newton( 10, m_samp )
 find_ivols_Newton( 10, m_samp, init_mode=1 )
 

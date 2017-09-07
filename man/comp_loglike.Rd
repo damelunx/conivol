@@ -43,7 +43,7 @@ N <- 10^5
 v_exact <- circ_ivol( D, alpha, product=TRUE )
 
 # collect sample data
-m_samp <- rbichibarsq_circ(N,D,alpha)
+m_samp <- circ_rbichibarsq(N,D,alpha)
 data <- prepare_data(d, m_samp)
 est <- estimate_statdim_var(d, m_samp)
 v1 <- init_v( d )

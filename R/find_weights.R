@@ -25,13 +25,13 @@
 #'         }
 #'
 #' @section See also:
-#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
 #' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{find_ivols_EM}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
+#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
 #' prepare_data( 10, m_samp )
 #'
 #' @export
@@ -84,7 +84,7 @@ prepare_data <- function(d, m_samp) {
 #' v_exact <- circ_ivol( D, alpha, product=TRUE )
 #'
 #' # collect sample data
-#' m_samp <- rbichibarsq_circ(N,D,alpha)
+#' m_samp <- circ_rbichibarsq(N,D,alpha)
 #' data <- prepare_data(d, m_samp)
 #' est <- estimate_statdim_var(d, m_samp)
 #' v1 <- init_v( d )
@@ -144,13 +144,13 @@ comp_loglike <- function(v, data, mode=0){
 #' @return The output of \code{init_v} is a \code{(d+1)}-column vector.
 #'
 #' @section See also:
-#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
 #' \code{\link[conivol]{rbichibarsq_polyh}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
+#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
 #' est <- estimate_statdim_var(d, m_samp)
 #' init_v( 10 )
 #' init_v( 10, 1, delta=est$delta, var=est$var )
@@ -347,14 +347,14 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'         of the log-likelihood function.
 #'
 #' @section See also:
-#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
 #' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{prepare_data}},
 #' \code{\link[conivol]{init_v}}, \code{\link[conivol]{comp_loglike}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
+#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
 #' find_ivols_EM( 10, m_samp )
 #' find_ivols_EM( 10, m_samp, init_mode=1 )
 #'
@@ -547,7 +547,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'         of the log-likelihood function.
 #'
 #' @examples
-#' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
+#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
 #' find_ivols_GD( 10, m_samp )
 #' find_ivols_GD( 10, m_samp, init_mode=1 )
 #'
@@ -692,7 +692,7 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'         of the log-likelihood function.
 #'
 #' @examples
-#' m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
+#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
 #' find_ivols_Newton( 10, m_samp )
 #' find_ivols_Newton( 10, m_samp, init_mode=1 )
 #'
