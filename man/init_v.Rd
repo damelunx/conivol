@@ -31,14 +31,14 @@ moment-fitting.
 }
 \section{See also}{
 
-\code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+\code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
 \code{\link[conivol]{rbichibarsq_polyh}}
 
 Package: \code{\link[conivol]{conivol}}
 }
 
 \examples{
-m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
+m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
 est <- estimate_statdim_var(d, m_samp)
 init_v( 10 )
 init_v( 10, 1, delta=est$delta, var=est$var )

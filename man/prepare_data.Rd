@@ -36,14 +36,14 @@ prepares the data used in maximum likelihood estimation.
 }
 \section{See also}{
 
-\code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rbichibarsq_circ}},
+\code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
 \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{find_ivols_EM}}
 
 Package: \code{\link[conivol]{conivol}}
 }
 
 \examples{
-m_samp <- rbichibarsq_circ(10^6,c(5,5),c(pi/3,pi/4))
+m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
 prepare_data( 10, m_samp )
 
 }

@@ -30,7 +30,7 @@ a single vector with the intrinsic volumes of the product cone is returned.
 }
 \section{See also}{
 
-\code{\link[conivol]{rbichibarsq_circ}}
+\code{\link[conivol]{circ_rbichibarsq}}
 
 Package: \code{\link[conivol]{conivol}}
 }

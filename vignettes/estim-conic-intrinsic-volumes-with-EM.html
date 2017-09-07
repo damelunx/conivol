@@ -12,7 +12,7 @@
 
 <meta name="author" content="Dennis Amelunxen" />
 
-<meta name="date" content="2017-08-22" />
+<meta name="date" content="2017-09-07" />
 
 <title>Estimating conic intrinsic volumes via EM algorithm</title>
 
@@ -32,7 +32,7 @@
 
 <h1 class="title toc-ignore">Estimating conic intrinsic volumes via EM algorithm</h1>
 <h4 class="author"><em>Dennis Amelunxen</em></h4>
-<h4 class="date"><em>2017-08-22</em></h4>
+<h4 class="date"><em>2017-09-07</em></h4>
 
 
 
@@ -73,8 +73,8 @@ In particular, we assume that <span class="math inline">\(C\)</span> is not a li
 <li><em>normal distribution:</em> match a normal distribution to the first and second moments of <span class="math inline">\(Z\)</span> and discretize: <span class="math display">\[ v^{(0)}_k = \frac{\text{Prob}\{k-0.5\leq \nu\leq k+0.5\}}{\text{Prob}\{-0.5\leq \nu\leq d+0.5\}} \]</span> where <span class="math inline">\(\nu\sim N(\hat\delta,\widehat{\text{var}})\)</span>.</li>
 <li><em>circular cones</em>: <span class="math inline">\(d\)</span>-dimensional cones of angle <span class="math inline">\(\alpha\)</span> have an approximate statistical dimension of <span class="math inline">\(d\sin^2\alpha\)</span> and an approximate variance of <span class="math inline">\((d/2-1)\sin^2(2\alpha)\)</span>. We can thus choose <span class="math inline">\(\alpha\)</span> to match either the statistical dimension, or the variance, or take an average of both fits:
 <ol style="list-style-type: lower-alpha">
-<li><em>match first moment</em>: take <span class="math inline">\(\alpha=\text{arcsin}\sqrt{\hat\delta/d}\)</span> and take <span class="math inline">\(v^{(0)}\)</span> to be the intrinsic volumes of a <span class="math inline">\(d\)</span>-dimensional circlar cone with an angle of <span class="math inline">\(\alpha\)</span>.</li>
-<li><em>match second moment</em>: if <span class="math inline">\(\hat\delta&lt;d/2\)</span> then take <span class="math inline">\(\beta=\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}\)</span> else take <span class="math inline">\(\beta=\frac{\pi}{2}-\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}\)</span> and take <span class="math inline">\(v^{(0)}\)</span> to be the intrinsic volumes of a <span class="math inline">\(d\)</span>-dimensional circlar cone with an angle of <span class="math inline">\(\beta\)</span>.</li>
+<li><em>match first moment</em>: take <span class="math inline">\(\alpha=\text{arcsin}\sqrt{\hat\delta/d}\)</span> and take <span class="math inline">\(v^{(0)}\)</span> to be the intrinsic volumes of a <span class="math inline">\(d\)</span>-dimensional circular cone with an angle of <span class="math inline">\(\alpha\)</span>.</li>
+<li><em>match second moment</em>: if <span class="math inline">\(\hat\delta&lt;d/2\)</span> then take <span class="math inline">\(\beta=\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}\)</span> else take <span class="math inline">\(\beta=\frac{\pi}{2}-\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}\)</span> and take <span class="math inline">\(v^{(0)}\)</span> to be the intrinsic volumes of a <span class="math inline">\(d\)</span>-dimensional circular cone with an angle of <span class="math inline">\(\beta\)</span>.</li>
 <li><em>average both fits</em>: take <span class="math inline">\(v^{(0)}\)</span> as the geometric mean of the intrinsic volumes obtained in (a) and (b).</li>
 </ol></li>
 </ol>
@@ -135,7 +135,7 @@ In the situation at hand, we seek to maximize the function
 \\ \iff &amp; \text{minimize } (-A^Tz)^Tu + r \quad\text{subject to}\quad u\geq0, Ax=w, s=1, \|w\|^2\leq 2rs .
 \end{align*}\]</span>
 <p>This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint (see the <a href="http://rmosek.r-forge.r-project.org/">Rmosek userguide</a>).</p>
-<p>This is the approach taken in the function <code>rbichibarsq_polyh</code>.</p>
+<p>This is the approach taken in the function <code>polyh_rbichibarsq</code>.</p>
 <p>The projection of a point <span class="math inline">\(z\in\text{R}^n\)</span> onto the polar cone, and more generally, the projection onto the polyhedral set <span class="math inline">\(\{y\mid A^Ty\leq c\}\)</span>, <span class="math inline">\(A\in\text{R}^{d\times n}\)</span>, can be formulated as SOCP in a similar way:</p>
 <span class="math display">\[\begin{align*}
    &amp; \underset{A^Ty\leq c}{\text{argmin}}\, \|y-z\|_2
