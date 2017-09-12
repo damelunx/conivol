@@ -42,6 +42,12 @@
 #'                                  a product of circular cones
 #' }
 #'
+#' @section Computations involving products of (polars of) Weyl chambers:
+#' \itemize{
+#'   \item \code{\link[conivol]{weyl_matrix}}: TBD
+#'   \item \code{\link[conivol]{weyl_ivol}}: TBD
+#' }
+#'
 #' @section General polyhedral cones:
 #' \itemize{
 #'   \item \code{\link[conivol]{polyh_reduce}}: computes a reduced representation

@@ -65,7 +65,7 @@ circ_ivol <- function(d, alpha, product = FALSE) {
 
 
 
-#' Sample from bivariate chi-bar-squared distribution of products of circular cones
+#' Sample from bivariate chi-bar-squared distribution of products of circular cones.
 #'
 #' \code{circ_rbichibarsq} generates an \code{n} by \code{2} matrix
 #' such that the rows form iid samples from the bivariate chi-bar-squared
