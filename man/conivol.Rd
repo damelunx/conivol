@@ -55,6 +55,14 @@ based on the expectation maximization (EM) method.
 }
 }
 
+\section{Computations involving products of (polars of) Weyl chambers}{
+
+\itemize{
+  \item \code{\link[conivol]{weyl_matrix}}: TBD
+  \item \code{\link[conivol]{weyl_ivol}}: TBD
+}
+}
+
 \section{General polyhedral cones}{
 
 \itemize{
