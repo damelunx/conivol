@@ -117,7 +117,7 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
     is_in_L <- vector("logical",nn)
     if (solver=="nnls") {
         for (j in 1:nn) {
-            is_in_L[j] <- isTRUE(nnls(A[,-j],-A[,j])$deviance<d*tol)
+            is_in_L[j] <- isTRUE(nnls::nnls(A[,-j],-A[,j])$deviance<d*tol)
         }
     } else {
         for (j in 1:nn) {
@@ -157,7 +157,7 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
     is_relevant <- vector("logical", nn)
     if (solver=="nnls") {
         for (j in 1:nn) {
-            is_relevant[j] <- isTRUE(nnls(A[,-j], A[,j])$deviance > d*tol)
+            is_relevant[j] <- isTRUE(nnls::nnls(A[,-j], A[,j])$deviance > d*tol)
         }
     } else {
         for (j in 1:nn) {
@@ -257,7 +257,7 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
     if (solver=="nnls") {
         for (i in 1:n) {
             y <- rnorm(d)
-            q <- nnls(A,y)$deviance
+            q <- nnls::nnls(A,y)$deviance
             out[i, ] <- c(sum(y^2)-q,q)
         }
     } else {
@@ -435,7 +435,7 @@ polyh_samp_ivol_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
         for (i in 1:n) {
             y <- rnorm(d)
             # compute rank of submatrix corresponding to nonzero components in expression of projection
-            out[i] <- qr(A[ ,which(nnls(A,y)$x>tol)])$rank
+            out[i] <- qr(A[ ,which(nnls::nnls(A,y)$x>tol)])$rank
         }
     } else {
         nn <- dim(A)[2]
