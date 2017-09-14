@@ -85,7 +85,7 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
     if (length(d)==1)
         return(M[[1]])
     else if (product)
-        return(Matrix::bdiag(M))
+        return(as.matrix(Matrix::bdiag(M)))
     else return(V)
 }
 

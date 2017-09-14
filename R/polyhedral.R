@@ -520,3 +520,120 @@ polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
         return( d-polyh_samp_ivol_gen(n, A, solver=solver, reduce=FALSE, tol=tol) )
 }
 
+
+
+#' Bayesian posterior for samples of intrinsic volumes distribution
+#'
+#' \code{polyh_ivol_Bayes} generates functions for computing quantiles of marginals
+#' of the posterior distribution and for sampling from the posterior distribution,
+#' given samples of the intrinsic volumes distribution.
+#'
+#'samples, dim, lin, prior="noninformative", v_prior=NA
+#' @param samples vector of integers representing independent samples from the
+#'                intrinsic volumes distribution of a convex cone
+#' @param dim the dimension of the cone
+#' @param lin the lineality of the cone
+#' @param prior either "noninformative" (default) or "informative"
+#' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
+#'
+#' @return The output of \code{polyh_ivol_Bayes} is a list containing the following elements:
+#' \itemize{
+#'   \item \code{post_marg_quant}: a function that computes the quantiles of the
+#'                    marginals of the posterior distribution;
+#'                    \code{marg_quant(i,alpha)} returns the value \code{x}
+#'                    such that \code{Prob(v_i<x)=alpha};
+#'                    the index \code{i} as well as the probability \code{alpha}
+#'                    may be vectors,
+#'   \item \code{post_samp}: a function that returns samples of the posterior distribution;
+#'                    \code{post_samp(n)} returns an \code{n}-by-\code{(dim+1)}
+#'                    matrix whose rows form a set of \code{n} independent samples
+#'                    of the posterior distribution,
+#'   \item \code{Dir}: a list containing the weights of the Dirichlet distributions
+#'                    that make up both prior and posterior distributions.
+#' }
+#'
+#' @note See \href{../doc/bayesian.html#sampl_latent}{this vignette}
+#'       for further info.
+#'
+#' @section See also:
+#' \code{\link[conivol]{polyh_samp_ivol_gen}}, \code{\link[conivol]{polyh_samp_ivol_ineq}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
+#'
+#' @examples
+#' samp <- polyh_samp_ivol_gen(20,matrix(1:12,4,3))
+#' polyh_ivol_Bayes(samp$samples, samp$dim, samp$lin)
+#'
+#' @export
+#'
+polyh_ivol_Bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
+    # check whether prior is "noninformative" or "informative"
+    # check whether lin==dim
+
+    d <- dim-lin
+    I_even <- 2*(0:floor(d/2)) + 1          # final +1 is because of R indices start at 1
+    I_odd  <- 1+2*(0:floor((d-1)/2)) + 1    # final +1 is because of R indices start at 1
+
+    if (is.na(v_prior)) {
+        v_prior_adj <- rep(0,d+1)
+        v_prior_adj[I_even] <- 1/ceiling((d+1)/2) / 2
+        v_prior_adj[I_odd]  <- 1/floor((d+1)/2) / 2
+    } else {
+        v_prior_adj <- v_prior[lin:dim]
+    }
+
+    Dir_prior_even <- 2*v_prior_adj[I_even]
+    Dir_prior_odd  <- 2*v_prior_adj[I_odd]
+
+    if (prior=="informative"){
+        Dir_prior_even <- 1+Dir_prior_even
+        Dir_prior_odd  <- 1+Dir_prior_odd
+    }
+    update <- tabulate(1+samples-lin, 1+dim-lin)
+
+    Dir_post_even <- Dir_prior_even + update[I_even]
+    Dir_post_odd  <- Dir_prior_odd  + update[I_odd]
+
+    marg_quant <- function(i,alpha) {
+        m <- max(length(i),length(alpha))
+        i <- rep_len(i,m)
+        alpha <- rep_len(alpha,m)
+        X <- rep(0,m)
+        for (j in 1:m) {
+            if ( i[j] < lin || i[j] > dim)
+                X[j] <- 0
+            else {
+                if ((i[j]-lin)%%2==0)
+                    X[j] <- qbeta(alpha[j], Dir_post_even[(i[j]-lin)/2+1],
+                                  sum(Dir_post_even[-((i[j]-lin)/2+1)])) / 2
+                else
+                    X[j] <- qbeta(alpha[j], Dir_post_odd[(i[j]-lin-1)/2+1],
+                                  sum(Dir_post_odd[-((i[j]-lin-1)/2+1)])) / 2
+            }
+        }
+        return(X)
+    }
+
+    post_samp <- function(n) {
+        samp <- matrix(0,n,dim+1)
+        for (j in I_even)
+            samp[ ,j+lin] <- rgamma(n,Dir_post_even[(j-1)/2+1])
+        for (j in I_odd)
+            samp[ ,j+lin] <- rgamma(n,Dir_post_odd[(j-2)/2+1])
+        samp[ ,I_even+lin] <- samp[ ,I_even+lin] / rowSums(samp[ ,I_even+lin]) / 2
+        samp[ ,I_odd+lin]  <- samp[ ,I_odd+lin]  / rowSums(samp[ ,I_odd+lin])  / 2
+        return(samp)
+    }
+
+    out <- list()
+    out$post_marg_quant <- marg_quant
+    out$post_samp  <- post_samp
+    out$Dir <- list(prior=list(even=Dir_prior_even, odd=Dir_prior_odd),
+                    post =list(even=Dir_post_even,  odd=Dir_post_odd))
+    return(out)
+}
+
+
+
+
+

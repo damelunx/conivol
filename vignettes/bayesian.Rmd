@@ -82,6 +82,8 @@ The posterior distribution for $V$, or $V^e$ and $V^o$, respectively, is easily 
 
 As before we will first describe this for the random vector $V$ before describing the necessary adaptations for the even/odd index decomposition.
 
+### Samples of the latent variable {#sampl_latent}
+
 ### Distribution on probability simplex {#distr_simplex}
 
 We derive the posterior distribution by using the latent variable $Z$. Note first that the posterior distribution of $V$ given direct samples of the latent variable is again Dirichlet distributed:
