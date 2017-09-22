@@ -55,6 +55,14 @@ based on the expectation maximization (EM) method.
 }
 }
 
+\section{Computations involving products of (polars of) Weyl chambers}{
+
+\itemize{
+  \item \code{\link[conivol]{weyl_matrix}}: TBD
+  \item \code{\link[conivol]{weyl_ivol}}: TBD
+}
+}
+
 \section{General polyhedral cones}{
 
 \itemize{
@@ -66,6 +74,7 @@ based on the expectation maximization (EM) method.
   \item \code{\link[conivol]{polyh_samp_ivol_ineq}}: produces samples from the
                                   intrinsic volumes distribution of
                                   a polyhedral cone given by inequalities
+  \item \code{\link[conivol]{polyh_ivol_Bayes}}: TBD
   \item \code{\link[conivol]{polyh_rbichibarsq_gen}}: produces samples from the bivariate
                                   chi-bar-squared distribution with weights
                                   given by the conic intrinsic volumes of

@@ -1,11 +1,13 @@
 Package: conivol
 Type: Package
-Title: Conic intrinsic volumes and (bivariate) chibarsquare distribution
+Title: Conic intrinsic volumes and (bivariate) chi-bar-squared distribution
 Version: 0.0.0.9000
 Authors@R: as.person(c(
-        "Dennis Amelunxen <damelunx@gmail.com> [aut, cre]"
+        "Dennis Amelunxen <damelunx@gmail.com> [aut, cre]",
+        "Martin Lotz <lotzma@gmail.com> [aut]"
     ))
-Description: A package for computing the conic intrinsic volumes and
+Description: --TBD--
+    A package for computing the conic intrinsic volumes and
     chibarsquare distribution of products of circular cones, and
     for estimating the intrinsic volumes of a closed convex cone
     from projection data. The projection data has to consist of two values:
