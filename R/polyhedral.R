@@ -528,7 +528,6 @@ polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' of the posterior distribution and for sampling from the posterior distribution,
 #' given samples of the intrinsic volumes distribution.
 #'
-#'samples, dim, lin, prior="noninformative", v_prior=NA
 #' @param samples vector of integers representing independent samples from the
 #'                intrinsic volumes distribution of a convex cone
 #' @param dim the dimension of the cone
