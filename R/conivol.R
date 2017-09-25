@@ -73,6 +73,7 @@
 #'                               quite flat around its maximum, the function supports
 #'                               several ways to introduce some (well-founded) bias
 #'                               and thus improve the estimate
+#'   \item \code{\link[conivol]{find_ivols_jags}} TBD
 #' }
 #'
 #' See the corresponding object documentation for more information. See also the following vignettes:
