@@ -4,6 +4,8 @@ author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 # output: rmarkdown::pdf_document
+# header-includes:
+#   - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
 vignette: >
   %\VignetteIndexEntry{Estimating conic intrinsic volumes via EM algorithm}
   %\VignetteEngine{knitr::rmarkdown}
