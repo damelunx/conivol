@@ -22,16 +22,16 @@ As the name suggests, a closed convex cone $C\subseteq\text{R}^d$ satisfies the 
 
 1. $C$ is **closed**:  
 the limit of any convergent sequence is an element of $C$,
-$$\forall x_1,x_2,\ldots\in C \text{ such that } \lim_{i\to\infty} x_i \text{ exists}: \lim_{i\to\infty} x_i\in C$$
+  \[ \forall x_1,x_2,\ldots\in C \text{ such that } \lim_{i\to\infty} x_i \text{ exists}: \lim_{i\to\infty} x_i\in C \]
 2. $C$ is **convex**:  
 any convex combination of elements in $C$ lies in $C$,  
-$$ \forall x,y\in C,\; 0\leq \lambda\leq 1 : \lambda x+(1-\lambda) y\in C$$
+  \[ \forall x,y\in C,\; 0\leq \lambda\leq 1 : \lambda x+(1-\lambda) y\in C \]
 3. $C$ is a **cone**:  
 any positive scaling of an element in $C$ lies in $C$,
-$$\forall x\in C\;,\lambda>0 : \lambda x\in C$$
+  \[ \forall x\in C\;,\lambda>0 : \lambda x\in C \]
 
 Properties 1. and 3. imply that every nonzero closed cone contains the origin, $0\in C$. Furthermore, if $0\in C$, then properties 2. and 3. taken together are equivalent to the property
-$$\forall x,y\in C,\; \lambda,\mu\geq0 : \lambda x+\mu y\in C$$
+  \[ \forall x,y\in C,\; \lambda,\mu\geq0 : \lambda x+\mu y\in C \]
 In other words, a (nonempty) closed convex cone is a closed set, which is closed under taking nonnegative linear combinations. Below we will always assume that closed convex cones are nonempty, hence, they contain at least the origin.
 
 Note that if $C\subseteq\text{R}^d$ and $D\subseteq\text{R}^e$ are closed convex cones, then their direct product is a closed convex cone, $C\times D\subseteq\text{R}^{d+e}$.
@@ -39,25 +39,27 @@ Note that if $C\subseteq\text{R}^d$ and $D\subseteq\text{R}^e$ are closed convex
 ### Polar cones
 
 Every closed convex cone $C\subseteq\text{R}^d$ defines a natural counterpart, its polar cone
-$$ C^\circ := \{y\in\text{R}^d\mid \forall x\in C: x^Ty\leq 0\} . $$
+  \[ C^\circ := \{y\in\text{R}^d\mid \forall x\in C: x^Ty\leq 0\} . \]
 The polar cone is also a closed convex cone, and the polar of the polar cone is the original cone, which in this context is also called the primal cone, $(C^\circ)^\circ = C$. It thus makes sense to think about the primal cone and its polar cone as a primal-polar pair of cones. A cone is called self-dual, if $C^\circ=-C$.  
 
 Note that $(\text{R}^d)^\circ=\{0\}$. Also, polarity behaves well with direct products, $(C\times D)^\circ = C^\circ\times D^\circ$.  
-
 The polar cone depends on the ambient space, i.e., if we embed $C\subseteq\text{R}^d$ in $\text{R}^e$, $e\geq d$, by formally identifying $C$ with $C\times\{0\}\subseteq\text{R}^e$, then the polar of the embedded cone is given by $(C\times\{0\})^\circ = C^\circ\times\text{R}^{e-d}$.
+
+If the cone $C$ is transformed by an invertible linear transformation then its polar cone is transformed by the transpose of the inverse of the transformation:
+  \[ (AC)^\circ = B^T C^\circ ,\qquad \text{if $A$ invertible and } B=A^{-1} . \]
 
 ### Dimension and lineality {#dim_lin}
 
 The smallest linear space containing a cone $C$ is given by $C+(-C)$, and the largest linear space contained in $C$, called the lineality space of $C$, is given by $C\cap (-C)$. Linear hull and lineality space are related by polarity, as
 
-$$ C^\circ+(-C^\circ) = (C\cap (-C))^\bot ,\quad C^\circ\cap(-C^\circ) = (C+(-C))^\bot , $$
+  \[ C^\circ+(-C^\circ) = (C\cap (-C))^\bot ,\quad C^\circ\cap(-C^\circ) = (C+(-C))^\bot , \]
 where $L^\bot$ denotes the orthogonal complement of a linear space. Every closed convex cone has the natural orthogonal decomposition
-$$ C = L + \bar C , $$
+  \[ C = L + \bar C , \]
 where $L=C\cap (-C)$ denotes the lineality space, and $\bar C=\Pi_{L^\bot}(C)$ the image of the projection of $C$ onto the orthogonal complement of $L$.
 
 The (linear) dimension of a cone is the dimension of its linear hull, and the lineality of a cone is the dimension of its lineality space,
 
-$$ \text{dim}(C) = \text{dim}(C+(-C)) ,\quad \text{lin}(C) = \text{dim}(C\cap(-C)) . $$
+  \[ \text{dim}(C) = \text{dim}(C+(-C)) ,\quad \text{lin}(C) = \text{dim}(C\cap(-C)) . \]
 Note that by the above polarity statement we have $\text{dim}(C)=d-\text{lin}(C^\circ)$ and $\text{lin}(C)=d-\text{dim}(C^\circ)$.
 
 ### Examples: linear subspaces
@@ -73,21 +75,90 @@ Furthermore, for cones which are not linear subspaces the intrinsic volumes sati
 Polyhedral cones are a straightforward generalization of linear subspaces and can be described in two ways, which are related via polarity:
 
 1. as conic convex combinations of a finite number of vectors,
-$$ C = \{Az \mid z\in\text{R}^n, z\geq 0\} ,\quad A\in\text{R}^{d\times n} , $$
+  \[ C = \{Az \mid z\in\text{R}^n, z\geq 0\} ,\quad A\in\text{R}^{d\times n} , \]
 where the inequality $z\geq0$ is meant componentwise,
 2. as the intersection of finitely many closed linear half-spaces,
-$$ C^\circ = \{y\in\text{R}^d \mid A^Ty\leq 0\} . $$
+  \[ C^\circ = \{y\in\text{R}^d \mid A^Ty\leq 0\} . \]
 
 Although the set of polyhedral cones does not exhaust the set of closed convex cones, it can be shown (and it is intuitively clear) that every closed convex cone can be arbitrarily well approximated by polyhedral cones.
 
 For later use we recall that a face of a polyhedral cone is the intersection of a linear hyperplane (linear subspace of codimension one) with the cone, where the cone has to lie entirely in one of the two closed half-spaces defined by the hyperplane. Every polyhedral cone has a finite number of faces, and decomposes into the disjoint union of the relative interiors of its faces,
-$$ C = \dot{\bigcup_{F\text{ face of } C}} \text{relint}(F) .  $$
+  \[ C = \dot{\bigcup_{F\text{ face of } C}} \text{relint}(F) .  \]
 See the [appendix](#sampling_polyh) for computations involving the natural orthogonal decomposition of polyhedral cones.
+
+### Examples: simplicial cones and Weyl chambers of finite reflection groups {#simpl_weyl}
+
+A special class of polyhedral cones is given by so-called simplicial cones. These are full-dimensional cones with a minimal number 
+of edges and facets. Formally, we can describe these cones as positive orthants transformed by an invertible linear transformation:
+  \[ \big\{\text{simplicial cones in }\text{R}^d\big\} = \big\{A\text{R}_+^d\mid A\in\text{R}^{d\times d} \text{ invertible} \big\} . \]
+In other words, a simplicial cone is generated by the columns of an invertible matrix. Note that since the positive orthant is self-dual, $(\text{R}_+^d)^\circ=-\text{R}_+^d$, we easily obtain the polar cone of a simplicial cone through the inverse matrix,
+  \[ \big( A\text{R}_+^d \big)^\circ = -B^T\text{R}_+^d ,\qquad \text{if $A$ invertible and } B=A^{-1} . \]
+
+A special class of simplicial cones are the Weyl chambers of finite reflection groups of which the most important ones are of class 'A', 'BC', and 'D'. These chambers are isometric to the following three cones,
+\begin{align*}
+   C_A & = \big\{ x\in\text{R}^{d+1} \mid x_1 \leq x_2 \leq \dots \leq x_{d+1} \big\} ,
+\\ C_{BC} & = \big\{ x\in\text{R}^d \mid 0\leq x_1 \leq x_2 \leq \dots \leq x_d \big\} ,
+\\ C_D & = \big\{ x\in\text{R}^d \mid -x_2\leq x_1 \leq x_2 \leq \dots \leq x_d \big\} .
+\end{align*}
+Note that the first cone is strictly speaking not simplicial, as it contains the one-dimensional linear subspace $L=\{\lambda 1_d\mid \lambda\in\text{R}\}$, where $1_d\in\text{R}^d$ denotes the all-one vector. However, the projection of $C$ onto the orthogonal complement of $L$ yields the natural orthogonal decomposition $C_A=L+\bar C_A$, and the projection $\bar C_A$ is indeed a simplicial cone. Using the matrix description $\{y\in\text{R}^d \mid A^Ty\leq 0\}$, we see that the above defined cones correspond to the matrices
+\begin{align*}
+   A_A & = \begin{pmatrix}
+       1
+    \\ -1 & 1
+    \\    & \ddots & \ddots
+    \\    & & -1 & 1
+    \\    & & & -1
+    \end{pmatrix} ,
+   & A_{BC} & = \begin{pmatrix}
+       -1 & 1
+    \\    & \ddots & \ddots
+    \\    & & -1 & 1
+    \\    & & & -1
+    \end{pmatrix} ,
+   \\ A_D & = \begin{pmatrix}
+       -1 & 1
+    \\ -1 &-1 & 1
+    \\    & & -1 & 1
+    \\    & & & \ddots & \ddots
+    \\    & & & & -1 & 1
+    \\    & & & & & -1
+    \end{pmatrix} .
+\end{align*}
+The truly simplicial cone $\bar C_A$ corresponds to the matrix
+  \[ \bar A_A = Q^T A_A , \]
+where $Q\in \text{R}^{(d+1)\times d}$ is such that its columns form an orthonormal basis of $L^\bot$.
+
+Taking the negative inverse of the transpose, we see that the polar cones $\bar C_A^\circ, {C}^\circ_{BC}, {C}^\circ_D$ (the polar cone of $\bar C_A^\circ$ taken in the ambient space $L^\bot$) correspond to the following matrices:
+\begin{align*}
+   \bar A_A^\circ & = Q^T \begin{pmatrix}
+       0
+    \\ 1 & 0
+    \\ 1 & 1 & 0
+    \\ \vdots & \dots & \ddots & \ddots
+    \\ 1 & \dots & \dots & 1 & 0
+    \end{pmatrix} ,
+ & {A}^\circ_{BC} & = \begin{pmatrix}
+       1
+    \\ 1 & 1
+    \\ \vdots & \dots & \ddots
+    \\ 1 & \dots & \dots & 1
+    \end{pmatrix} ,
+\\ {A}^\circ_D & = \begin{pmatrix}
+       1/2 & -1/2
+    \\ 1/2 & 1/2
+    \\ 1/2 & 1/2 & 1
+    \\ 1/2 & 1/2 & 1 & 1
+    \\ \vdots & \vdots & \vdots & \dots & \ddots
+    \\ 1/2 & 1/2 & 1 & \dots & \dots & 1
+    \end{pmatrix} .
+\end{align*}
+
+These matrices can be obtained through the function `weyl_matrix`.
 
 ### Examples: circular cones
 
 Circular cones consist of all points that lie below a certain angle towards a given semi-axis. Choosing this semi-axis to be the $d$th coordinate axis, we define the $d$-dimensional circular cone of angle $0<\alpha\leq\frac{\pi}{2}$ via
-$$ \text{Circ}_d(\alpha) := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\} , $$
+  \[ \text{Circ}_d(\alpha) := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\} , \]
 where $\|\cdot\|$ denotes the Euclidean norm.  
 
 The circular cones form a class of cones, which is interesting for both theoretical and practical purposes. For theoretical purposes because circular cones are known to satisfy certain extreme inequalities (see [below](#inequs)), and are suspected to satisfy even more; and for practical purposes because they, and products of them, provide a reasonably large, yet accessible, class of cones which is easy to analyze with respect to the intrinsic volumes.
@@ -95,51 +166,58 @@ The circular cones form a class of cones, which is interesting for both theoreti
 ## Conic intrinsic volumes {#intro_intrvol}
 
 The conic intrinsic volumes of a closed convex cone $C\subseteq\text{R}^d$ form a $(d+1)$-element vector,
-$$ v(C) = (v_0(C),\ldots,v_d(C)) \geq 0 ,\quad \sum_{k=0}^d v_k(C) = 1 . $$
+  \[ v(C) = (v_0(C),\ldots,v_d(C)) \geq 0 ,\quad \sum_{k=0}^d v_k(C) = 1 . \]
 If $C$ is a polyhedral cone, then the intrinsic volumes can be characterized in the following way: letting $g\sim N(0,I_d)$ a Gaussian vector and $\Pi_C$ denoting the projection map onto $C$,
-$$ \Pi_C\colon\text{R}^d\to C ,\qquad \Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\} , $$
+  \[ \Pi_C\colon\text{R}^d\to C ,\qquad \Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\} , \]
 the $k$th intrinsic volume is the probability that $\Pi_C(g)$ lies in the relative interior of a $k$-dimensional face of $C$,
-$$ v_k(C) = \text{Prob}\big\{\Pi_C(g)\in \text{relint}(F), F \text{ face of }C, \dim(F)=k\big\} . $$
+  \[ v_k(C) = \text{Prob}\big\{\Pi_C(g)\in \text{relint}(F), F \text{ face of }C, \dim(F)=k\big\} . \]
 Note that this characterization holds exclusively for polyhedral cones.
 
 If $C=L$ is a linear subspace, then
-$$ v_k(L) = \begin{cases} 1 & \text{if } k=\dim(L) \\ 0 & \text{else} . \end{cases} $$
+  \[ v_k(L) = \begin{cases} 1 & \text{if } k=\dim(L) \\ 0 & \text{else} . \end{cases} \]
 It can be shown that if $C$ is *not* a linear subspace, then
-$$ v_0(C)+v_2(C)+v_4(C)+\cdots = v_1(C)+v_3(C)+v_5(C)+\cdots = \tfrac{1}{2} . $$
+  \[ v_0(C)+v_2(C)+v_4(C)+\cdots = v_1(C)+v_3(C)+v_5(C)+\cdots = \tfrac{1}{2} . \]
 This linear relation is the reason why in the computations in `conivol` the underlying closed convex cone is always assumed to be not a linear subspace.  
 
 The intrinsic volumes of the polar cone are the same as those of the primal cone, but the index gets reversed,
-$$ v_k(C^\circ) = v_{d-k}(C) . $$
+  \[ v_k(C^\circ) = v_{d-k}(C) . \]
 The intrinsic volumes of a product of cones arise as the convolution of the intrinsic volumes of its components,
-$$ v_k(C\times D) = \sum_{i+j=k} v_i(C) v_j(D) . $$
+  \[ v_k(C\times D) = \sum_{i+j=k} v_i(C) v_j(D) . \]
 This convolution is conveniently implemented in `comp_ivols_product`.
 
-Closed formulas for the intrinsic volumes of circular cones are known, see for example [@AB15, Sec. 3.3], and implemented in `circ_ivol`.
-
 From the natural orthogonal decomposition $C = L + \bar C$, where $L=C\cap (-C)$ and $\bar C=\Pi_{L^\bot}(C)$, one can show that $v_k(C)=0$ if $k<\text{lin}(C)$ or $k>\text{dim}(C)$ and^[The strictly positive inequalities actually require a proof in the nonpolyhedral case (and without having log-concavity); one can deduce this from the kinematic formula by projecting the cone on a uniformly random linear subspace and looking at the volume of the (relative) boundary of the projection.]
-$$v_k(C)=v_{k-\text{lin}(C)}(\bar C)>0 \quad\text{for}\quad \text{lin}(C)\leq k\leq\text{dim}(C) . $$
+  \[ v_k(C)=v_{k-\text{lin}(C)}(\bar C)>0 \quad\text{for}\quad \text{lin}(C)\leq k\leq\text{dim}(C) . \]
 
 ### Statistical dimension and variance
 
 The first moment of the discrete random variable defined by the conic intrinsic volumes of a cone is called its statistical dimension,
-$$ \delta(C) = \sum_{k=0}^d k v_k(C) . $$
+  \[ \delta(C) = \sum_{k=0}^d k v_k(C) . \]
 Note that the statistical dimension coincides with the (linear) dimension if $C$ is a linear subspace. It also generalizes some other properties, such as $\delta(C^\circ)=d-\delta(C)$ and  $\delta(C\times D)=\delta(C)+\delta(D)$.
 
 For later use we also define the variance of the cone via
-$$ \text{var}(C) = \sum_{k=0}^d (k-\delta(C))^2 v_k(C) . $$
+  \[ \text{var}(C) = \sum_{k=0}^d (k-\delta(C))^2 v_k(C) . \]
 
+### Examples: Weyl chambers of finite reflection groups
+
+asdf
+
+### Examples: circular cones
+
+Closed formulas for the intrinsic volumes of circular cones are known, see for example [@AB15, Sec. 3.3], and implemented in `circ_ivol`.
+
+asdf
 
 ## (Bivariate) chi-bar-squared distribution {#bivchibarsq}
 
 For $k\geq0$ let $F_k$ denote the cumulative distribution function (cdf) of the $\chi_k^2$ distribution, where $F_0(t)=1$ if $t\geq0$ and $F_0(t)=0$ if $t<0$. The chi-bar-squared distribution with weight vector $v=(v_0,\ldots,v_d)$, where $v\geq0$ and $\sum_{k=0}^dv_k=1$, can be characterized through its cdf via
-$$ F_v(t) = \sum_{k=0}^d v_k F_k(t) . $$
+  \[ F_v(t) = \sum_{k=0}^d v_k F_k(t) . \]
 In terms of random variables, one can think of sampling from the chi-bar-squared distribution as a two-step procedure,
 
 1. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $v$,
 2. sample an element from the $\chi_k^2$ distribution.
 
 The bivariate chi-bar-squared distribution with weight vector $v$ can similarly be characterized through its cdf via
-$$ \Phi_v(s,t) = \sum_{k=0}^d v_k F_k(s) F_{d-k}(t) . $$
+  \[ \Phi_v(s,t) = \sum_{k=0}^d v_k F_k(s) F_{d-k}(t) . \]
 In terms of random variables, one can think of sampling $(x,y)$ from the chi-bar-squared distribution as a two-step procedure,
 
 1. sample an index $k\in\{0,\ldots,d\}$ according to the distribution defined by the weight vector $v$,
@@ -155,9 +233,9 @@ This sampling procedure is useful for the understanding of the EM algorithm in `
 ### Relation to closed convex cones {#bivchibars_cone}
 
 The (bivariate) chi-bar-squared distribution corresponding to a closed convex cone $C$ is of course the one arising from taking the conic intrinsic volumes as weights; in terms of the cdf,
-$$ F_C(t) = \sum_{k=0}^d v_k(C) F_k(t) ,\qquad \Phi_C(s,t) = \sum_{k=0}^d v_k(C) F_k(s) F_{d-k}(t) . $$
+  \[ F_C(t) = \sum_{k=0}^d v_k(C) F_k(t) ,\qquad \Phi_C(s,t) = \sum_{k=0}^d v_k(C) F_k(s) F_{d-k}(t) . \]
 A natural sampling for these distributions involves the projection map $\Pi_C$. Denoting by $g\sim N(0,I_d)$ a Gaussian vector, one can show that the chi-bar-squared and the bivariate chi-bar-squared distributions are given by the distributions of the random variables
-$$ \|\Pi_C(g)\|^2 \quad\text{and}\quad \big(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2\big) . $$
+  \[ \|\Pi_C(g)\|^2 \quad\text{and}\quad \big(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2\big) . \]
 The fact that these random variables have the (bivariate) chi-bar-squared distribution with weights given by the conic intrinsic volumes is one form of the Conic Steiner Theorem, see [@McCT14].
 
 The moments of the continuous random variables $\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2$ are closely related with those of the discrete random variable defined by the intrinsic volumes. In fact, for the first and second moment we obtain the following:
@@ -190,16 +268,16 @@ As remarked above, the vector of intrinsic volumes of a cone $C$ with natural or
 
 Formally, we would like to sample the bivariate chi-bar squared distribution of a cone $\tilde C\subseteq \text{R}^e$, with $e=\text{dim}(C)-\text{lin}(C)$, which is isometric to the cone $\bar C$, so that $v_k(\tilde C)=v_k(\bar C)$. Note that $v_k(\tilde C)>0$ for all $k=0,\ldots,e$.
 
-In the following two subsections we describe how this is achieved and implemented in `rbichibarsq_polyh_gen` and `rbichibarsq_polyh_ineq`, depending on whether the cone is given by generators or inequalities.
+In the following two subsections we describe how this is achieved and implemented in `polyh_rbichibarsq_gen` and `polyh_rbichibarsq_ineq`, depending on whether the cone is given by generators or inequalities.
 
 ### Polyhedral cones given by generators
 
 We assume that the polyhedral cone is given in the form
-$$ C = \{Az \mid z\in\text{R}^n, z\geq 0\} ,\quad A\in\text{R}^{d\times n} ;$$
+  \[ C = \{Az \mid z\in\text{R}^n, z\geq 0\} ,\quad A\in\text{R}^{d\times n} ; \]
 the cone $\tilde C$ will accordingly be given in the form
-$$ \tilde C = \{\tilde A\tilde z \mid \tilde z\in\text{R}^m, \tilde z\geq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , $$
+  \[ \tilde C = \{\tilde A\tilde z \mid \tilde z\in\text{R}^m, \tilde z\geq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , \]
 with $e=\text{dim}(C)-\text{lin}(C)$ and $m=\text{(number of edges of $\bar C$)}\leq n$. Moreover, we will specify the orthogonal decomposition of $C$ via the matrices $Q_L\in\text{R}^{d\times\text{lin}(C)}$ and $Q_C\in\text{R}^{d\times e}$, with $Q_L^TQ_L=I_{\text{lin}(C)}$ and $Q_C^TQ_C=I_e$, such that
-$$ L=Q_L\cdot\text{R}^{\text{lin}(C)} ,\quad \bar C=Q_C\cdot\tilde C . $$
+  \[ L=Q_L\cdot\text{R}^{\text{lin}(C)} ,\quad \bar C=Q_C\cdot\tilde C . \]
 
 The following simple algorithm achieves this:
 
@@ -211,26 +289,26 @@ The lineality space $L$ is given by the linear hull of $\{v_j\mid -v_j\in C_j\}$
 * Compute the singular value decomposition of $B$ and define $Q_C$ as the matrix consisting of the left-singular vectors corresponding to the nonzero singular values; $e=\text{dim}(C)-\text{lin}(C)$ is given by the number of columns of $Q_C$. Defining $\tilde A=Q_C^T B$, the cone $\tilde C$ is given as the conical hull of the columns of $\tilde A$, but not necessarily in a minimal way.
 * Test each column of $\tilde A$ whether it lies in the column generated by the remaining columns, similar to the above tests, drop that column if it does.
 
-This simple algorithm is described in [@WW67]; there are more efficient algorithms, see [@DL06] and the references therein, but in small and medium sized dimensions the simple algorithm should be sufficient. This algorithm is implemented in `rbichibarsq_polyh_gen`, it produces a list
-$$ [ \text{dim}(C),\text{lin}(C),Q_L,Q_C,\tilde A,M ] $$
+This simple algorithm is described in [@WW67]; there are more efficient algorithms, see [@DL06] and the references therein, but in small and medium sized dimensions the simple algorithm should be sufficient. This algorithm is implemented in `polyh_rbichibarsq_gen`, it produces a list
+  \[ [ \text{dim}(C),\text{lin}(C),Q_L,Q_C,\tilde A,M ] \]
 where $M\in\text{R}^{N\times 2}$ such that the rows are independent samples from the bivariate chi-bar-squared distribution of $\tilde C$.
 
 ### Polyhedral cones given by inequalities
 
 We assume that the polyhedral cone is given in the form
-$$ C = \{y\in\text{R}^d \mid A^Ty\leq 0\} ,\quad A\in\text{R}^{d\times n} ; $$
+  \[ C = \{y\in\text{R}^d \mid A^Ty\leq 0\} ,\quad A\in\text{R}^{d\times n} ; \]
 the cone $\tilde C$ will accordingly be given in the form
-$$ \tilde C = \{\tilde y\in\text{R}^e \mid \tilde A^T\tilde y\leq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , $$
+  \[ \tilde C = \{\tilde y\in\text{R}^e \mid \tilde A^T\tilde y\leq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , \]
 with $e=\text{dim}(C)-\text{lin}(C)$ and $m=\text{(number of facets of $\bar C$)}\leq n$. Moreover, we will specify the orthogonal decomposition of $C$ via the matrices $Q_L\in\text{R}^{d\times(d-\text{dim}(C))}$ and $Q_C\in\text{R}^{d\times e}$, with $Q_L^TQ_L=I_{d-\text{dim}(C)}$ and $Q_C^TQ_C=I_e$, such that
 \begin{align*}
    L & =\{y\in\text{R}^d\mid Q_L^Ty=0, Q_C^Ty=0\} ,\quad \bar C=Q_C\cdot\tilde C ,
 \\ C & =\{y\in\text{R}^d \mid Q_L^Ty=0, \tilde A^TQ_C^Ty\leq 0\}  .
 \end{align*}
 
-We use polarity to reduce this case to the case of cones given by generators. Calling `rbichibarsq_polyh_gen` with input matrix $A$ produces the list
-$$ [ \text{dim}(C^\circ),\text{lin}(C^\circ),Q_L,Q_C,\tilde A,M'] . $$
-We compute the corresponding out of `rbichibarsq_polyh_ineq`,
-$$ [ \text{dim}(C),\text{lin}(C),Q_L,Q_C,\tilde A,M ] , $$
+We use polarity to reduce this case to the case of cones given by generators. Calling `polyh_rbichibarsq_gen` with input matrix $A$ produces the list
+  \[ [ \text{dim}(C^\circ),\text{lin}(C^\circ),Q_L,Q_C,\tilde A,M'] . \]
+We compute the corresponding out of `polyh_rbichibarsq_ineq`,
+  \[ [ \text{dim}(C),\text{lin}(C),Q_L,Q_C,\tilde A,M ] , \]
 in the following way:
 
 * $\text{dim}(C)=d-\text{lin}(C^\circ)$, $\text{lin}(C)=d-\text{dim}(C^\circ)$,

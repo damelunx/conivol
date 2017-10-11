@@ -12,7 +12,7 @@
 
 <meta name="author" content="Dennis Amelunxen" />
 
-<meta name="date" content="2017-09-21" />
+<meta name="date" content="2017-09-14" />
 
 <title>Bayesian estimates for conic intrinsic volumes</title>
 
@@ -32,7 +32,7 @@
 
 <h1 class="title toc-ignore">Bayesian estimates for conic intrinsic volumes</h1>
 <h4 class="author"><em>Dennis Amelunxen</em></h4>
-<h4 class="date"><em>2017-09-21</em></h4>
+<h4 class="date"><em>2017-09-14</em></h4>
 
 
 
@@ -85,6 +85,9 @@ We use the Dirichlet distribution as a prior, <span class="math inline">\(V\sim 
 <h2>Posterior distribution</h2>
 <p>The posterior distribution for <span class="math inline">\(V\)</span>, or <span class="math inline">\(V^e\)</span> and <span class="math inline">\(V^o\)</span>, respectively, is easily derived through Bayes’ Theorem. What is a bit more complicated is the question how to sample from this distribution, which is crucial for obtaining, for example, credible regions or morginal credible intervals. For this we will describe how to extend the distribution on the probability simplex (or product of probability simplices in the even/odd index decomposition) to a distribution on the positive orthant, so that we can employ a standard Gibbs sampling procedure to sample from the posterior distribution.</p>
 <p>As before we will first describe this for the random vector <span class="math inline">\(V\)</span> before describing the necessary adaptations for the even/odd index decomposition.</p>
+<div id="sampl_latent" class="section level3">
+<h3>Samples of the latent variable</h3>
+</div>
 <div id="distr_simplex" class="section level3">
 <h3>Distribution on probability simplex</h3>
 We derive the posterior distribution by using the latent variable <span class="math inline">\(Z\)</span>. Note first that the posterior distribution of <span class="math inline">\(V\)</span> given direct samples of the latent variable is again Dirichlet distributed:
