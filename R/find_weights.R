@@ -81,7 +81,7 @@ prepare_data <- function(d, m_samp) {
 #' alpha <- c(pi/3,pi/4)
 #' d <- sum(D)
 #' N <- 10^5
-#' v_exact <- circ_ivol( D, alpha, product=TRUE )
+#' v_exact <- circ_ivols( D, alpha, product=TRUE )
 #'
 #' # collect sample data
 #' m_samp <- circ_rbichibarsq(N,D,alpha)
@@ -168,19 +168,19 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
         return(v/sum(v))
     } else if (init_mode==2) {
         alpha <- asin(sqrt(delta/d))
-        return(conivol::circ_ivol(d,alpha))
+        return(conivol::circ_ivols(d,alpha))
     } else if (init_mode==3) {
         alpha <- asin(sqrt(2*var/(d-2)))/2
         if ((alpha<pi/4 && delta>d/2) || (alpha>pi/4 && delta<d/2))
         alpha <- pi/2-alpha;
-        return(conivol::circ_ivol(d,alpha))
+        return(conivol::circ_ivols(d,alpha))
     } else if (init_mode==4) {
         alpha1 <- asin(sqrt(delta/d))
         alpha2 <- asin(sqrt(2*var/(d-2)))/2
         if ((alpha2<pi/4 && delta>d/2) || (alpha2>pi/4 && delta<d/2))
             alpha2 <- pi/2-alpha2;
-        v1 <- conivol::circ_ivol(d,alpha1)
-        v2 <- conivol::circ_ivol(d,alpha2)
+        v1 <- conivol::circ_ivols(d,alpha1)
+        v2 <- conivol::circ_ivols(d,alpha2)
         v <- sqrt(v1*v2)
         return(v/sum(v))
     } else {

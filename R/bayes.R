@@ -50,7 +50,7 @@
 #' # defining the example cone
 #' D <- c(5,8)
 #' alpha <- c( asin(sqrt(0.9)) , asin(sqrt(0.8)))
-#' v <- circ_ivol(D, alpha, product = TRUE)
+#' v <- circ_ivols(D, alpha, product = TRUE)
 #' d <- sum(D)
 #'
 #' # getting the sample data
@@ -366,7 +366,7 @@ find_ivols_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_
 #' # defining the example cone
 #' D <- c(5,8)
 #' alpha <- c( asin(sqrt(0.9)) , asin(sqrt(0.8)))
-#' v <- circ_ivol(D, alpha, product = TRUE)
+#' v <- circ_ivols(D, alpha, product = TRUE)
 #' d <- sum(D)
 #'
 #' # getting the sample data

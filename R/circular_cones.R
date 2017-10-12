@@ -1,6 +1,6 @@
 #' The conic intrinsic volumes of (products of) circular cones.
 #'
-#' \code{circ_ivol} computes the conic intrinsic volumes of circular cones,
+#' \code{circ_ivols} computes the conic intrinsic volumes of circular cones,
 #' whose dimensions and angles are given in the vectors \code{d} and
 #' \code{alpha} (vectors must be of same lengths); if the length of the vectors
 #' is one, a single vector is returned; if the length of the vectors is greater
@@ -23,13 +23,13 @@
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' circ_ivol(5, pi/4)
-#' circ_ivol(c(5,5), c(pi/4,pi/8))
-#' circ_ivol(c(5,5), c(pi/4,pi/8), product = TRUE)
+#' circ_ivols(5, pi/4)
+#' circ_ivols(c(5,5), c(pi/4,pi/8))
+#' circ_ivols(c(5,5), c(pi/4,pi/8), product = TRUE)
 #'
 #' @export
 #'
-circ_ivol <- function(d, alpha, product = FALSE) {
+circ_ivols <- function(d, alpha, product = FALSE) {
     if (length(d)!=length(alpha))
         stop("Inputs d and alpha must be of same length.")
 
@@ -82,7 +82,7 @@ circ_ivol <- function(d, alpha, product = FALSE) {
 #'         to the vector of dimensions \code{d} and the vector of angles \code{alpha}.
 #'
 #' @section See also:
-#' \code{\link[conivol]{circ_ivol}}, \code{\link[conivol]{polyh_rbichibarsq}},
+#' \code{\link[conivol]{circ_ivols}}, \code{\link[conivol]{polyh_rbichibarsq}},
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{rchibarsq}},
 #' \code{\link[stats]{rchisq}},
 #'
@@ -100,13 +100,13 @@ circ_rbichibarsq <- function(n,d,alpha) {
     if (any(d<2) || any(alpha<0) || any(alpha>pi/2))
         stop("Dimensions d must be >=2 and alpha must be between 0 and pi/2.")
 
-    return( conivol::rbichibarsq(n, conivol::circ_ivol(d,alpha,TRUE)) )
+    return( conivol::rbichibarsq(n, conivol::circ_ivols(d,alpha,TRUE)) )
 
     # SLOW:
     # if (length(d)==1)
-    #     return( rbichibarsq(n, circ_ivol(d,alpha)) )
+    #     return( rbichibarsq(n, circ_ivols(d,alpha)) )
     # else
-    #     return( Reduce('+', lapply(circ_ivol(d,alpha), function(v){rbichibarsq(n,v)}) ) )
+    #     return( Reduce('+', lapply(circ_ivols(d,alpha), function(v){rbichibarsq(n,v)}) ) )
 
     # SLOW:
     # out <- matrix(0,n,2)

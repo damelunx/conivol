@@ -34,7 +34,7 @@
 #'
 #' @section Computations involving products of circular cones:
 #' \itemize{
-#'   \item \code{\link[conivol]{circ_ivol}}: computes the intrinsic volumes of (a product of)
+#'   \item \code{\link[conivol]{circ_ivols}}: computes the intrinsic volumes of (a product of)
 #'                           circular cones
 #'   \item \code{\link[conivol]{circ_rbichibarsq}}: produces samples from the bivariate
 #'                                  chi-bar-squared distribution with weights
@@ -45,20 +45,20 @@
 #' @section Computations involving products of (polars of) Weyl chambers:
 #' \itemize{
 #'   \item \code{\link[conivol]{weyl_matrix}}: TBD
-#'   \item \code{\link[conivol]{weyl_ivol}}: TBD
+#'   \item \code{\link[conivol]{weyl_ivols}}: TBD
 #' }
 #'
 #' @section General polyhedral cones:
 #' \itemize{
 #'   \item \code{\link[conivol]{polyh_reduce}}: computes a reduced representation
 #'                                   of a polyhedral cone given by generators
-#'   \item \code{\link[conivol]{polyh_samp_ivol_gen}}: produces samples from the
+#'   \item \code{\link[conivol]{polyh_samp_ivols_gen}}: produces samples from the
 #'                                   intrinsic volumes distribution of
 #'                                   a polyhedral cone given by generators
-#'   \item \code{\link[conivol]{polyh_samp_ivol_ineq}}: produces samples from the
+#'   \item \code{\link[conivol]{polyh_samp_ivols_ineq}}: produces samples from the
 #'                                   intrinsic volumes distribution of
 #'                                   a polyhedral cone given by inequalities
-#'   \item \code{\link[conivol]{polyh_ivol_Bayes}}: TBD
+#'   \item \code{\link[conivol]{polyh_ivols_Bayes}}: TBD
 #'   \item \code{\link[conivol]{polyh_rbichibarsq_gen}}: produces samples from the bivariate
 #'                                   chi-bar-squared distribution with weights
 #'                                   given by the conic intrinsic volumes of

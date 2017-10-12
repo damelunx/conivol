@@ -353,7 +353,7 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 
 #' Sample from intrinsic volumes distribution of a polyhedral cone given by generators
 #'
-#' \code{polyh_samp_ivol_gen} generates a vector of iid samples from the intrinsic
+#' \code{polyh_samp_ivols_gen} generates a vector of iid samples from the intrinsic
 #' volumes distribution, that is, the distribution on \code{{0,1,...,d}} with the
 #' probability for \code{k} given by \code{v_k(C)}, where \code{C} is the
 #' polyhedral cone by the generator matrix \code{A}, that is, \code{C={Ax|x>=0}}.
@@ -370,7 +370,7 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @param tol tolerance used in the reduction step
 #'            (single precision machine epsilon by default)
 #'
-#' @return The output of \code{polyh_samp_ivol_gen(n,A)}, with the default value
+#' @return The output of \code{polyh_samp_ivols_gen(n,A)}, with the default value
 #'         \code{reduce==TRUE}, is a list containing the following elements:
 #' \itemize{
 #'   \item \code{dim}: the dimension of the linear span of \code{C},
@@ -392,16 +392,16 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_samp_ivol_ineq}}
+#' \code{\link[conivol]{polyh_samp_ivols_ineq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' polyh_samp_ivol_gen(20,matrix(1:12,4,3)
+#' polyh_samp_ivols_gen(20,matrix(1:12,4,3)
 #'
 #' @export
 #'
-polyh_samp_ivol_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
+polyh_samp_ivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
     if (solver=="nnls") {
         if (!requireNamespace("nnls", quietly = TRUE))
             stop("\n Could not find package 'nnls'.")
@@ -457,7 +457,7 @@ polyh_samp_ivol_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 
 #' Sample from intrinsic volumes distribution of a polyhedral cone given by inequalities
 #'
-#' \code{polyh_samp_ivol_ineq} generates a vector of iid samples from the intrinsic
+#' \code{polyh_samp_ivols_ineq} generates a vector of iid samples from the intrinsic
 #' volumes distribution, that is, the distribution on \code{{0,1,...,d}} with the
 #' probability for \code{k} given by \code{v_k(C)}, where \code{C} is the
 #' polyhedral cone by the inequalities matrix \code{A}, that is, \code{C={y|A^Ty<=0}}.
@@ -474,7 +474,7 @@ polyh_samp_ivol_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @param tol tolerance used in the reduction step
 #'            (single precision machine epsilon by default)
 #'
-#' @return The output of \code{polyh_samp_ivol_ineq(n,A)}, with the default value
+#' @return The output of \code{polyh_samp_ivols_ineq(n,A)}, with the default value
 #'         \code{reduce==TRUE}, is a list containing the following elements:
 #' \itemize{
 #'   \item \code{dim}: the dimension of the linear span of \code{C},
@@ -496,19 +496,19 @@ polyh_samp_ivol_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_samp_ivol_gen}}
+#' \code{\link[conivol]{polyh_samp_ivols_gen}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' polyh_samp_ivol_ineq(20,matrix(1:12,4,3)
+#' polyh_samp_ivols_ineq(20,matrix(1:12,4,3)
 #'
 #' @export
 #'
-polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
+polyh_samp_ivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
     d <- dim(A)[1]
     if (reduce) {
-        out <- polyh_samp_ivol_gen(n, A, solver=solver, reduce=TRUE, tol=tol)
+        out <- polyh_samp_ivols_gen(n, A, solver=solver, reduce=TRUE, tol=tol)
         dimCpol <- out$dim
         linCpol <- out$lin
 
@@ -517,14 +517,14 @@ polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
         out$samples <- d-out$samples
         return(out)
     } else
-        return( d-polyh_samp_ivol_gen(n, A, solver=solver, reduce=FALSE, tol=tol) )
+        return( d-polyh_samp_ivols_gen(n, A, solver=solver, reduce=FALSE, tol=tol) )
 }
 
 
 
 #' Bayesian posterior for samples of intrinsic volumes distribution
 #'
-#' \code{polyh_ivol_Bayes} generates functions for computing quantiles of marginals
+#' \code{polyh_ivols_Bayes} generates functions for computing quantiles of marginals
 #' of the posterior distribution and for sampling from the posterior distribution,
 #' given samples of the intrinsic volumes distribution.
 #'
@@ -535,7 +535,7 @@ polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
 #'
-#' @return The output of \code{polyh_ivol_Bayes} is a list containing the following elements:
+#' @return The output of \code{polyh_ivols_Bayes} is a list containing the following elements:
 #' \itemize{
 #'   \item \code{post_marg_quant}: a function that computes the quantiles of the
 #'                    marginals of the posterior distribution;
@@ -555,17 +555,17 @@ polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_samp_ivol_gen}}, \code{\link[conivol]{polyh_samp_ivol_ineq}}
+#' \code{\link[conivol]{polyh_samp_ivols_gen}}, \code{\link[conivol]{polyh_samp_ivols_ineq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' samp <- polyh_samp_ivol_gen(20,matrix(1:12,4,3))
-#' polyh_ivol_Bayes(samp$samples, samp$dim, samp$lin)
+#' samp <- polyh_samp_ivols_gen(20,matrix(1:12,4,3))
+#' polyh_ivols_Bayes(samp$samples, samp$dim, samp$lin)
 #'
 #' @export
 #'
-polyh_ivol_Bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
+polyh_ivols_Bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
     # check whether prior is "noninformative" or "informative"
     # check whether lin==dim
 
