@@ -38,7 +38,7 @@
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{find_ivols_EM}}
+#' \code{\link[conivol]{find_ivols_em}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -354,7 +354,7 @@ find_ivols_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{find_ivols_EM}}
+#' \code{\link[conivol]{find_ivols_em}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'

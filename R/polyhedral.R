@@ -524,7 +524,7 @@ polyh_samp_ivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 
 #' Bayesian posterior for samples of intrinsic volumes distribution
 #'
-#' \code{polyh_ivols_Bayes} generates functions for computing quantiles of marginals
+#' \code{polyh_ivols_bayes} generates functions for computing quantiles of marginals
 #' of the posterior distribution and for sampling from the posterior distribution,
 #' given samples of the intrinsic volumes distribution.
 #'
@@ -535,7 +535,7 @@ polyh_samp_ivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
 #'
-#' @return The output of \code{polyh_ivols_Bayes} is a list containing the following elements:
+#' @return The output of \code{polyh_ivols_bayes} is a list containing the following elements:
 #' \itemize{
 #'   \item \code{post_marg_quant}: a function that computes the quantiles of the
 #'                    marginals of the posterior distribution;
@@ -561,11 +561,11 @@ polyh_samp_ivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'
 #' @examples
 #' samp <- polyh_samp_ivols_gen(20,matrix(1:12,4,3))
-#' polyh_ivols_Bayes(samp$samples, samp$dim, samp$lin)
+#' polyh_ivols_bayes(samp$samples, samp$dim, samp$lin)
 #'
 #' @export
 #'
-polyh_ivols_Bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
+polyh_ivols_bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
     # check whether prior is "noninformative" or "informative"
     # check whether lin==dim
 
@@ -631,7 +631,6 @@ polyh_ivols_Bayes <- function(samples, dim, lin, prior="noninformative", v_prior
                     post =list(even=Dir_post_even,  odd=Dir_post_odd))
     return(out)
 }
-
 
 
 

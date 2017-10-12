@@ -58,7 +58,7 @@
 #'   \item \code{\link[conivol]{polyh_samp_ivols_ineq}}: produces samples from the
 #'                                   intrinsic volumes distribution of
 #'                                   a polyhedral cone given by inequalities
-#'   \item \code{\link[conivol]{polyh_ivols_Bayes}}: TBD
+#'   \item \code{\link[conivol]{polyh_ivols_bayes}}: TBD
 #'   \item \code{\link[conivol]{polyh_rbichibarsq_gen}}: produces samples from the bivariate
 #'                                   chi-bar-squared distribution with weights
 #'                                   given by the conic intrinsic volumes of
@@ -74,14 +74,14 @@
 #'   \item \code{\link[conivol]{prepare_data}}: evaluates the sample data of the bivariate chi-bar-squared
 #'                              data (find the corresponding chi-squared density values);
 #'                              this potentially time-consuming step is called during
-#'                              \code{find_ivols_EM} and can be computed outside and passed
-#'                              as parameter to avoid multiple calls, should \code{find_ivols_EM}
+#'                              \code{find_ivols_em} and can be computed outside and passed
+#'                              as parameter to avoid multiple calls, should \code{find_ivols_em}
 #'                              be called more than once
 #'   \item \code{\link[conivol]{init_v}}: find an initial estimate of the weights, potentially
 #'                        based on first and/or second moment
 #'   \item \code{\link[conivol]{comp_loglike}}: compute the log-likelihood of a weight vector
 #'                              for specific sample data
-#'   \item \code{\link[conivol]{find_ivols_EM}}: produces EM-type iterates that may or may not converge
+#'   \item \code{\link[conivol]{find_ivols_em}}: produces EM-type iterates that may or may not converge
 #'                               to the maximum likelihood estimate for the weights
 #'                               of the bivariate chi-bar-squared distribution
 #'                               from sample data; as the likelihood function is
