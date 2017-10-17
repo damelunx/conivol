@@ -1,6 +1,6 @@
 \documentclass{article}
 
-\usepackage[margin=0mm, paperwidth=50.1mm, paperheight=98mm]{geometry}
+\usepackage[margin=0mm, paperwidth=22.3mm, paperheight=98.1mm]{geometry}
 
 \usepackage{amsmath}
 \usepackage{tikz}
@@ -22,17 +22,35 @@
    \node[det, below=1 of t] (Tinv) {$T^{-1}$} ;
    \node[latent, below=.5 of Tinv] (u) {$\vct u$} ;
    \node[det, below=.5 of u] (exp) {$\exp$} ;
-   \node[latent, below left=.5 of exp] (veven) {$\vct{v}_{\text{even}}$} ;
-   \node[latent, below right=.5 of exp] (vodd) {$\vct{v}_{\text{odd}}$} ;
-   \node[obs, below=1 of veven] (Neven) {$\vct{N}_{\text{even}}$} ;
-   \node[obs, below=1.1 of vodd] (Nodd) {$\vct{N}_{\text{odd}}$} ;
+   \node[latent, below=.5 of exp] (v) {$\vct{v}$} ;
+   \node[obs, below=1 of v] (N) {$\vct{N}$} ;
    \edge[->] {t} {Tinv} ;
    \edge[->] {Tinv} {u} ;
    \edge[->] {u} {exp} ;
-   \edge[->] {exp} {veven,vodd} ;
-   \factor[below=.3 of veven] {veven-Neven} {left:Multinom} {veven} {Neven} ;
-   \factor[below=.3 of vodd] {vodd-Nodd} {right:Multinom} {vodd} {Nodd} ;
+   \edge[->] {exp} {v} ;
+   \factor[below=.3 of v] {v-N} {left:Multinom} {v} {N} ;
 \end{tikzpicture}
+% OLD: with even/odd index decomposition
+% \begin{tikzpicture}
+%    \node[latent] (t) {$t_k$} ;
+%    \node[const, above=1 of t] (alpbet) {$\alpha_k,\beta_k$} ;
+%    \factor[above=.5 of t] {alpbet-t} {left:Gamma} {alpbet} {t} ;
+%    \plate {alpbett} {(alpbet)(t)} {\rule{2mm}{0mm}$k=0,\ldots,d$} ;
+%    
+%    \node[det, below=1 of t] (Tinv) {$T^{-1}$} ;
+%    \node[latent, below=.5 of Tinv] (u) {$\vct u$} ;
+%    \node[det, below=.5 of u] (exp) {$\exp$} ;
+%    \node[latent, below left=.5 of exp] (veven) {$\vct{v}_{\text{even}}$} ;
+%    \node[latent, below right=.5 of exp] (vodd) {$\vct{v}_{\text{odd}}$} ;
+%    \node[obs, below=1 of veven] (Neven) {$\vct{N}_{\text{even}}$} ;
+%    \node[obs, below=1.1 of vodd] (Nodd) {$\vct{N}_{\text{odd}}$} ;
+%    \edge[->] {t} {Tinv} ;
+%    \edge[->] {Tinv} {u} ;
+%    \edge[->] {u} {exp} ;
+%    \edge[->] {exp} {veven,vodd} ;
+%    \factor[below=.3 of veven] {veven-Neven} {left:Multinom} {veven} {Neven} ;
+%    \factor[below=.3 of vodd] {vodd-Nodd} {right:Multinom} {vodd} {Nodd} ;
+% \end{tikzpicture}
 \end{center}
 
 \end{document}
