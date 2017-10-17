@@ -635,3 +635,157 @@ polyh_ivols_bayes <- function(samples, dim, lin, prior="noninformative", v_prior
 
 
 
+
+#' Stan model creation for Bayesian posterior given direct samples, enforcing log-concavity
+#'
+#' \code{polyh_ivols_stan} generates inputs for Stan (data list and model string or external file)
+#' for sampling from the posterior distribution,
+#' given direct (multinomial) samples of the intrinsic volumes distribution.
+#' The prior distribution is taken on the log-concavity parameters
+#' (second iterated differences of the logarithms of the intrinsic volumes),
+#' which enforces log-concavity of the intrinsic volumes.
+#'
+#' @param samples vector of integers representing independent samples from the
+#'                intrinsic volumes distribution of a convex cone
+#' @param dim the dimension of the cone
+#' @param lin the lineality of the cone
+#' @param prior either "noninformative" (default) or "informative"
+#' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
+#' @param filename filename for output (NA by default, in which case the return is a string)
+#' @param overwrite logical; determines whether the output should overwrite an existing file
+#'
+#' @return If \code{filename==NA} then the output of \code{find_ivols_stan} is a list containing the following elements:
+#' \itemize{
+#'   \item \code{model}: a string that forms the description of the Stan model,
+#'   \item \code{data}: a data list containing the prepared data to be used
+#'                    for defining a Stan model object,
+#'                    ## rest still has to be adapted ##
+#'   \item \code{variable.names}: the single string "V" to be used as additional
+#'                    parameter when creating samples from the JAGS object to
+#'                    indicate that only this vector should be tracked.
+#' }
+#' If \code{filename!=NA} then the model string will be written to the file with
+#' the specified name and the output will only contain the elements \code{data}
+#' and \code{variable.names}.
+#'
+#' @note See \href{../doc/bayesian.html#sampl_latent}{this vignette}
+#'       for further info.
+#'
+#' @section See also:
+#' \code{\link[conivol]{polyh_samp_ivols_gen}}, \code{\link[conivol]{polyh_samp_ivols_ineq}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
+#'
+#' @examples
+#' samp <- polyh_samp_ivols_gen(20,matrix(1:12,4,3))
+#' polyh_ivols_Bayes(samp$samples, samp$dim, samp$lin)
+#'
+#' @export
+#'
+polyh_ivols_stan <- function(samples, dim, lin, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+    # check whether prior is "noninformative" or "informative"
+    # check whether lin==dim
+
+    d_nonz <- dim-lin
+
+    # put this in the Stan program?
+    if (is.na(v_prior)) {
+        v_nonz_prior <- rep(1,d_nonz+1)/(d_nonz+1)
+    } else {
+        v_nonz_prior <- v_prior[lin:dim]
+    }
+
+    # put this in the Stan program?
+    if (prior=="informative"){
+        alpha_prior <- v_nonz_prior / 2
+        beta_prior  <- rep(1/2,d_nonz+1)
+    } else {
+        alpha_prior <- rep(1,d_nonz+1)
+        beta_prior  <- 1 / v_nonz_prior
+    }
+
+    data_list <- list(
+        dim         = dim ,
+        lin         = lin ,
+        samples     = samples ,
+        alpha_prior = alpha_prior ,
+        beta_prior  = beta_prior
+    )
+        model_string <- "
+data {
+    int <lower=1> dim;                                       \\ dimension of linear span
+    int <lower=0, upper=dim-1> lin;                          \\ lineality
+    int <lower=0> samples[];                                 \\ sample of multinomial distribution (even and odd)
+    vector <lower=0>[dim-lin+1] alpha ;                      \\ prior values for hyperparameters alpha
+    vector <lower=0>[dim-lin+1] beta ;                       \\ prior values for hyperparameters beta
+}
+transformed data {
+    int d ;                                                  \\ just for convenience
+    d = size(samples)-1 ;
+    int d_nonz ;                                             \\ just for convenience
+    d_nonz = dim-lin+1 ;
+    int <lower=0>[d_nonz] samp_nonz ;                        \\ just for convenience
+    samp_nonz = samples[(lin+1):(dim+1)] ;
+
+    matrix[d_nonz+1,d_nonz+1] T ;                            \\ transformation matrix for u ~> t
+    for (i in 1:(d_nonz-1)) {
+        T[i,i] = 1 ;
+        T[i,i+1] = -2 ;
+        T[i,i+2] = 1 ;
+    }
+    if (d_nonz%2==0) {
+        for (i in 0:(d_nonz/2)) {
+            T[d_nonz,2*i+1] = 1 ;
+            T[d_nonz+1,2*i+2] = 1 ;
+        }
+        T[d_nonz+1,1] = 1 ;
+    } else {
+        for (i in 0:((d_nonz-1)/2)) {
+            T[d_nonz,2*i+1] = 1 ;
+            T[d_nonz+1,2*i+2] = 1 ;
+        }
+        T[d_nonz,2*d_nonz+1] = 1 ;
+    }
+}
+parameters {
+    vector [d_nonz+1] t ;
+}
+transformed parameters {
+    vector [d_nonz+1] u ;
+    u = T \ t ;
+
+    vector <lower=0>[d_nonz+1] v_nonz ;
+    v_nonz = exp(u) ;
+}
+model {
+    for (k in 0:d_nonz) {
+        t[k+1] ~ gamma(alpha[k+1], beta[k+1])
+    }
+    samp_nonz ~ multinomial(v_nonz)
+}
+generated quantities {
+    vector [d+1] V ;
+    if (lin>0) V[1:lin] = rep_vector(0,lin) ;
+    if (dim<d) V[(dim+2):(d+1)] = rep_vector(0,d-dim) ;
+    V[(lin+1):(dim+1)] = v_nonz / sum(v_nonz) ;
+}
+"
+
+    out                <- list()
+    out$data           <- data_list
+    out$variable.names <- "V"
+
+    if ( !is.na(filename) && file.exists(filename) && overwrite==FALSE )
+        stop("\n File with given filename exists and overwrite==FALSE.")
+    else if ( !is.na(filename) ) {
+        if (file.exists(filename))
+            file.remove(filename)
+        file_conn<-file(filename)
+        writeLines(model_string, file_conn)
+        close(file_conn)
+    } else {
+        out$model <- model_string
+    }
+    return(out)
+
+}
