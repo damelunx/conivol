@@ -26,7 +26,7 @@
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{find_ivols_EM}}
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{find_ivols_em}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -81,7 +81,7 @@ prepare_data <- function(d, m_samp) {
 #' alpha <- c(pi/3,pi/4)
 #' d <- sum(D)
 #' N <- 10^5
-#' v_exact <- circ_ivol( D, alpha, product=TRUE )
+#' v_exact <- circ_ivols( D, alpha, product=TRUE )
 #'
 #' # collect sample data
 #' m_samp <- circ_rbichibarsq(N,D,alpha)
@@ -168,19 +168,19 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
         return(v/sum(v))
     } else if (init_mode==2) {
         alpha <- asin(sqrt(delta/d))
-        return(conivol::circ_ivol(d,alpha))
+        return(conivol::circ_ivols(d,alpha))
     } else if (init_mode==3) {
         alpha <- asin(sqrt(2*var/(d-2)))/2
         if ((alpha<pi/4 && delta>d/2) || (alpha>pi/4 && delta<d/2))
         alpha <- pi/2-alpha;
-        return(conivol::circ_ivol(d,alpha))
+        return(conivol::circ_ivols(d,alpha))
     } else if (init_mode==4) {
         alpha1 <- asin(sqrt(delta/d))
         alpha2 <- asin(sqrt(2*var/(d-2)))/2
         if ((alpha2<pi/4 && delta>d/2) || (alpha2>pi/4 && delta<d/2))
             alpha2 <- pi/2-alpha2;
-        v1 <- conivol::circ_ivol(d,alpha1)
-        v2 <- conivol::circ_ivol(d,alpha2)
+        v1 <- conivol::circ_ivols(d,alpha1)
+        v2 <- conivol::circ_ivols(d,alpha2)
         v <- sqrt(v1*v2)
         return(v/sum(v))
     } else {
@@ -191,7 +191,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 
 # create the input for mosek for EM step
 #
-.create_mosek_input_EM <- function(const,extrap_pol,extrap_prim,selfdual) {
+.create_mosek_input_em <- function(const,extrap_pol,extrap_prim,selfdual) {
     d <- length(const)-1
 
     mos_inp <- list()
@@ -291,14 +291,14 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 }
 
 
-.update_mosek_input_EM <- function(mos_inp,const) {
+.update_mosek_input_em <- function(mos_inp,const) {
     mos_inp$scopt$opro[3, ] <- const
     return(mos_inp)
 }
 
 #' Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm.
 #'
-#' \code{find_ivols_EM} produces EM-type iterates from a two-column
+#' \code{find_ivols_em} produces EM-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
 #' distribution, which may or may not (depending on the starting point) converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
@@ -340,7 +340,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_EM} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{find_ivols_em} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute EM-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
@@ -355,17 +355,17 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' find_ivols_EM( 10, m_samp )
-#' find_ivols_EM( 10, m_samp, init_mode=1 )
+#' find_ivols_em( 10, m_samp )
+#' find_ivols_em( 10, m_samp, init_mode=1 )
 #'
 #' @export
 #'
-find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           lambda=0, no_of_lcc_projections=1, lcc_amount=0,
                           extrapolate=0, selfdual=FALSE, data=NULL) {
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop( paste0("\n Could not find package 'Rmosek'.",
-            "\n If MOSEK is not available, try using 'find_ivols_GD' and 'find_ivols_Newton' instead of 'find_ivols_EM'.",
+            "\n If MOSEK is not available, try using 'find_ivols_gd' and 'find_ivols_newton' instead of 'find_ivols_em'.",
             "\n See the help entries for more information.") )
     if (!requireNamespace("Matrix", quietly = TRUE))
         stop("\n Could not find package 'Matrix'.")
@@ -405,7 +405,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     out_loglike[1] <- comp_loglike(v,data)
 
     # prepare Mosek inputs
-    mos_inp <- .create_mosek_input_EM(rep(0,d+1),extrap_pol,extrap_prim,selfdual)
+    mos_inp <- .create_mosek_input_em(rep(0,d+1),extrap_pol,extrap_prim,selfdual)
     # prepare log-concavity enforcing parameters
     lambda_v <- c(0,0,rep_len(lambda, d-1),0,0)
     # prepare index sets for potential normalization
@@ -451,7 +451,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             else if (extrap_pol & extrap_prim)
                 const <- const_pre + c_lambda[i_rel] * ( 2*lambda_v[3:(d+1)]-lambda_v[2:d]-lambda_v[4:(d+2)] )
 
-            mos_inp <- .update_mosek_input_EM(mos_inp,const)
+            mos_inp <- .update_mosek_input_em(mos_inp,const)
             mos_out <- Rmosek::mosek(mos_inp, opts)
             success <- check_mosek_success(mos_out$response$code)
         }
@@ -497,7 +497,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 
 #' Finding the weights of the bivariate chi-bar-squared distribution using gradient descent.
 #'
-#' \code{find_ivols_GD} produces gradient descent iterates from a two-column
+#' \code{find_ivols_gd} produces gradient descent iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
 #' distribution, which may or may not (depending on the starting point) converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
@@ -540,7 +540,7 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_GD} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{find_ivols_gd} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute gradient descent-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
@@ -548,12 +548,12 @@ find_ivols_EM <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' find_ivols_GD( 10, m_samp )
-#' find_ivols_GD( 10, m_samp, init_mode=1 )
+#' find_ivols_gd( 10, m_samp )
+#' find_ivols_gd( 10, m_samp, init_mode=1 )
 #'
 #' #@export #(gradient descent doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
@@ -642,7 +642,7 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 
 #' Finding the weights of the bivariate chi-bar-squared distribution using Newton's method.
 #'
-#' \code{find_ivols_Newton} produces Newton-type iterates from a two-column
+#' \code{find_ivols_newton} produces Newton-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
 #' distribution, which may or may not (depending on the starting point) converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
@@ -685,7 +685,7 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_Newton} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{find_ivols_newton} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute Newton-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
@@ -693,12 +693,12 @@ find_ivols_GD <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' find_ivols_Newton( 10, m_samp )
-#' find_ivols_Newton( 10, m_samp, init_mode=1 )
+#' find_ivols_newton( 10, m_samp )
+#' find_ivols_newton( 10, m_samp, init_mode=1 )
 #'
 #' #@export  #(Newton's method doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-find_ivols_Newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+find_ivols_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                               lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))

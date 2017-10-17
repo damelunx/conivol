@@ -10,7 +10,7 @@
 #'         obtained from convolving the components of \code{V}.
 #'
 #' @section See also:
-#' \code{\link[conivol]{circ_ivol}}
+#' \code{\link[conivol]{circ_ivols}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'

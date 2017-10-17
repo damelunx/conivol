@@ -353,7 +353,7 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 
 #' Sample from intrinsic volumes distribution of a polyhedral cone given by generators
 #'
-#' \code{polyh_samp_ivol_gen} generates a vector of iid samples from the intrinsic
+#' \code{polyh_samp_ivols_gen} generates a vector of iid samples from the intrinsic
 #' volumes distribution, that is, the distribution on \code{{0,1,...,d}} with the
 #' probability for \code{k} given by \code{v_k(C)}, where \code{C} is the
 #' polyhedral cone by the generator matrix \code{A}, that is, \code{C={Ax|x>=0}}.
@@ -370,7 +370,7 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @param tol tolerance used in the reduction step
 #'            (single precision machine epsilon by default)
 #'
-#' @return The output of \code{polyh_samp_ivol_gen(n,A)}, with the default value
+#' @return The output of \code{polyh_samp_ivols_gen(n,A)}, with the default value
 #'         \code{reduce==TRUE}, is a list containing the following elements:
 #' \itemize{
 #'   \item \code{dim}: the dimension of the linear span of \code{C},
@@ -392,16 +392,16 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_samp_ivol_ineq}}
+#' \code{\link[conivol]{polyh_samp_ivols_ineq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' polyh_samp_ivol_gen(20,matrix(1:12,4,3)
+#' polyh_samp_ivols_gen(20,matrix(1:12,4,3)
 #'
 #' @export
 #'
-polyh_samp_ivol_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
+polyh_samp_ivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
     if (solver=="nnls") {
         if (!requireNamespace("nnls", quietly = TRUE))
             stop("\n Could not find package 'nnls'.")
@@ -457,7 +457,7 @@ polyh_samp_ivol_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 
 #' Sample from intrinsic volumes distribution of a polyhedral cone given by inequalities
 #'
-#' \code{polyh_samp_ivol_ineq} generates a vector of iid samples from the intrinsic
+#' \code{polyh_samp_ivols_ineq} generates a vector of iid samples from the intrinsic
 #' volumes distribution, that is, the distribution on \code{{0,1,...,d}} with the
 #' probability for \code{k} given by \code{v_k(C)}, where \code{C} is the
 #' polyhedral cone by the inequalities matrix \code{A}, that is, \code{C={y|A^Ty<=0}}.
@@ -474,7 +474,7 @@ polyh_samp_ivol_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @param tol tolerance used in the reduction step
 #'            (single precision machine epsilon by default)
 #'
-#' @return The output of \code{polyh_samp_ivol_ineq(n,A)}, with the default value
+#' @return The output of \code{polyh_samp_ivols_ineq(n,A)}, with the default value
 #'         \code{reduce==TRUE}, is a list containing the following elements:
 #' \itemize{
 #'   \item \code{dim}: the dimension of the linear span of \code{C},
@@ -496,19 +496,19 @@ polyh_samp_ivol_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_samp_ivol_gen}}
+#' \code{\link[conivol]{polyh_samp_ivols_gen}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' polyh_samp_ivol_ineq(20,matrix(1:12,4,3)
+#' polyh_samp_ivols_ineq(20,matrix(1:12,4,3)
 #'
 #' @export
 #'
-polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
+polyh_samp_ivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
     d <- dim(A)[1]
     if (reduce) {
-        out <- polyh_samp_ivol_gen(n, A, solver=solver, reduce=TRUE, tol=tol)
+        out <- polyh_samp_ivols_gen(n, A, solver=solver, reduce=TRUE, tol=tol)
         dimCpol <- out$dim
         linCpol <- out$lin
 
@@ -517,14 +517,14 @@ polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
         out$samples <- d-out$samples
         return(out)
     } else
-        return( d-polyh_samp_ivol_gen(n, A, solver=solver, reduce=FALSE, tol=tol) )
+        return( d-polyh_samp_ivols_gen(n, A, solver=solver, reduce=FALSE, tol=tol) )
 }
 
 
 
 #' Bayesian posterior for samples of intrinsic volumes distribution
 #'
-#' \code{polyh_ivol_Bayes} generates functions for computing quantiles of marginals
+#' \code{polyh_ivols_bayes} generates functions for computing quantiles of marginals
 #' of the posterior distribution and for sampling from the posterior distribution,
 #' given samples of the intrinsic volumes distribution.
 #'
@@ -535,7 +535,7 @@ polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
 #'
-#' @return The output of \code{polyh_ivol_Bayes} is a list containing the following elements:
+#' @return The output of \code{polyh_ivols_bayes} is a list containing the following elements:
 #' \itemize{
 #'   \item \code{post_marg_quant}: a function that computes the quantiles of the
 #'                    marginals of the posterior distribution;
@@ -555,17 +555,17 @@ polyh_samp_ivol_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_samp_ivol_gen}}, \code{\link[conivol]{polyh_samp_ivol_ineq}}
+#' \code{\link[conivol]{polyh_samp_ivols_gen}}, \code{\link[conivol]{polyh_samp_ivols_ineq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' samp <- polyh_samp_ivol_gen(20,matrix(1:12,4,3))
-#' polyh_ivol_Bayes(samp$samples, samp$dim, samp$lin)
+#' samp <- polyh_samp_ivols_gen(20,matrix(1:12,4,3))
+#' polyh_ivols_bayes(samp$samples, samp$dim, samp$lin)
 #'
 #' @export
 #'
-polyh_ivol_Bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
+polyh_ivols_bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
     # check whether prior is "noninformative" or "informative"
     # check whether lin==dim
 
@@ -636,3 +636,156 @@ polyh_ivol_Bayes <- function(samples, dim, lin, prior="noninformative", v_prior=
 
 
 
+#' Stan model creation for Bayesian posterior given direct samples, enforcing log-concavity
+#'
+#' \code{polyh_ivols_stan} generates inputs for Stan (data list and model string or external file)
+#' for sampling from the posterior distribution,
+#' given direct (multinomial) samples of the intrinsic volumes distribution.
+#' The prior distribution is taken on the log-concavity parameters
+#' (second iterated differences of the logarithms of the intrinsic volumes),
+#' which enforces log-concavity of the intrinsic volumes.
+#'
+#' @param samples vector of integers representing independent samples from the
+#'                intrinsic volumes distribution of a convex cone
+#' @param dim the dimension of the cone
+#' @param lin the lineality of the cone
+#' @param prior either "noninformative" (default) or "informative"
+#' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
+#' @param filename filename for output (NA by default, in which case the return is a string)
+#' @param overwrite logical; determines whether the output should overwrite an existing file
+#'
+#' @return If \code{filename==NA} then the output of \code{find_ivols_stan} is a list containing the following elements:
+#' \itemize{
+#'   \item \code{model}: a string that forms the description of the Stan model,
+#'   \item \code{data}: a data list containing the prepared data to be used
+#'                    for defining a Stan model object,
+#'                    ## rest still has to be adapted ##
+#'   \item \code{variable.names}: the single string "V" to be used as additional
+#'                    parameter when creating samples from the JAGS object to
+#'                    indicate that only this vector should be tracked.
+#' }
+#' If \code{filename!=NA} then the model string will be written to the file with
+#' the specified name and the output will only contain the elements \code{data}
+#' and \code{variable.names}.
+#'
+#' @note See \href{../doc/bayesian.html#sampl_latent}{this vignette}
+#'       for further info.
+#'
+#' @section See also:
+#' \code{\link[conivol]{polyh_samp_ivols_gen}}, \code{\link[conivol]{polyh_samp_ivols_ineq}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
+#'
+#' @examples
+#' samp <- polyh_samp_ivols_gen(20,matrix(1:12,4,3))
+#' polyh_ivols_Bayes(samp$samples, samp$dim, samp$lin)
+#'
+#' @export
+#'
+polyh_ivols_stan <- function(samples, dim, lin, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+    # check whether prior is "noninformative" or "informative"
+    # check whether lin==dim
+
+    d_nonz <- dim-lin
+
+    # put this in the Stan program?
+    if (is.na(v_prior)) {
+        v_nonz_prior <- rep(1,d_nonz+1)/(d_nonz+1)
+    } else {
+        v_nonz_prior <- v_prior[lin:dim]
+    }
+
+    # put this in the Stan program?
+    if (prior=="informative"){
+        alpha_prior <- v_nonz_prior / 2
+        beta_prior  <- rep(1/2,d_nonz+1)
+    } else {
+        alpha_prior <- rep(1,d_nonz+1)
+        beta_prior  <- 1 / v_nonz_prior
+    }
+
+    data_list <- list(
+        dim         = dim ,
+        lin         = lin ,
+        samples     = samples ,
+        alpha_prior = alpha_prior ,
+        beta_prior  = beta_prior
+    )
+        model_string <- "
+data {
+    int <lower=1> dim;                                       \\ dimension of linear span
+    int <lower=0, upper=dim-1> lin;                          \\ lineality
+    int <lower=0> samples[];                                 \\ sample of multinomial distribution (even and odd)
+    vector <lower=0>[dim-lin+1] alpha ;                      \\ prior values for hyperparameters alpha
+    vector <lower=0>[dim-lin+1] beta ;                       \\ prior values for hyperparameters beta
+}
+transformed data {
+    int d ;                                                  \\ just for convenience
+    d = size(samples)-1 ;
+    int d_nonz ;                                             \\ just for convenience
+    d_nonz = dim-lin+1 ;
+    int <lower=0>[d_nonz] samp_nonz ;                        \\ just for convenience
+    samp_nonz = samples[(lin+1):(dim+1)] ;
+
+    matrix[d_nonz+1,d_nonz+1] T ;                            \\ transformation matrix for u ~> t
+    for (i in 1:(d_nonz-1)) {
+        T[i,i] = 1 ;
+        T[i,i+1] = -2 ;
+        T[i,i+2] = 1 ;
+    }
+    if (d_nonz%2==0) {
+        for (i in 0:(d_nonz/2)) {
+            T[d_nonz,2*i+1] = 1 ;
+            T[d_nonz+1,2*i+2] = 1 ;
+        }
+        T[d_nonz+1,1] = 1 ;
+    } else {
+        for (i in 0:((d_nonz-1)/2)) {
+            T[d_nonz,2*i+1] = 1 ;
+            T[d_nonz+1,2*i+2] = 1 ;
+        }
+        T[d_nonz,2*d_nonz+1] = 1 ;
+    }
+}
+parameters {
+    vector [d_nonz+1] t ;
+}
+transformed parameters {
+    vector [d_nonz+1] u ;
+    u = T \ t ;
+
+    vector <lower=0>[d_nonz+1] v_nonz ;
+    v_nonz = exp(u) ;
+}
+model {
+    for (k in 0:d_nonz) {
+        t[k+1] ~ gamma(alpha[k+1], beta[k+1])
+    }
+    samp_nonz ~ multinomial(v_nonz)
+}
+generated quantities {
+    vector [d+1] V ;
+    if (lin>0) V[1:lin] = rep_vector(0,lin) ;
+    if (dim<d) V[(dim+2):(d+1)] = rep_vector(0,d-dim) ;
+    V[(lin+1):(dim+1)] = v_nonz / sum(v_nonz) ;
+}
+"
+
+    out                <- list()
+    out$data           <- data_list
+    out$variable.names <- "V"
+
+    if ( !is.na(filename) && file.exists(filename) && overwrite==FALSE )
+        stop("\n File with given filename exists and overwrite==FALSE.")
+    else if ( !is.na(filename) ) {
+        if (file.exists(filename))
+            file.remove(filename)
+        file_conn<-file(filename)
+        writeLines(model_string, file_conn)
+        close(file_conn)
+    } else {
+        out$model <- model_string
+    }
+    return(out)
+
+}

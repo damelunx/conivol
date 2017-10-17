@@ -29,7 +29,7 @@
 #'         matrices will be returned.
 #'
 #' @section See also:
-#' \code{\link[conivol]{weyl_ivol}}
+#' \code{\link[conivol]{weyl_ivols}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -92,7 +92,7 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
 
 #' The conic intrinsic volumes of (products/duals of) Weyl chambers.
 #'
-#' \code{weyl_ivol} computes the conic intrinsic volumes of (polars of)
+#' \code{weyl_ivols} computes the conic intrinsic volumes of (polars of)
 #' Weyl chambers of finite reflection groups of type A, BC, D.
 #' The dimensions and types are given
 #' in the vectors \code{d} and \code{cone_type} (vectors must be of same lengths,
@@ -126,13 +126,13 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' weyl_ivol(5, "BC")
-#' weyl_ivol(c(5,5), c("BC","Ap"))
-#' weyl_ivol(c(5,5), c("BC","Ap"), product = TRUE)
+#' weyl_ivols(5, "BC")
+#' weyl_ivols(c(5,5), c("BC","Ap"))
+#' weyl_ivols(c(5,5), c("BC","Ap"), product = TRUE)
 #'
 #' @export
 #'
-weyl_ivol <- function(d, cone_type, product = FALSE) {
+weyl_ivols <- function(d, cone_type, product = FALSE) {
     if (!requireNamespace("polynom", quietly = TRUE))
         stop("\n Could not find package 'polynom'.")
     if (length(d)!=length(cone_type))
