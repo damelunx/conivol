@@ -1,3 +1,70 @@
+#' The conic intrinsic volumes of (products of) circular cones.
+#'
+#' \code{circ_ivols} computes the conic intrinsic volumes of circular cones,
+#' whose dimensions and angles are given in the vectors \code{d} and
+#' \code{alpha} (vectors must be of same lengths); if the length of the vectors
+#' is one, a single vector is returned; if the length of the vectors is greater
+#' than one and \code{prcoduct==FALSE}, a list of vectors is returned;
+#' if the length of the vectors is greater than one and \code{product==TRUE},
+#' a single vector with the intrinsic volumes of the product cone is returned.
+#'
+#' @param d vector of dimensions; must be same length as \code{alpha}.
+#' @param alpha vector of angles; must be same length as \code{d}.
+#' @param product logical; if \code{TRUE}, intrinsic volumes of product cone are returned.
+#'
+#' @return If \code{length(d)==1} or \code{(length(d)>1 & product==TRUE)}
+#'         then a single vectors will be returned.
+#'         If \code{(length(d)>1 & product==FALSE)} then a list of
+#'         vectors will be returned.
+#'
+#' @section See also:
+#' \code{\link[conivol]{circ_rbichibarsq}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
+#'
+#' @examples
+#' circ_ivols(5, pi/4)
+#' circ_ivols(c(5,5), c(pi/4,pi/8))
+#' circ_ivols(c(5,5), c(pi/4,pi/8), product = TRUE)
+#'
+#' @export
+#'
+circ_ivols <- function(d, alpha, product = FALSE) {
+    if (length(d)!=length(alpha))
+        stop("Inputs d and alpha must be of same length.")
+
+    V <- list()
+    for (i in 1:length(d)) {
+        if (d[i]<=1 || alpha[i]<0 || alpha[i]>pi/2)
+            v <- NA
+        else if (alpha[i]==0)
+            v <- c(0.5, 0.5, rep(0,d[i]-2))
+        else if (alpha[i]==pi/2)
+            v <- c(rep(0,d[i]-2), 0.5, 0.5)
+        else {
+            v <- rep(0,d[i]+1)
+            v[1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
+                             log( integrate(function(x){sin(x)^(d[i]-2)},0,pi/2-alpha[i])$value ) )
+
+            v[d[i]+1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
+                                  log( integrate(function(x){sin(x)^(d[i]-2)},0,alpha[i])$value ) )
+
+            k <- 1:(d[i]-1)
+            v[2:d[i]] <- exp( lgamma(d[i]/2)-lgamma((k+1)/2)-lgamma((d[i]-k+1)/2)+
+                                  (k-1)*log(sin(alpha[i]))+(d[i]-k-1)*log(cos(alpha[i]))-log(2) )
+        }
+        V[[i]] <- v
+    }
+
+    if (length(d)==1)
+        return(V[[1]])
+    else if (product)
+        return(conivol::comp_ivols_product(V))
+    else return(V)
+}
+
+
+
 #' Matrix representation of (products/duals of) Weyl chambers.
 #'
 #' \code{weyl_matrix} computes a matrix representation of the (polars of)
