@@ -1,10 +1,10 @@
-#' The conic intrinsic volumes of (products of) circular cones.
+#' The conic intrinsic volumes of (products of) circular cones
 #'
 #' \code{circ_ivols} computes the conic intrinsic volumes of circular cones,
 #' whose dimensions and angles are given in the vectors \code{d} and
 #' \code{alpha} (vectors must be of same lengths); if the length of the vectors
 #' is one, a single vector is returned; if the length of the vectors is greater
-#' than one and \code{prcoduct==FALSE}, a list of vectors is returned;
+#' than one and \code{product==FALSE}, a list of vectors is returned;
 #' if the length of the vectors is greater than one and \code{product==TRUE},
 #' a single vector with the intrinsic volumes of the product cone is returned.
 #'
@@ -18,8 +18,6 @@
 #'         vectors will be returned.
 #'
 #' @section See also:
-#' \code{\link[conivol]{circ_rbichibarsq}}
-#'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
@@ -80,6 +78,7 @@ circ_ivols <- function(d, alpha, product = FALSE) {
 #' @note See \href{../doc/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
 #'       for further info.
 #'
+#' @section See also:
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
@@ -133,7 +132,7 @@ ellips_semiax <- function(A) {
 }
 
 
-#' Sample from bivariate chi-bar-squared distribution of products of ellipsoidal cones.
+#' Sample from bivariate chi-bar-squared distribution of an ellipsoidal cone
 #'
 #' \code{ellips_rbichibarsq} generates an \code{n} by \code{2} matrix
 #' such that the rows form iid samples from the bivariate chi-bar-squared
@@ -168,11 +167,18 @@ ellips_semiax <- function(A) {
 #' @note See \href{../doc/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
 #'       for further info.
 #'
+#' @section See also:
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
 #' A <- matrix(c(2,3,5,7,11,13,17,19,23),3,3)
-#' ellips_rbichibarsq(100,A)
+#' ellips_rbichibarsq(10,A)
+#'
+#' # the lengths of the semiaxes (directly):
+#' ellips_semiax(A)
+#'
+#' # sampling without computing semiaxes first:
+#' ellips_rbichibarsq(10,A,FALSE)
 #'
 #' @export
 #'
@@ -183,11 +189,17 @@ ellips_rbichibarsq <- function(n,A, semiax = TRUE) {
         if ( !all( A>0 ) )
             stop("\n If A is a vector then it must be positive.")
         d <- length(A)+1
-        A <- diag( c(A,1) )
+        A_ell <- diag( c(A,1) )
     } else {                           # A is a matrix
         d <- dim(A)[1]
         if (dim(A)[2] != d || qr(A)$rank != d)
             stop("\n If A is a matrix then it must be invertible.")
+        if (semiax) {
+            alpha <- conivol::ellips_semiax(A)
+            A_ell <- diag( c(alpha,1) )
+        } else {
+            A_ell <- A
+        }
     }
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop("\n Could not find package 'Rmosek'.")
@@ -195,22 +207,25 @@ ellips_rbichibarsq <- function(n,A, semiax = TRUE) {
         stop("\n Could not find package 'Matrix'.")
 
     opts <- list(verbose=0)
-    mos_inp <- .create_mosek_input_ellips(A_ell,rep(0,d))
+    mos_inp <- conivol:::.create_mosek_input_ellips(A_ell,rep(0,d))
     out <- matrix(0,n,2)
 
     for (i in 1:n) {
         z <- rnorm(d)
-        mos_inp <- .update_mosek_input_ellips(mos_inp,z)
+        mos_inp <- conivol:::.update_mosek_input_ellips(mos_inp,z)
         nrmprojsq <- sum(Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(d+3):(2*d+2)]^2)
         out[i,1] <- nrmprojsq
         out[i,2] <- sum(z^2)-nrmprojsq
     }
-    return(out)
+    if (semiax)
+        return( list( semiax=alpha, samples=out ) )
+    else
+        return(out)
 }
 
 
 
-#' Matrix representation of (products/duals of) Weyl chambers.
+#' Matrix representation of (products/duals of) Weyl chambers
 #'
 #' \code{weyl_matrix} computes a matrix representation of the (polars of)
 #' Weyl chambers of finite reflection groups of type A, BC, and D.
@@ -219,19 +234,20 @@ ellips_rbichibarsq <- function(n,A, semiax = TRUE) {
 #' entries of \code{conetype} must be 'A', 'BC', 'D', 'Ap', 'BCp', or 'Dp').
 #' If the length of the vectors is one, a single matrix is returned; if the
 #' length of the vectors is greater
-#' than one and \code{prcoduct==FALSE}, a list of matrices is returned;
+#' than one and \code{product==FALSE}, a list of matrices is returned;
 #' if the length of the vectors is greater than one and \code{product==TRUE},
 #' a single matrix representing the product cone is returned.
 #'
 #' @param d vector of dimensions; must be same length as \code{cone_type}.
-#' @param cone_type vector of cone types; must be same length as \code{d},
+#' @param cone_type vector of cone types; must be same length as \code{d}, the
+#'             available types are as follows:
 #'             \describe{
-#'               \item{\code{cone_type=="A"}:}{chamber of type A}
-#'               \item{\code{cone_type=="BC"}:}{chamber of type BC}
-#'               \item{\code{cone_type=="D"}:}{chamber of type D}
-#'               \item{\code{cone_type=="Ap"}:}{polar of chamber of type A}
-#'               \item{\code{cone_type=="BCp"}:}{polar of chamber of type BC}
-#'               \item{\code{cone_type=="Dp"}:}{polar of chamber of type D}
+#'               \item{\code{"A"}:}{chamber of type A}
+#'               \item{\code{"BC"}:}{chamber of type BC}
+#'               \item{\code{"D"}:}{chamber of type D}
+#'               \item{\code{"Ap"}:}{polar of chamber of type A}
+#'               \item{\code{"BCp"}:}{polar of chamber of type BC}
+#'               \item{\code{"Dp"}:}{polar of chamber of type D}
 #'             }
 #' @param product logical; if \code{TRUE}, a representation of the product cone is returned.
 #'
@@ -287,7 +303,7 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
             A[1,2] <- -1/2
         }
         if (cone_type[i] %in% c("A","Ap")) {
-            tmp <- rbind(0,diag(rep(-1,d)))
+            tmp <- rbind(0,diag(rep(-1,d[i])))
             diag(tmp) <- 1
             Q <- svd(tmp)$u
             A <- t(Q) %*% A
@@ -298,11 +314,11 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
         return(M[[1]])
     else if (product)
         return(as.matrix(Matrix::bdiag(M)))
-    else return(V)
+    else return(M)
 }
 
 
-#' The conic intrinsic volumes of (products/duals of) Weyl chambers.
+#' The conic intrinsic volumes of (products/duals of) Weyl chambers
 #'
 #' \code{weyl_ivols} computes the conic intrinsic volumes of (polars of)
 #' Weyl chambers of finite reflection groups of type A, BC, D.
@@ -311,19 +327,20 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
 #' entries of \code{conetype} must be 'A', 'BC', 'D', 'Ap', 'BCp', or 'Dp').
 #' If the length of the vectors is one, a single vector is returned; if the
 #' length of the vectors is greater
-#' than one and \code{prcoduct==FALSE}, a list of vectors is returned;
+#' than one and \code{product==FALSE}, a list of vectors is returned;
 #' if the length of the vectors is greater than one and \code{product==TRUE},
 #' a single vector with the intrinsic volumes of the product cone is returned.
 #'
 #' @param d vector of dimensions; must be same length as \code{cone_type}.
-#' @param cone_type vector of cone types; must be same length as \code{d},
+#' @param cone_type vector of cone types; must be same length as \code{d}, the
+#'             available types are as follows:
 #'             \describe{
-#'               \item{\code{cone_type=="A"}:}{chamber of type A}
-#'               \item{\code{cone_type=="BC"}:}{chamber of type BC}
-#'               \item{\code{cone_type=="D"}:}{chamber of type D}
-#'               \item{\code{cone_type=="Ap"}:}{polar of chamber of type A}
-#'               \item{\code{cone_type=="BCp"}:}{polar of chamber of type BC}
-#'               \item{\code{cone_type=="Dp"}:}{polar of chamber of type D}
+#'               \item{\code{"A"}:}{chamber of type A}
+#'               \item{\code{"BC"}:}{chamber of type BC}
+#'               \item{\code{"D"}:}{chamber of type D}
+#'               \item{\code{"Ap"}:}{polar of chamber of type A}
+#'               \item{\code{"BCp"}:}{polar of chamber of type BC}
+#'               \item{\code{"Dp"}:}{polar of chamber of type D}
 #'             }
 #' @param product logical; if \code{TRUE}, intrinsic volumes of product cone are returned.
 #'

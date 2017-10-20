@@ -1,4 +1,4 @@
-#' Compute intrinsic volumes of product cone from intrinsic volumes of components.
+#' Compute intrinsic volumes of product cone from intrinsic volumes of components
 #'
 #' \code{comp_ivols_product} computes the intrinsic volumes of a product cone
 #' from the intrinsic volumes of its components. That is, it returns the
@@ -10,8 +10,6 @@
 #'         obtained from convolving the components of \code{V}.
 #'
 #' @section See also:
-#' \code{\link[conivol]{circ_ivols}}
-#'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
@@ -47,14 +45,19 @@ comp_ivols_product <- function(V) {
 #'         and variance \code{var},
 #'
 #' @section See also:
-#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{polyh_rbichibarsq}}
+#' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{ellips_rbichibarsq}},
+#' \code{\link[conivol]{polyh_rbichibarsq_gen}}, \code{\link[conivol]{polyh_rbichibarsq_ineq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- circ_rbichibarsq(10^4,10,pi/8)
+#' v <- circ_ivols(10,pi/8)
+#' m_samp <- rbichibarsq(10^4,v)
 #' estimate_statdim_var(10, m_samp)
+#'
+#' # true values:
+#' list( delta=sum((1:length(v)-1)*v),
+#'       var=sum((1:length(v)-1)^2*v)-sum((1:length(v)-1)*v)^2 )
 #'
 #' @export
 #'
@@ -62,8 +65,8 @@ estimate_statdim_var <- function(d, m_samp) {
     md <- colMeans(m_samp)
     mv <- colMeans(m_samp^2)
     delta <- (md[1] + d-md[2])/2
-    # var <- sqrt( (1+mv[1]-(delta+1)^2) * (1+mv[2]-(d-delta+1)^2) )
-    var <- (1+mv[1]-(delta+1)^2)
+    var <- sqrt( (1+mv[1]-(delta+1)^2) * (1+mv[2]-(d-delta+1)^2) )
+    # var <- (1+mv[1]-(delta+1)^2)
 
     return(list(delta=delta,var=var))
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/find_weights.R
 \name{comp_loglike}
 \alias{comp_loglike}
-\title{Evaluate the log-likelihood of the estimated intrinsic volumes.}
+\title{Evaluate the log-likelihood of the estimated intrinsic volumes}
 \usage{
 comp_loglike(v, data, mode = 0)
 }

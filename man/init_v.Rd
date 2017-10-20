@@ -2,7 +2,7 @@
 % Please edit documentation in R/find_weights.R
 \name{init_v}
 \alias{init_v}
-\title{Finding an initial estimate of the intrinsic volumes.}
+\title{Finding an initial estimate of the intrinsic volumes}
 \usage{
 init_v(d, init_mode = 0, delta = d/2, var = d/4)
 }
