@@ -64,6 +64,151 @@ circ_ivols <- function(d, alpha, product = FALSE) {
 }
 
 
+#' Computes the semiaxes of an ellipsoidal cone given as the linear image of the Lorentz cone
+#'
+#' \code{ellips_semiax} takes as input an invertible matrix \code{A}
+#' and returns the lengths of the semiaxes of the ellipsoidal cone given by
+#' the image of the Lorentz cone under \code{A}.
+#'
+#' @param A matrix
+#'
+#' @return The output of \code{ellips_semiax(A)}, \code{A in Gl_d}, is a positive
+#' vector \code{a in R^(d-1)} such that the cone \code{A*L}, where \code{L=\{x in R^d | x_d >= ||x||\}},
+#' is isometric to the cone \code{\{x in R^d | x_d >= sum_(j=1)^(d-1) x_j^2/a_j^2\}}.
+#'
+#'
+#' @note See \href{../doc/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
+#'       for further info.
+#'
+#' Package: \code{\link[conivol]{conivol}}
+#'
+#' @examples
+#' A <- matrix(c(2,3,5,7,11,13,17,19,23),3,3)
+#' ellips_semiax(A)
+#'
+#' @export
+#'
+ellips_semiax <- function(A) {
+    if (!is.matrix(A))
+        stop("\n Input is not a matrix.")
+    d <- dim(A)[1]
+    if (dim(A)[2] != d)
+        stop("\n Input matrix is not a square matrix.")
+    if (qr(A)$rank != d)
+        stop("\n Input matrix is not invertible.")
+
+    eigs_AJAt <- sort(eigen( A %*% (c(rep(-1,d-1),1) * t(A)) )$values)
+    return( sqrt(-eigs_AJAt[1:(d-1)]/eigs_AJAt[d]) )
+}
+
+
+
+# create the mosek input for the projection on ellipsoidal cone
+#
+.create_mosek_input_ellips <- function(A,z) {
+    d <- dim(A)[1]
+
+    Aext <- cbind( A, matrix(0,d,2), diag(-1,d) )
+
+    mos_inp <- list(sense = "min")
+    mos_inp$c     <- c( -z, 1, rep(0,d+1) )
+    mos_inp$A     <- Matrix::Matrix( Aext, sparse=TRUE )
+    mos_inp$bc    <- rbind(blc = rep(0,d),
+                           buc = rep(0,d))
+    mos_inp$bx    <- rbind(blx = c(rep(-Inf,d),0,1,rep(-Inf,d)),
+                           bux = c(rep(Inf,d+1),1,rep(Inf,d)))
+    mos_inp$cones <- matrix( list(
+        "QUAD", c(d,1:(d-1)) ,
+        "RQUAD", c(d+1,d+2,(d+3):(2*d+2))
+    ), 2, 2 )
+    rownames(mos_inp$cones) <- c("type", "sub")
+
+    return(mos_inp)
+}
+
+.update_mosek_input_ellips <- function(mos_inp,z) {
+    d <- length(z)
+    mos_inp$c[1:d] <- -z
+    return(mos_inp)
+}
+
+
+#' Sample from bivariate chi-bar-squared distribution of products of ellipsoidal cones.
+#'
+#' \code{ellips_rbichibarsq} generates an \code{n} by \code{2} matrix
+#' such that the rows form iid samples from the bivariate chi-bar-squared
+#' distribution of an ellipsoidal cone.
+#'
+#' @param n number of samples
+#' @param A invertible matrix or positive vector
+#' @param semiax logical; if \code{TRUE}, the algorithm will first compute the
+#'               lengths of the semiaxes of the cone
+#'
+#' @return If \code{A} is an invertible matrix and \code{reduce==TRUE} (default),
+#'         then the output of \code{ellips_rbichibarsq_gen(n,A)} is a list
+#'         containing the following elements:
+#' \itemize{
+#'   \item \code{semiax}: a vector of the lengths of the semiaxes of the ellipsoidal
+#'         cone defined by the matrix \code{A},
+#'   \item \code{samples}: an \code{n} by \code{2} matrix whose rows form
+#'         iid samples from the bivariate chi-bar-squared distribution with
+#'         weights given by the intrinsic volumes of the ellipsoidal cone \code{A*L},
+#'         where \code{L=\{x in R^d | x_d >= ||x||\}}.
+#' }
+#'         If \code{A} is a positive vector or \code{reduce==FALSE} then the output is only an
+#'         \code{n} by \code{2} matrix whose rows form
+#'         iid samples from the bivariate chi-bar-squared distribution with
+#'         weights given by the intrinsic volumes of the ellipsoidal cone \code{A*L},
+#'         or \code{diag(c(A,1))*L}, depending on whether \code{A} is an invertible
+#'         matrix or a positive vector.
+#'
+#' @section See also:
+#' \code{\link[conivol]{ellips_semiax}}
+#'
+#' @note See \href{../doc/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
+#'       for further info.
+#'
+#' Package: \code{\link[conivol]{conivol}}
+#'
+#' @examples
+#' A <- matrix(c(2,3,5,7,11,13,17,19,23),3,3)
+#' ellips_rbichibarsq(100,A)
+#'
+#' @export
+#'
+ellips_rbichibarsq <- function(n,A, semiax = TRUE) {
+    if (!is.matrix(A) && !is.vector(A))
+        stop("\n A must be a vector or a matrix.")
+    if ( is.null( dim(A) ) ) {         # A is a vector
+        if ( !all( A>0 ) )
+            stop("\n If A is a vector then it must be positive.")
+        d <- length(A)+1
+        A <- diag( c(A,1) )
+    } else {                           # A is a matrix
+        d <- dim(A)[1]
+        if (dim(A)[2] != d || qr(A)$rank != d)
+            stop("\n If A is a matrix then it must be invertible.")
+    }
+    if (!requireNamespace("Rmosek", quietly = TRUE))
+        stop("\n Could not find package 'Rmosek'.")
+    if (!requireNamespace("Matrix", quietly = TRUE))
+        stop("\n Could not find package 'Matrix'.")
+
+    opts <- list(verbose=0)
+    mos_inp <- .create_mosek_input_ellips(A_ell,rep(0,d))
+    out <- matrix(0,n,2)
+
+    for (i in 1:n) {
+        z <- rnorm(d)
+        mos_inp <- .update_mosek_input_ellips(mos_inp,z)
+        nrmprojsq <- sum(Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(d+3):(2*d+2)]^2)
+        out[i,1] <- nrmprojsq
+        out[i,2] <- sum(z^2)-nrmprojsq
+    }
+    return(out)
+}
+
+
 
 #' Matrix representation of (products/duals of) Weyl chambers.
 #'

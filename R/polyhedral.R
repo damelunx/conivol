@@ -200,7 +200,7 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
 #'                    the orthogonal complement of the lineality space of \code{C},
 #'                    set to \code{NA} if \code{C} is a linear space,
 #'   \item \code{A_reduced}: a matrix defining the reduced cone,
-#'   \item \code{samples}: an \code{n} by \code{2} matrix rows of the matrix form
+#'   \item \code{samples}: an \code{n} by \code{2} matrix whose rows form
 #'         iid samples from the bivariate chi-bar-squared distribution with
 #'         weights given by the intrinsic volumes of the reduced cone \code{{A_reduced x|x>=0}};
 #'         set to \code{NA} if \code{C} is a linear space.
@@ -310,7 +310,7 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'                    the orthogonal complement of the lineality space of \code{C},
 #'                    set to \code{NA} if \code{C} is a linear space,
 #'   \item \code{A_reduced}: a matrix defining the reduced cone,
-#'   \item \code{samples}: an \code{n} by \code{2} matrix rows of the matrix form
+#'   \item \code{samples}: an \code{n} by \code{2} matrix whose rows form
 #'         iid samples from the bivariate chi-bar-squared distribution with
 #'         weights given by the intrinsic volumes of the reduced cone \code{{y|A_reduced^T y<=0}}.
 #' }

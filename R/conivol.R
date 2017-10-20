@@ -32,20 +32,17 @@
 #'                                      bivariate chi-bar-squared distribution
 #' }
 #'
-#' @section Computations involving products of circular cones:
+#' @section Special classes of cones:
 #' \itemize{
 #'   \item \code{\link[conivol]{circ_ivols}}: computes the intrinsic volumes of (a product of)
 #'                           circular cones
-#'   \item \code{\link[conivol]{circ_rbichibarsq}}: produces samples from the bivariate
-#'                                  chi-bar-squared distribution with weights
-#'                                  given by the conic intrinsic volumes of
-#'                                  a product of circular cones
-#' }
-#'
-#' @section Computations involving products of (polars of) Weyl chambers:
-#' \itemize{
-#'   \item \code{\link[conivol]{weyl_matrix}}: TBD
-#'   \item \code{\link[conivol]{weyl_ivols}}: TBD
+#'   \item \code{\link[conivol]{ellips_semiax}}: computes the semiaxes of an ellipsoidal cone
+#'   \item \code{\link[conivol]{ellips_rbichibarsq}}: produces samples from the bivariate
+#'                           chi-bar-squared distribution of an ellipsoidal cone
+#'   \item \code{\link[conivol]{weyl_matrix}}: computes a matrix representation of
+#'                           (a product of) Weyl chambers
+#'   \item \code{\link[conivol]{weyl_ivols}}: computes the intrinsic volumes of (a product of)
+#'                           Weyl chambers
 #' }
 #'
 #' @section General polyhedral cones:

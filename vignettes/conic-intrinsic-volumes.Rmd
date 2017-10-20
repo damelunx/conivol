@@ -157,11 +157,40 @@ These matrices can be obtained through the function `weyl_matrix`.
 
 ### Examples: circular cones
 
-Circular cones consist of all points that lie below a certain angle towards a given semi-axis. Choosing this semi-axis to be the $d$th coordinate axis, we define the $d$-dimensional circular cone of angle $0<\alpha\leq\frac{\pi}{2}$ via
-  \[ \text{Circ}_d(\alpha) := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\} , \]
+Circular cones consist of all points that lie below a certain angle towards a given semi-axis. Choosing this semi-axis to be the $d$th coordinate axis, we define the $d$-dimensional circular cone of angle $0<\alpha<\frac{\pi}{2}$ via
+\begin{align*}
+   \text{Circ}_d(\alpha) & := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\}
+\\ & = \Big\{x\in\text{R}^d\mid x_d\geq 0 ,\; x_d^2\geq \sum_{k=1}^{d-1} \frac{x_k^2}{\tan(\alpha)^2} \Big\} ,
+\end{align*}
 where $\|\cdot\|$ denotes the Euclidean norm.  
 
 The circular cones form a class of cones, which is interesting for both theoretical and practical purposes. For theoretical purposes because circular cones are known to satisfy certain extreme inequalities (see [below](#inequs)), and are suspected to satisfy even more; and for practical purposes because they, and products of them, provide a reasonably large, yet accessible, class of cones which is easy to analyze with respect to the intrinsic volumes.
+
+* the cone $\text{Circ}_d(\pi/4)$ is also called Lorentz cone or ice-cream cone; we will denote it by $\mathcal{L}^d=\text{Circ}_d(\pi/4)$
+
+### Examples: ellipsoidal cones {#ellips_cone}
+
+* Ellipsoidal cones are linear images of circular cones (or equivalently, of the Lorentz cone). More precisely, to simplify the discussion we will only consider full-rank linear maps.
+* Every $d$-dimensional ellipsoidal cone is isometric to a cone of the form
+\begin{align*}
+   \mathcal{E}_\alpha & = \text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal{L}^d
+\\ & = \Big\{ x\in\text{R}^d\mid x_d\geq0,\;  x_d^2\geq\sum_{k=1}^{d-1}\frac{x_k^2}{\alpha_k^2}\Big\}
+\end{align*}
+  with $\alpha_1\geq\dots\geq\alpha_{d-1}>0$, the semi-axes of the cone.
+* note that the circular cone $\text{Circ}_d(\alpha)$ has all semiaxes equal to $\tan(\alpha)$.
+* proof for the above statement: Let $C=A\mathcal L^d$ for some invertible linear transformation $A$. Consider the eigenvalue decomposition of the symmetric matrix $A^{-T}JA^{-1}$ with $J=\text{diag}(-1,\ldots,-1,1)$: according to [Sylvester's law of inertia](https://en.wikipedia.org/wiki/Singular-value_decomposition) this matrix has $d-1$ negative and one positive eigenvalues. Let these be given by $-\lambda_1,\ldots,-\lambda_{d-1}$ and $\lambda_d$, respectively, so that
+  \[ A^{-T}JA^{-1} = Q\text{diag}(-\lambda_1,\ldots,-\lambda_{d-1},\lambda_d)Q^T . \]
+  Setting $\alpha_k=(\lambda_d/\lambda_k)^{1/2}$ for $k=1,\ldots,d-1$, and $\mu=1/\lambda_d$, we obtain
+\begin{align*}
+   \mu J & = A^TQ\text{diag}(-\lambda_1/\lambda_d,\ldots,-\lambda_{d-1}/\lambda_d,1)Q^TA
+\\ & = A^TQ\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1) J \text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA
+\end{align*}
+  According to [@LS75] this implies that either $\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA\mathcal L^d=\mathcal L^d$ or $\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA\mathcal L^d=-\mathcal L^d$, that is, either $A\mathcal L^d=Q\text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal L^d=Q\mathcal{E}_\alpha$ or $A\mathcal L^d=-Q\text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal L^d=-Q\mathcal{E}_\alpha$. In both cases we see that $A\mathcal L^d$ is isometric to $\mathcal{E}_\alpha$.
+* the above proof shows how to find the semi-axes of an ellipsoidal cone given as the linear image of the Lorentz cone, which is the method implemented in `ellips_rbichibarsq`.
+* more precisely, note that the polar of an ellipsoidal cone is given as follows:
+  \[ (A\mathcal{L}^d)^\circ = -A^{-T}\mathcal{L}^d \]
+  In particular, the semiaxes of the polar cone of $\mathcal{E}_\alpha$ are given by $\frac{1}{\alpha_{d-1}}\geq\dots\geq\frac{1}{\alpha_1}>0$. So, instead of computing the semiaxes of $A\mathcal{L}^d$ by computing the eigenvalues of $A^{-T}JA^{-1}$, we compute the eigenvalues of $AJA^T$, say, $-\mu_1,\ldots,-\mu_{d-1}$ and $\mu_d$. The semiaxes of $A\mathcal{L}^d$ are then given by
+  \[ \alpha_k=\sqrt{\tfrac{\mu_k}{\mu_d}} ,\quad k=1,\ldots,d-1 . \]
 
 ## Conic intrinsic volumes {#intro_intrvol}
 

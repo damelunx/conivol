@@ -160,7 +160,7 @@ The problem of finding the projection of a point $z\in\text{R}^d$ onto a polyhed
 \begin{align*}
    & \underset{u\geq0}{\text{argmin}}\, \|Au-z\|_2
 \\ \iff & \text{minimize } \tfrac12 \|Au\|^2 - z^T A u \quad\text{subject to}\quad u\geq0
-\\ \iff & \text{minimize } (-A^Tz)^Tu + r \quad\text{subject to}\quad u\geq0, Ax=w, s=1, \|w\|^2\leq 2rs .
+\\ \iff & \text{minimize } (-A^Tz)^Tu + r \quad\text{subject to}\quad u\geq0, Au=w, s=1, \|w\|^2\leq 2rs .
 \end{align*}
 This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint (see the [Rmosek userguide](http://rmosek.r-forge.r-project.org/)).
 
@@ -175,7 +175,14 @@ The projection of a point $z\in\text{R}^n$ onto the polar cone, and more general
 \end{align*}
 This last formulation is solved with MOSEK, using the rotated quadratic cone constraint, to enforce the log-concavity constraints in the EM algorithm.
 
+The problem of finding the projection of a point $z\in\text{R}^d$ onto an ellipsoidal cone given as the (full-dimensional) linear image of the Lorentz cone, $A\mathcal{L}^d$, $A\in\text{Gl}_d$, can also be formulated as an (SOCP):
 
+\begin{align*}
+   & \underset{x\in A\mathcal{L}^d}{\text{argmin}}\, \|x-z\|_2
+\\ \iff & \text{minimize } \tfrac12 \|x\|^2 - z^T x \quad\text{subject to}\quad x=Ay, y\in\mathcal{L}^d
+\\ \iff & \text{minimize } (-z)^Tx + r \quad\text{subject to}\quad x=Ay, y\in\mathcal{L}^d, s=1, \|x\|^2\leq 2rs .
+\end{align*}
+This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint.
 
 
 ### Appendix B: Gradient and Hessian
