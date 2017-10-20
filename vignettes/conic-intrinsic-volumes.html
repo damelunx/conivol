@@ -12,7 +12,7 @@
 
 <meta name="author" content="Dennis Amelunxen" />
 
-<meta name="date" content="2017-09-14" />
+<meta name="date" content="2017-10-20" />
 
 <title>Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</title>
 
@@ -32,7 +32,7 @@
 
 <h1 class="title toc-ignore">Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</h1>
 <h4 class="author"><em>Dennis Amelunxen</em></h4>
-<h4 class="date"><em>2017-09-14</em></h4>
+<h4 class="date"><em>2017-10-20</em></h4>
 
 
 
@@ -144,8 +144,37 @@ Taking the negative inverse of the transpose, we see that the polar cones <span 
 </div>
 <div id="examples-circular-cones" class="section level3">
 <h3>Examples: circular cones</h3>
-<p>Circular cones consist of all points that lie below a certain angle towards a given semi-axis. Choosing this semi-axis to be the <span class="math inline">\(d\)</span>th coordinate axis, we define the <span class="math inline">\(d\)</span>-dimensional circular cone of angle <span class="math inline">\(0&lt;\alpha\leq\frac{\pi}{2}\)</span> via <span class="math display">\[ \text{Circ}_d(\alpha) := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\} , \]</span> where <span class="math inline">\(\|\cdot\|\)</span> denotes the Euclidean norm.</p>
+Circular cones consist of all points that lie below a certain angle towards a given semi-axis. Choosing this semi-axis to be the <span class="math inline">\(d\)</span>th coordinate axis, we define the <span class="math inline">\(d\)</span>-dimensional circular cone of angle <span class="math inline">\(0&lt;\alpha&lt;\frac{\pi}{2}\)</span> via
+<span class="math display">\[\begin{align*}
+   \text{Circ}_d(\alpha) &amp; := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\}
+\\ &amp; = \Big\{x\in\text{R}^d\mid x_d\geq 0 ,\; x_d^2\geq \sum_{k=1}^{d-1} \frac{x_k^2}{\tan(\alpha)^2} \Big\} ,
+\end{align*}\]</span>
+<p>where <span class="math inline">\(\|\cdot\|\)</span> denotes the Euclidean norm.</p>
 <p>The circular cones form a class of cones, which is interesting for both theoretical and practical purposes. For theoretical purposes because circular cones are known to satisfy certain extreme inequalities (see <a href="#inequs">below</a>), and are suspected to satisfy even more; and for practical purposes because they, and products of them, provide a reasonably large, yet accessible, class of cones which is easy to analyze with respect to the intrinsic volumes.</p>
+<ul>
+<li>the cone <span class="math inline">\(\text{Circ}_d(\pi/4)\)</span> is also called Lorentz cone or ice-cream cone; we will denote it by <span class="math inline">\(\mathcal{L}^d=\text{Circ}_d(\pi/4)\)</span></li>
+</ul>
+</div>
+<div id="ellips_cone" class="section level3">
+<h3>Examples: ellipsoidal cones</h3>
+<ul>
+<li>Ellipsoidal cones are linear images of circular cones (or equivalently, of the Lorentz cone). More precisely, to simplify the discussion we will only consider full-rank linear maps.</li>
+<li>Every <span class="math inline">\(d\)</span>-dimensional ellipsoidal cone is isometric to a cone of the form
+<span class="math display">\[\begin{align*}
+   \mathcal{E}_\alpha &amp; = \text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal{L}^d
+\\ &amp; = \Big\{ x\in\text{R}^d\mid x_d\geq0,\;  x_d^2\geq\sum_{k=1}^{d-1}\frac{x_k^2}{\alpha_k^2}\Big\}
+\end{align*}\]</span>
+with <span class="math inline">\(\alpha_1\geq\dots\geq\alpha_{d-1}&gt;0\)</span>, the semi-axes of the cone.</li>
+<li>note that the circular cone <span class="math inline">\(\text{Circ}_d(\alpha)\)</span> has all semiaxes equal to <span class="math inline">\(\tan(\alpha)\)</span>.</li>
+<li>proof for the above statement: Let <span class="math inline">\(C=A\mathcal L^d\)</span> for some invertible linear transformation <span class="math inline">\(A\)</span>. Consider the eigenvalue decomposition of the symmetric matrix <span class="math inline">\(A^{-T}JA^{-1}\)</span> with <span class="math inline">\(J=\text{diag}(-1,\ldots,-1,1)\)</span>: according to <a href="https://en.wikipedia.org/wiki/Singular-value_decomposition">Sylvester’s law of inertia</a> this matrix has <span class="math inline">\(d-1\)</span> negative and one positive eigenvalues. Let these be given by <span class="math inline">\(-\lambda_1,\ldots,-\lambda_{d-1}\)</span> and <span class="math inline">\(\lambda_d\)</span>, respectively, so that <span class="math display">\[ A^{-T}JA^{-1} = Q\text{diag}(-\lambda_1,\ldots,-\lambda_{d-1},\lambda_d)Q^T . \]</span> Setting <span class="math inline">\(\alpha_k=(\lambda_d/\lambda_k)^{1/2}\)</span> for <span class="math inline">\(k=1,\ldots,d-1\)</span>, and <span class="math inline">\(\mu=1/\lambda_d\)</span>, we obtain
+<span class="math display">\[\begin{align*}
+   \mu J &amp; = A^TQ\text{diag}(-\lambda_1/\lambda_d,\ldots,-\lambda_{d-1}/\lambda_d,1)Q^TA
+\\ &amp; = A^TQ\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1) J \text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA
+\end{align*}\]</span>
+According to <span class="citation">(Loewy and Schneider 1975)</span> this implies that either <span class="math inline">\(\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA\mathcal L^d=\mathcal L^d\)</span> or <span class="math inline">\(\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA\mathcal L^d=-\mathcal L^d\)</span>, that is, either <span class="math inline">\(A\mathcal L^d=Q\text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal L^d=Q\mathcal{E}_\alpha\)</span> or <span class="math inline">\(A\mathcal L^d=-Q\text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal L^d=-Q\mathcal{E}_\alpha\)</span>. In both cases we see that <span class="math inline">\(A\mathcal L^d\)</span> is isometric to <span class="math inline">\(\mathcal{E}_\alpha\)</span>.</li>
+<li>the above proof shows how to find the semi-axes of an ellipsoidal cone given as the linear image of the Lorentz cone, which is the method implemented in <code>ellips_rbichibarsq</code>.</li>
+<li>more precisely, note that the polar of an ellipsoidal cone is given as follows: <span class="math display">\[ (A\mathcal{L}^d)^\circ = -A^{-T}\mathcal{L}^d \]</span> In particular, the semiaxes of the polar cone of <span class="math inline">\(\mathcal{E}_\alpha\)</span> are given by <span class="math inline">\(\frac{1}{\alpha_{d-1}}\geq\dots\geq\frac{1}{\alpha_1}&gt;0\)</span>. So, instead of computing the semiaxes of <span class="math inline">\(A\mathcal{L}^d\)</span> by computing the eigenvalues of <span class="math inline">\(A^{-T}JA^{-1}\)</span>, we compute the eigenvalues of <span class="math inline">\(AJA^T\)</span>, say, <span class="math inline">\(-\mu_1,\ldots,-\mu_{d-1}\)</span> and <span class="math inline">\(\mu_d\)</span>. The semiaxes of <span class="math inline">\(A\mathcal{L}^d\)</span> are then given by <span class="math display">\[ \alpha_k=\sqrt{\tfrac{\mu_k}{\mu_d}} ,\quad k=1,\ldots,d-1 . \]</span></li>
+</ul>
 </div>
 </div>
 <div id="intro_intrvol" class="section level2">
@@ -258,6 +287,9 @@ We assume that the polyhedral cone is given in the form <span class="math displa
 </div>
 <div id="ref-DL06">
 <p>Dulá, José H., and Francisco J. López. 2006. “Algorithms for the Frame of a Finitely Generated Unbounded Polyhedron.” <em>INFORMS J. Comput.</em> 18 (1): 97–110. doi:<a href="https://doi.org/10.1287/ijoc.1040.0109">10.1287/ijoc.1040.0109</a>.</p>
+</div>
+<div id="ref-LS75">
+<p>Loewy, Raphael, and Hans Schneider. 1975. “Positive Operators on the <span class="math inline">\(n\)</span>-Dimensional Ice Cream Cone.” <em>J. Math. Anal. Appl.</em> 49: 375–92. doi:<a href="https://doi.org/10.1016/0022-247X(75)90186-9">10.1016/0022-247X(75)90186-9</a>.</p>
 </div>
 <div id="ref-MS16">
 <p>Makowski, Matthias, and Julian Scheuer. 2016. “Rigidity Results, Inverse Curvature Flows and Alexandrov-Fenchel Type Inequalities in the Sphere.” <em>Asian J. Math.</em> 20 (5): 869–92. doi:<a href="https://doi.org/10.4310/AJM.2016.v20.n5.a2">10.4310/AJM.2016.v20.n5.a2</a>.</p>

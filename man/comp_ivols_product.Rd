@@ -20,7 +20,7 @@ convolution of the vectors of intrinsic volumes given in \code{V}.
 }
 \section{See also}{
 
-\code{\link[conivol]{circ_ivol}}
+\code{\link[conivol]{circ_ivols}}
 
 Package: \code{\link[conivol]{conivol}}
 }
