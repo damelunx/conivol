@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_with_ivols.R
 \name{comp_ivols_product}
 \alias{comp_ivols_product}
-\title{Compute intrinsic volumes of product cone from intrinsic volumes of components.}
+\title{Compute intrinsic volumes of product cone from intrinsic volumes of components}
 \usage{
 comp_ivols_product(V)
 }
@@ -19,8 +19,6 @@ from the intrinsic volumes of its components. That is, it returns the
 convolution of the vectors of intrinsic volumes given in \code{V}.
 }
 \section{See also}{
-
-\code{\link[conivol]{circ_ivols}}
 
 Package: \code{\link[conivol]{conivol}}
 }

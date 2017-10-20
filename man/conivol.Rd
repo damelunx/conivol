@@ -119,10 +119,10 @@ based on the expectation maximization (EM) method.
                              for sampling from the posterior distribution,
                              given samples of the bivariate chi-bar-squared distribution
 }
+}
 
+\section{Vignettes}{
 
-
-See the corresponding object documentation for more information. See also the following vignettes:
 \itemize{
   \item \href{../doc/conic-intrinsic-volumes.html}{conic-intrinsic-volumes}:
         introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions

@@ -123,8 +123,8 @@ dbichibarsq <- function(x, v) {
 #'
 #'
 #' @examples
-#' pbichibarsq(3,c(0.1,0.6,0.3))
-#' pbichibarsq(c(0.2,3,4.5),c(0.1,0.6,0.3))
+#' pbichibarsq(c(2,3),c(0.1,0.6,0.3))
+#' pbichibarsq(matrix(c(2,3,4,5),2,2),c(0.1,0.6,0.3))
 #'
 #' @export
 #'
@@ -148,9 +148,9 @@ pbichibarsq <- function(x, v) {
         # find out which rows are nonnegative
         I <- which( (x[1:D[1]]>=0) & (x[D[1]+(1:D[1])]>=0) )
 
-        out[I] <- v[1]*pchisq(x[I,2],d) +
-            colSums( sapply( x[I, ], function(t) pchisq(t[1],1:d-1)*pchisq(t[2],rev(1:d-1)) ) * v[2:d] ) +
-            v[d+1]*pchisq(x[I,1],d)
+        if (length(I)>0)
+            out[I] <- v[1]*pchisq(x[I,2],d) +
+                v[d+1]*pchisq(x[I,1],d)
 
         return(out)
     }

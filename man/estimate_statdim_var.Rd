@@ -24,14 +24,19 @@ bivariate chi-bar-squared distribution.
 }
 \section{See also}{
 
-\code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-\code{\link[conivol]{polyh_rbichibarsq}}
+\code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{ellips_rbichibarsq}},
+\code{\link[conivol]{polyh_rbichibarsq_gen}}, \code{\link[conivol]{polyh_rbichibarsq_ineq}}
 
 Package: \code{\link[conivol]{conivol}}
 }
 
 \examples{
-m_samp <- circ_rbichibarsq(10^4,10,pi/8)
+v <- circ_ivols(10,pi/8)
+m_samp <- rbichibarsq(10^4,v)
 estimate_statdim_var(10, m_samp)
+
+# true values:
+list( delta=sum((1:length(v)-1)*v),
+      var=sum((1:length(v)-1)^2*v)-sum((1:length(v)-1)*v)^2 )
 
 }

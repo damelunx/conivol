@@ -121,8 +121,7 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
         }
     } else {
         for (j in 1:nn) {
-            mos_inp <- .create_mosek_input_polyh_prim(A[ ,-j], -A[ ,j])
-            # is_in_L[j] <- all.equal( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+d+1)] , A[ ,j] ) == TRUE
+            mos_inp <- conivol:::.create_mosek_input_polyh_prim(A[ ,-j], -A[ ,j])
             is_in_L[j] <- isTRUE( sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+d+1)]^2 ) < d*tol )
         }
     }
@@ -161,12 +160,11 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
         }
     } else {
         for (j in 1:nn) {
-            mos_inp <- .create_mosek_input_polyh_prim(A[ ,-j], A[ ,j])
+            mos_inp <- conivol:::.create_mosek_input_polyh_prim(A[ ,-j], A[ ,j])
             is_relevant[j] <- isTRUE( sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+d+1)]^2 ) > d*tol )
         }
     }
-    A <- A[,is_relevant]
-    return( list( dim=dimC, lin=linC, QL=QL, QC=QC, A_reduced=A ) )
+    return( list( dim=dimC, lin=linC, QL=QL, QC=QC, A_reduced=A[,is_relevant] ) )
 }
 
 

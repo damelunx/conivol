@@ -105,8 +105,7 @@
 #' }
 #'
 #'
-#'
-#' See the corresponding object documentation for more information. See also the following vignettes:
+#' @section Vignettes:
 #' \itemize{
 #'   \item \href{../doc/conic-intrinsic-volumes.html}{conic-intrinsic-volumes}:
 #'         introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions

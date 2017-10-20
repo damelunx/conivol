@@ -1,4 +1,4 @@
-#' Evaluate the sample data for maximum likelihood estimation.
+#' Evaluate the sample data for maximum likelihood estimation
 #'
 #' \code{prepare_data_em} takes a two-column matrix whose rows form
 #' iid samples from a bivariate chi-bar-squared distribution and
@@ -52,7 +52,7 @@ prepare_data_em <- function(d, m_samp) {
 }
 
 
-#' Evaluate the log-likelihood of the estimated intrinsic volumes.
+#' Evaluate the log-likelihood of the estimated intrinsic volumes
 #'
 #' \code{comp_loglike} evaluates the (normalized) log-likelihood of a vector
 #' with respect to given data, the output of \code{prepare_data_em}.
@@ -124,7 +124,7 @@ comp_loglike <- function(v, data, mode=0){
 
 
 
-#' Finding an initial estimate of the intrinsic volumes.
+#' Finding an initial estimate of the intrinsic volumes
 #'
 #' \code{init_v} find an initial estimate of the intrinsic volumes via
 #' moment-fitting.
@@ -296,7 +296,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
     return(mos_inp)
 }
 
-#' Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm.
+#' Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm
 #'
 #' \code{find_ivols_em} produces EM-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
@@ -495,7 +495,7 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 }
 
 
-#' Finding the weights of the bivariate chi-bar-squared distribution using gradient descent.
+#' Finding the weights of the bivariate chi-bar-squared distribution using gradient descent
 #'
 #' \code{find_ivols_gd} produces gradient descent iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
@@ -640,7 +640,7 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 
 
 
-#' Finding the weights of the bivariate chi-bar-squared distribution using Newton's method.
+#' Finding the weights of the bivariate chi-bar-squared distribution using Newton's method
 #'
 #' \code{find_ivols_newton} produces Newton-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
