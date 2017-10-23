@@ -1,6 +1,6 @@
 #' JAGS model creation for Bayesian posterior given samples of bivariate chi-bar-squared distribution
 #'
-#' \code{find_ivols_jags} generates inputs for JAGS (data list and model string or external file)
+#' \code{estim_jags} generates inputs for JAGS (data list and model string or external file)
 #' for sampling from the posterior distribution,
 #' given samples of the bivariate chi-bar-squared distribution.
 #'
@@ -14,7 +14,7 @@
 #' @param filename filename for output (NA by default, in which case the return is a string)
 #' @param overwrite logical; determines whether the output should overwrite an existing file
 #'
-#' @return If \code{filename==NA} then the output of \code{find_ivols_jags} is a list containing the following elements:
+#' @return If \code{filename==NA} then the output of \code{estim_jags} is a list containing the following elements:
 #' \itemize{
 #'   \item \code{model}: a string that forms the description of the JAGS model,
 #'                    which can be directly used as input (via text connection
@@ -38,7 +38,7 @@
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{find_ivols_em}}
+#' \code{\link[conivol]{estim_em}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -59,11 +59,11 @@
 #' samples <- circ_rbichibarsq(N,D,alpha)
 #'
 #' # compute initial guess
-#' est <- estimate_statdim_var(d, m_samp)
+#' est <- estim_statdim_var(d, m_samp)
 #' v0 <- init_v(d,init_mode=1,delta=est$delta,var=est$var)
 #'
 #' # obtain input data for JAGS model; use v0 as prior
-#' in_jags <- find_ivols_jags(samples, d, prior="informative", v_prior=v0)
+#' in_jags <- estim_jags(samples, d, prior="informative", v_prior=v0)
 #'
 #' # create JAGS model
 #' model_connection <- textConnection(in_jags$model)
@@ -98,7 +98,7 @@
 #'
 #' @export
 #'
-find_ivols_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
 
     I_pol  <- which(samples[ ,1]==0)
     I_prim <- which(samples[ ,2]==0)
@@ -320,7 +320,7 @@ find_ivols_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_
 
 #' Stan model creation for Bayesian posterior given samples of bivariate chi-bar-squared distribution
 #'
-#' \code{find_ivols_stan} generates inputs for Stan (data list and model string or external file)
+#' \code{estim_stan} generates inputs for Stan (data list and model string or external file)
 #' for sampling from the posterior distribution,
 #' given samples of the bivariate chi-bar-squared distribution.
 #'
@@ -334,7 +334,7 @@ find_ivols_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_
 #' @param filename filename for output (NA by default, in which case the return is a string)
 #' @param overwrite logical; determines whether the output should overwrite an existing file
 #'
-#' @return If \code{filename==NA} then the output of \code{find_ivols_stan} is a list containing the following elements:
+#' @return If \code{filename==NA} then the output of \code{estim_stan} is a list containing the following elements:
 #' \itemize{
 #'   \item \code{model}: a string that forms the description of the Stan model,
 #'   \item \code{data}: a data list containing the prepared data to be used
@@ -354,7 +354,7 @@ find_ivols_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{find_ivols_em}}
+#' \code{\link[conivol]{estim_em}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -375,11 +375,11 @@ find_ivols_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_
 #' samples <- circ_rbichibarsq(N,D,alpha)
 #'
 #' # compute initial guess
-#' est <- estimate_statdim_var(d, m_samp)
+#' est <- estim_statdim_var(d, m_samp)
 #' v0 <- init_v(d,init_mode=1,delta=est$delta,var=est$var)
 #'
 #' # obtain input data for JAGS model; use v0 as prior
-#' in_jags <- find_ivols_jags(samples, d, prior="informative", v_prior=v0)
+#' in_jags <- estim_jags(samples, d, prior="informative", v_prior=v0)
 #'
 #' # create JAGS model
 #' model_connection <- textConnection(in_jags$model)
@@ -414,7 +414,7 @@ find_ivols_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_
 #'
 #' @export
 #'
-find_ivols_stan <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+estim_stan <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
 
     I_pol  <- which(samples[ ,1]==0)
     I_prim <- which(samples[ ,2]==0)

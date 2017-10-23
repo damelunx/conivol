@@ -39,7 +39,7 @@ Package: \code{\link[conivol]{conivol}}
 
 \examples{
 m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-est <- estimate_statdim_var(d, m_samp)
+est <- estim_statdim_var(d, m_samp)
 init_v( 10 )
 init_v( 10, 1, delta=est$delta, var=est$var )
 init_v( 10, 2, delta=est$delta )

@@ -26,7 +26,7 @@
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{find_ivols_em}}
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{estim_em}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -72,7 +72,7 @@ prepare_data_em <- function(d, m_samp) {
 #'         sample data given in \code{data}
 #'
 #' @section See also:
-#' \code{\link[conivol]{prepare_data_em}}, \code{\link[conivol]{estimate_statdim_var}}
+#' \code{\link[conivol]{prepare_data_em}}, \code{\link[conivol]{estim_statdim_var}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -86,7 +86,7 @@ prepare_data_em <- function(d, m_samp) {
 #' # collect sample data
 #' m_samp <- circ_rbichibarsq(N,D,alpha)
 #' data <- prepare_data_em(d, m_samp)
-#' est <- estimate_statdim_var(d, m_samp)
+#' est <- estim_statdim_var(d, m_samp)
 #' v1 <- init_v( d )
 #' v2 <- init_v( d, 1, delta=est$delta, var=est$var )
 #' v3 <- init_v( d, 2, delta=est$delta )
@@ -151,7 +151,7 @@ comp_loglike <- function(v, data, mode=0){
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' est <- estimate_statdim_var(d, m_samp)
+#' est <- estim_statdim_var(d, m_samp)
 #' init_v( 10 )
 #' init_v( 10, 1, delta=est$delta, var=est$var )
 #' init_v( 10, 2, delta=est$delta )
@@ -298,7 +298,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 
 #' Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm
 #'
-#' \code{find_ivols_em} produces EM-type iterates from a two-column
+#' \code{estim_em} produces EM-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
 #' distribution, which may or may not (depending on the starting point) converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
@@ -340,7 +340,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_em} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{estim_em} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute EM-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
@@ -355,17 +355,17 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' find_ivols_em( 10, m_samp )
-#' find_ivols_em( 10, m_samp, init_mode=1 )
+#' estim_em( 10, m_samp )
+#' estim_em( 10, m_samp, init_mode=1 )
 #'
 #' @export
 #'
-find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           lambda=0, no_of_lcc_projections=1, lcc_amount=0,
                           extrapolate=0, selfdual=FALSE, data=NULL) {
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop( paste0("\n Could not find package 'Rmosek'.",
-            "\n If MOSEK is not available, try using 'find_ivols_gd' and 'find_ivols_newton' instead of 'find_ivols_em'.",
+            "\n If MOSEK is not available, try using 'estim_gd' and 'estim_newton' instead of 'estim_em'.",
             "\n See the help entries for more information.") )
     if (!requireNamespace("Matrix", quietly = TRUE))
         stop("\n Could not find package 'Matrix'.")
@@ -398,7 +398,7 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     if (length(v_init)==d+1)
         v <- v_init
     else {
-        est <- conivol::estimate_statdim_var(d, m_samp)
+        est <- conivol::estim_statdim_var(d, m_samp)
         v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
     }
     out_iterates[1, ] <- v
@@ -497,7 +497,7 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 
 #' Finding the weights of the bivariate chi-bar-squared distribution using gradient descent
 #'
-#' \code{find_ivols_gd} produces gradient descent iterates from a two-column
+#' \code{estim_gd} produces gradient descent iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
 #' distribution, which may or may not (depending on the starting point) converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
@@ -540,7 +540,7 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_gd} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{estim_gd} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute gradient descent-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
@@ -548,12 +548,12 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' find_ivols_gd( 10, m_samp )
-#' find_ivols_gd( 10, m_samp, init_mode=1 )
+#' estim_gd( 10, m_samp )
+#' estim_gd( 10, m_samp, init_mode=1 )
 #'
 #' #@export #(gradient descent doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
@@ -566,7 +566,7 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     if (length(v_init)==d+1)
         v <- v_init
     else {
-        est <- conivol::estimate_statdim_var(d, m_samp)
+        est <- conivol::estim_statdim_var(d, m_samp)
         v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
     }
     out_iterates[1, ] <- v
@@ -642,7 +642,7 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 
 #' Finding the weights of the bivariate chi-bar-squared distribution using Newton's method
 #'
-#' \code{find_ivols_newton} produces Newton-type iterates from a two-column
+#' \code{estim_newton} produces Newton-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
 #' distribution, which may or may not (depending on the starting point) converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
@@ -685,7 +685,7 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_newton} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{estim_newton} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute Newton-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
@@ -693,12 +693,12 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' find_ivols_newton( 10, m_samp )
-#' find_ivols_newton( 10, m_samp, init_mode=1 )
+#' estim_newton( 10, m_samp )
+#' estim_newton( 10, m_samp, init_mode=1 )
 #'
 #' #@export  #(Newton's method doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-find_ivols_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+estim_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                               lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
@@ -711,7 +711,7 @@ find_ivols_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     if (length(v_init)==d+1)
         v <- v_init
     else {
-        est <- conivol::estimate_statdim_var(d, m_samp)
+        est <- conivol::estim_statdim_var(d, m_samp)
         v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
     }
     out_iterates[1, ] <- v

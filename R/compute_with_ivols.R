@@ -32,7 +32,7 @@ comp_ivols_product <- function(V) {
 
 #' Estimate the statistical dimension and variance from sample data
 #'
-#' \code{estimate_statdim_var} estimates the statistical dimension and the
+#' \code{estim_statdim_var} estimates the statistical dimension and the
 #' variance of intrinsic volumes from samples from the corresponding
 #' bivariate chi-bar-squared distribution.
 #'
@@ -40,7 +40,7 @@ comp_ivols_product <- function(V) {
 #' @param m_samp two-column matrix whose rows from iid samples from the bivariate
 #'               chi-bar-squared distribution corresponding to the cone
 #'
-#' @return The output of \code{estimate_statdim_var} is a two-element list
+#' @return The output of \code{estim_statdim_var} is a two-element list
 #'         consisting of the esimated statistical dimension \code{delta}
 #'         and variance \code{var},
 #'
@@ -53,7 +53,7 @@ comp_ivols_product <- function(V) {
 #' @examples
 #' v <- circ_ivols(10,pi/8)
 #' m_samp <- rbichibarsq(10^4,v)
-#' estimate_statdim_var(10, m_samp)
+#' estim_statdim_var(10, m_samp)
 #'
 #' # true values:
 #' list( delta=sum((1:length(v)-1)*v),
@@ -61,7 +61,7 @@ comp_ivols_product <- function(V) {
 #'
 #' @export
 #'
-estimate_statdim_var <- function(d, m_samp) {
+estim_statdim_var <- function(d, m_samp) {
     md <- colMeans(m_samp)
     mv <- colMeans(m_samp^2)
     delta <- (md[1] + d-md[2])/2

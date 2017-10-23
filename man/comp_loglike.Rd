@@ -30,7 +30,7 @@ with respect to given data, the output of \code{prepare_data_em}.
 }
 \section{See also}{
 
-\code{\link[conivol]{prepare_data_em}}, \code{\link[conivol]{estimate_statdim_var}}
+\code{\link[conivol]{prepare_data_em}}, \code{\link[conivol]{estim_statdim_var}}
 
 Package: \code{\link[conivol]{conivol}}
 }
@@ -45,7 +45,7 @@ v_exact <- circ_ivols( D, alpha, product=TRUE )
 # collect sample data
 m_samp <- circ_rbichibarsq(N,D,alpha)
 data <- prepare_data_em(d, m_samp)
-est <- estimate_statdim_var(d, m_samp)
+est <- estim_statdim_var(d, m_samp)
 v1 <- init_v( d )
 v2 <- init_v( d, 1, delta=est$delta, var=est$var )
 v3 <- init_v( d, 2, delta=est$delta )
