@@ -590,8 +590,23 @@ polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' samp <- polyh_rivols_gen(20,matrix(1:12,4,3))
-#' polyh_bayes(samp$samples, samp$dimC, samp$linC)
+#' D <- c(5,7)
+#' cone_types <- c("BC","BCp")
+#'
+#' v <- weyl_ivols(D, cone_types, product = TRUE)
+#' A <- weyl_matrix(D, cone_types, product = TRUE)
+#' true_data <- list( ivols=v, A=A )
+#' print(true_data)
+#'
+#' n <- 10^5
+#' out <- polyh_rivols_ineq(n,A)
+#' str(out)
+#'
+#' bayes_est <- polyh_bayes( out$samples, out$dim, out$lin )
+#' str(bayes_est)
+#'
+#' bayes_est$post_marg_quant(0:sum(D),0.5) / v
+#' sum( (bayes_est$post_marg_quant(0:sum(D),0.5)-v)^2 )
 #'
 #' @export
 #'
