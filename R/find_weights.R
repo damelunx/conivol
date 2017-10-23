@@ -1,6 +1,6 @@
 #' Evaluate the sample data for maximum likelihood estimation
 #'
-#' \code{prepare_data_em} takes a two-column matrix whose rows form
+#' \code{prepare_em} takes a two-column matrix whose rows form
 #' iid samples from a bivariate chi-bar-squared distribution and
 #' prepares the data used in maximum likelihood estimation.
 #'
@@ -8,7 +8,7 @@
 #' @param m_samp two-column matrix whose rows from iid samples from a bivariate
 #'               chi-bar-squared distribution.
 #'
-#' @return The output of \code{prepare_data_em} is a list of four elements:
+#' @return The output of \code{prepare_em} is a list of four elements:
 #'         \describe{
 #'           \item{\code{n}:}{the number of overall sample points
 #'                            (including those in primal or polar cone)}
@@ -32,11 +32,11 @@
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' prepare_data_em( 10, m_samp )
+#' prepare_em( 10, m_samp )
 #'
 #' @export
 #'
-prepare_data_em <- function(d, m_samp) {
+prepare_em <- function(d, m_samp) {
     I1 <- which( sapply(m_samp[ ,1], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.adj_tol))}) )
     I2 <- which( sapply(m_samp[ ,2], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.adj_tol))}) )
 
@@ -55,10 +55,10 @@ prepare_data_em <- function(d, m_samp) {
 #' Evaluate the log-likelihood of the estimated intrinsic volumes
 #'
 #' \code{comp_loglike} evaluates the (normalized) log-likelihood of a vector
-#' with respect to given data, the output of \code{prepare_data_em}.
+#' with respect to given data, the output of \code{prepare_em}.
 #'
 #' @param v vector of mixing weights (conic intrinsic volumes).
-#' @param data output of \code{prepare_data_em(d, m_samp)}.
+#' @param data output of \code{prepare_em(d, m_samp)}.
 #' @param mode specifies whether the first and last values should be taken into account:
 #'             \describe{
 #'               \item{\code{init_mode==0}:}{take all into account}
@@ -72,7 +72,7 @@ prepare_data_em <- function(d, m_samp) {
 #'         sample data given in \code{data}
 #'
 #' @section See also:
-#' \code{\link[conivol]{prepare_data_em}}, \code{\link[conivol]{estim_statdim_var}}
+#' \code{\link[conivol]{prepare_em}}, \code{\link[conivol]{estim_statdim_var}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -85,7 +85,7 @@ prepare_data_em <- function(d, m_samp) {
 #'
 #' # collect sample data
 #' m_samp <- circ_rbichibarsq(N,D,alpha)
-#' data <- prepare_data_em(d, m_samp)
+#' data <- prepare_em(d, m_samp)
 #' est <- estim_statdim_var(d, m_samp)
 #' v1 <- init_v( d )
 #' v2 <- init_v( d, 1, delta=est$delta, var=est$var )
@@ -336,7 +336,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @param selfdual logical; if \code{TRUE}, the symmetry equations \code{v[k+1]==v[d-k+1]},
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
-#' @param data output of \code{prepare_data_em(d, m_samp)}; this can be called
+#' @param data output of \code{prepare_em(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
@@ -348,7 +348,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{prepare_data_em}},
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{prepare_em}},
 #' \code{\link[conivol]{init_v}}, \code{\link[conivol]{comp_loglike}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
@@ -382,7 +382,7 @@ estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
-        data <- conivol::prepare_data_em(d, m_samp)
+        data <- conivol::prepare_em(d, m_samp)
 
     # decide whether v0 or vd should/have to be extrapolated, add Machine epsilon
     # if extrapolation is necessary but prohibited
@@ -536,7 +536,7 @@ estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
 #'
-#' @param data output of \code{prepare_data_em(d, m_samp)}; this can be called
+#' @param data output of \code{prepare_em(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
@@ -557,7 +557,7 @@ estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
-        data <- conivol::prepare_data_em(d, m_samp)
+        data <- conivol::prepare_em(d, m_samp)
 
     out_iterates <- matrix(0,N+1,d+1)
     out_loglike  <- vector("double", N+1)
@@ -681,7 +681,7 @@ estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
 #'
-#' @param data output of \code{prepare_data_em(d, m_samp)}; this can be called
+#' @param data output of \code{prepare_em(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
@@ -702,7 +702,7 @@ estim_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                               lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
-        data <- conivol::prepare_data_em(d, m_samp)
+        data <- conivol::prepare_em(d, m_samp)
 
     out_iterates <- matrix(0,N+1,d+1)
     out_loglike  <- vector("double", N+1)

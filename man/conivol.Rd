@@ -79,7 +79,7 @@ based on the expectation maximization (EM) method.
                      based on first and/or second moment
   \item \code{\link[conivol]{comp_loglike}}: compute the log-likelihood of a weight vector
                      for specific sample data
-  \item \code{\link[conivol]{prepare_data_em}}: evaluates the sample data of the bivariate chi-bar-squared
+  \item \code{\link[conivol]{prepare_em}}: evaluates the sample data of the bivariate chi-bar-squared
                      data (find the corresponding chi-squared density values)
   \item \code{\link[conivol]{estim_em}}: produces EM-type iterates that may or may not converge
                      to the maximum likelihood estimate for the weights
@@ -90,7 +90,6 @@ based on the expectation maximization (EM) method.
                      string or external file) for sampling from the posterior distribution
                      of the intrinsic volumes,
                      given samples of the bivariate chi-bar-squared distribution
-}
 }
 }
 

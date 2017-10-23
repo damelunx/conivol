@@ -68,8 +68,8 @@
 #'
 #' @return The output of \code{polyh_reduce(A)} is a list containing the following elements:
 #' \itemize{
-#'   \item \code{dim}: the dimension of the linear span of \code{C},
-#'   \item \code{lin}: the lineality of the cone \code{C},
+#'   \item \code{dimC}: the dimension of the linear span of \code{C},
+#'   \item \code{linC}: the lineality of the cone \code{C},
 #'   \item \code{QL}: an orthogonal basis of the lineality space of \code{C},
 #'                    set to \code{NA} if lineality space is zero-dimensional,
 #'   \item \code{QC}: an orthogonal basis of the projection of \code{C} onto
@@ -85,7 +85,7 @@
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' A <- cbind(diag(1,3),diag(1,3)+matrix(1,ncol=3,nrow=3))
+#' A <- cbind(diag(1,3),diag(1,3)+matrix(1,ncol=3,nrow=3),c(-1,0,0))
 #' A <- A[,sample(ncol(A))]
 #' print(A)
 #'
@@ -97,7 +97,7 @@
 #'
 #' @export
 #'
-polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
+polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
     if (solver=="nnls") {
         if (!requireNamespace("nnls", quietly = TRUE))
             stop("\n Could not find package 'nnls'.")
@@ -115,7 +115,7 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
     d <- dim(A)[1]
     dimC <- qr(A)$rank
     if (dimC==0)
-        return( list( dim=0, lin=0, QL=NA, QC=NA, A_reduced=0) )
+        return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0) )
     # find lineality space L
     nn <- dim(A)[2]
     is_in_L <- vector("logical",nn)
@@ -141,7 +141,7 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
             QL = svd(A_L)$u[ , 1:linC]
 
         if (dimC==linC)
-            return( list( dim=dimC, lin=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL)) )
+            return( list( dimC=dimC, linC=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL)) )
 
         A <- A[ , !is_in_L ]
         A <- A - QL %*% (t(QL) %*% A)
@@ -170,7 +170,7 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
                 (Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+2):(nn+d+1)]-A[ ,j])^2 ) > d*tol )
         }
     }
-    return( list( dim=dimC, lin=linC, QL=QL, QC=QC, A_reduced=A[,is_relevant] ) )
+    return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A[,is_relevant] ) )
 }
 
 
@@ -196,8 +196,8 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
 #' @return The output of \code{polyh_rbichibarsq_gen(n,A)}, with the default value
 #'         \code{reduce==TRUE}, is a list containing the following elements:
 #' \itemize{
-#'   \item \code{dim}: the dimension of the linear span of \code{C},
-#'   \item \code{lin}: the lineality of the cone \code{C},
+#'   \item \code{dimC}: the dimension of the linear span of \code{C},
+#'   \item \code{linC}: the lineality of the cone \code{C},
 #'   \item \code{QL}: an orthogonal basis of the lineality space of \code{C},
 #'                    set to \code{NA} if lineality space is zero-dimensional,
 #'   \item \code{QC}: an orthogonal basis of the projection of \code{C} onto
@@ -224,11 +224,19 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-8) {
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' polyh_rbichibarsq_gen_nnls(20,matrix(1:12,4,3))
+#' set.seed(1234)
+#' out <- polyh_rbichibarsq_gen(20, matrix(1:12,4,3))
+#' print(out)
+#'
+#' set.seed(1234)
+#' sampmos <- polyh_rbichibarsq_gen(20, out$A_reduced, solver="mosek", reduce=FALSE)
+#' print(sampmos)
+#'
+#' sum( (out$samples - sampmos)^2 )
 #'
 #' @export
 #'
-polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
+polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
     if (solver=="nnls") {
         if (!requireNamespace("nnls", quietly = TRUE))
             stop("\n Could not find package 'nnls'.")
@@ -245,13 +253,13 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 
     if (reduce) {
         red <- polyh_reduce(A, solver=solver, tol=tol)
-        dimC <- red$dim
+        dimC <- red$dimC
         if (dimC==0)
-            return( list( dim=0, lin=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
-        linC <- red$lin
+            return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
+        linC <- red$linC
         QL   <- red$QL
         if (dimC==linC)
-            return( list( dim=dimC, lin=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL), samples=NA) )
+            return( list( dimC=dimC, linC=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL), samples=NA) )
         QC   <- red$QC
         A    <- red$A_reduced
     }
@@ -266,10 +274,10 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
         }
     } else {
         nn <- dim(A)[2]
-        mos_inp <- .create_mosek_input_polyh_prim(A,rep(0,d))
+        mos_inp <- conivol:::.create_mosek_input_polyh_prim(A,rep(0,d))
         for (i in 1:n) {
             y <- rnorm(d)
-            mos_inp <- .update_mosek_input_polyh_prim(mos_inp,y)
+            mos_inp <- conivol:::.update_mosek_input_polyh_prim(mos_inp,y)
             p <- sum( Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(nn+3):(nn+d+2)]^2 )
             out[i, ] <- c(p,sum(y^2)-p)
         }
@@ -278,7 +286,7 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
     if (!reduce)
         return(out)
     else
-        return( list( dim=dimC, lin=linC, QL=QL, QC=QC, A_reduced=A, samples=out) )
+        return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A, samples=out) )
 }
 
 
@@ -305,8 +313,8 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @return The output of \code{polyh_rbichibarsq_ineq(n,A)}, with the default value
 #'         \code{reduce==TRUE}, is a list containing the following elements:
 #' \itemize{
-#'   \item \code{dim}: the dimension of the linear span of \code{C},
-#'   \item \code{lin}: the lineality of the cone \code{C},
+#'   \item \code{dimC}: the dimension of the linear span of \code{C},
+#'   \item \code{linC}: the lineality of the cone \code{C},
 #'   \item \code{QL}: an orthogonal basis of the orthogonal complement of the
 #'                    linear span of \code{C},
 #'                    set to \code{NA} if \code{dim(C)==d},
@@ -334,19 +342,27 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' polyh_rbichibarsq_ineq(20,matrix(1:12,4,3)
+#' set.seed(1234)
+#' out <- polyh_rbichibarsq_ineq(20, matrix(1:12,4,3))
+#' print(out)
+#'
+#' set.seed(1234)
+#' sampmos <- polyh_rbichibarsq_ineq(20, out$A_reduced, solver="mosek", reduce=FALSE)
+#' print(sampmos)
+#'
+#' sum( (out$samples - sampmos)^2 )
 #'
 #' @export
 #'
-polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
+polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
     if (reduce) {
         d <- dim(A)[1]
         out <- polyh_rbichibarsq_gen(n, A, solver=solver, reduce=TRUE, tol=tol)
-        dimCpol <- out$dim
-        linCpol <- out$lin
+        dimCpol <- out$dimC
+        linCpol <- out$linC
 
-        out$dim <- d-linCpol
-        out$lin <- d-dimCpol
+        out$dimC <- d-linCpol
+        out$linC <- d-dimCpol
         out$samples <- out$samples[ , c(2,1) ]
         return(out)
     } else
@@ -377,8 +393,8 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @return The output of \code{polyh_rivols_gen(n,A)}, with the default value
 #'         \code{reduce==TRUE}, is a list containing the following elements:
 #' \itemize{
-#'   \item \code{dim}: the dimension of the linear span of \code{C},
-#'   \item \code{lin}: the lineality of the cone \code{C},
+#'   \item \code{dimC}: the dimension of the linear span of \code{C},
+#'   \item \code{linC}: the lineality of the cone \code{C},
 #'   \item \code{QL}: an orthogonal basis of the orthogonal complement of the
 #'                    linear span of \code{C},
 #'                    set to \code{NA} if \code{dim(C)==d},
@@ -401,11 +417,16 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' polyh_rivols_gen(20,matrix(1:12,4,3)
+#' set.seed(1234)
+#' out <- polyh_rivols_gen(20, matrix(1:12,4,3))
+#' print(out)
+#'
+#' set.seed(1234)
+#' out$linC + polyh_rivols_gen(20, out$A_reduced, solver="mosek", reduce=FALSE)
 #'
 #' @export
 #'
-polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
+polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
     if (solver=="nnls") {
         if (!requireNamespace("nnls", quietly = TRUE))
             stop("\n Could not find package 'nnls'.")
@@ -422,13 +443,13 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 
     if (reduce) {
         red <- polyh_reduce(A, solver=solver, tol=tol)
-        dimC <- red$dim
+        dimC <- red$dimC
         if (dimC==0)
-            return( list( dim=0, lin=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
-        linC <- red$lin
+            return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
+        linC <- red$linC
         QL   <- red$QL
         if (dimC==linC)
-            return( list( dim=dimC, lin=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL), samples=NA) )
+            return( list( dimC=dimC, linC=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL), samples=NA) )
         QC   <- red$QC
         A    <- red$A_reduced
     }
@@ -443,10 +464,10 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
         }
     } else {
         nn <- dim(A)[2]
-        mos_inp <- .create_mosek_input_polyh_prim(A,rep(0,d))
+        mos_inp <- conivol:::.create_mosek_input_polyh_prim(A,rep(0,d))
         for (i in 1:n) {
             y <- rnorm(d)
-            mos_inp <- .update_mosek_input_polyh_prim(mos_inp,y)
+            mos_inp <- conivol:::.update_mosek_input_polyh_prim(mos_inp,y)
             mos_out <- Rmosek::mosek(mos_inp,opts)
             out[i] <- qr(A[ ,which(mos_out$sol$itr$xx[1:nn]>tol)])$rank
         }
@@ -455,7 +476,7 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
     if (!reduce)
         return(out)
     else
-        return( list( dim=dimC, lin=linC, QL=QL, QC=QC, A_reduced=A, samples=out+linC) )
+        return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A, samples=out+linC) )
 }
 
 
@@ -481,8 +502,8 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' @return The output of \code{polyh_rivols_ineq(n,A)}, with the default value
 #'         \code{reduce==TRUE}, is a list containing the following elements:
 #' \itemize{
-#'   \item \code{dim}: the dimension of the linear span of \code{C},
-#'   \item \code{lin}: the lineality of the cone \code{C},
+#'   \item \code{dimC}: the dimension of the linear span of \code{C},
+#'   \item \code{linC}: the lineality of the cone \code{C},
 #'   \item \code{QL}: an orthogonal basis of the orthogonal complement of the
 #'                    linear span of \code{C},
 #'                    set to \code{NA} if \code{dim(C)==d},
@@ -505,19 +526,24 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' polyh_rivols_ineq(20,matrix(1:12,4,3)
+#' set.seed(1234)
+#' out <- polyh_rivols_ineq(20, matrix(1:12,4,3))
+#' print(out)
+#'
+#' set.seed(1234)
+#' out$linC + polyh_rivols_ineq(20, out$A_reduced, solver="mosek", reduce=FALSE)
 #'
 #' @export
 #'
-polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
+polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
     d <- dim(A)[1]
     if (reduce) {
         out <- polyh_rivols_gen(n, A, solver=solver, reduce=TRUE, tol=tol)
-        dimCpol <- out$dim
-        linCpol <- out$lin
+        dimCpol <- out$dimC
+        linCpol <- out$linC
 
-        out$dim <- d-linCpol
-        out$lin <- d-dimCpol
+        out$dimC <- d-linCpol
+        out$linC <- d-dimCpol
         out$samples <- d-out$samples
         return(out)
     } else
@@ -534,8 +560,8 @@ polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'
 #' @param samples vector of integers representing independent samples from the
 #'                intrinsic volumes distribution of a convex cone
-#' @param dim the dimension of the cone
-#' @param lin the lineality of the cone
+#' @param dimC the dimension of the cone
+#' @param linC the lineality of the cone
 #' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
 #'
@@ -548,7 +574,7 @@ polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'                    the index \code{i} as well as the probability \code{alpha}
 #'                    may be vectors,
 #'   \item \code{post_samp}: a function that returns samples of the posterior distribution;
-#'                    \code{post_samp(n)} returns an \code{n}-by-\code{(dim+1)}
+#'                    \code{post_samp(n)} returns an \code{n}-by-\code{(dimC+1)}
 #'                    matrix whose rows form a set of \code{n} independent samples
 #'                    of the posterior distribution,
 #'   \item \code{Dir}: a list containing the weights of the Dirichlet distributions
@@ -565,15 +591,15 @@ polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-8) {
 #'
 #' @examples
 #' samp <- polyh_rivols_gen(20,matrix(1:12,4,3))
-#' polyh_bayes(samp$samples, samp$dim, samp$lin)
+#' polyh_bayes(samp$samples, samp$dimC, samp$linC)
 #'
 #' @export
 #'
-polyh_bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
+polyh_bayes <- function(samples, dimC, linC, prior="noninformative", v_prior=NA) {
     # check whether prior is "noninformative" or "informative"
-    # check whether lin==dim
+    # check whether linC==dimC
 
-    d <- dim-lin
+    d <- dimC-linC
     I_even <- 2*(0:floor(d/2)) + 1          # final +1 is because of R indices start at 1
     I_odd  <- 1+2*(0:floor((d-1)/2)) + 1    # final +1 is because of R indices start at 1
 
@@ -582,7 +608,7 @@ polyh_bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
         v_prior_adj[I_even] <- 1/ceiling((d+1)/2) / 2
         v_prior_adj[I_odd]  <- 1/floor((d+1)/2) / 2
     } else {
-        v_prior_adj <- v_prior[lin:dim]
+        v_prior_adj <- v_prior[linC:dimC]
     }
 
     Dir_prior_even <- 2*v_prior_adj[I_even]
@@ -592,7 +618,7 @@ polyh_bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
         Dir_prior_even <- 1+Dir_prior_even
         Dir_prior_odd  <- 1+Dir_prior_odd
     }
-    update <- tabulate(1+samples-lin, 1+dim-lin)
+    update <- tabulate(1+samples-linC, 1+dimC-linC)
 
     Dir_post_even <- Dir_prior_even + update[I_even]
     Dir_post_odd  <- Dir_prior_odd  + update[I_odd]
@@ -603,28 +629,28 @@ polyh_bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
         alpha <- rep_len(alpha,m)
         X <- rep(0,m)
         for (j in 1:m) {
-            if ( i[j] < lin || i[j] > dim)
+            if ( i[j] < linC || i[j] > dimC)
                 X[j] <- 0
             else {
-                if ((i[j]-lin)%%2==0)
-                    X[j] <- qbeta(alpha[j], Dir_post_even[(i[j]-lin)/2+1],
-                                  sum(Dir_post_even[-((i[j]-lin)/2+1)])) / 2
+                if ((i[j]-linC)%%2==0)
+                    X[j] <- qbeta(alpha[j], Dir_post_even[(i[j]-linC)/2+1],
+                                  sum(Dir_post_even[-((i[j]-linC)/2+1)])) / 2
                 else
-                    X[j] <- qbeta(alpha[j], Dir_post_odd[(i[j]-lin-1)/2+1],
-                                  sum(Dir_post_odd[-((i[j]-lin-1)/2+1)])) / 2
+                    X[j] <- qbeta(alpha[j], Dir_post_odd[(i[j]-linC-1)/2+1],
+                                  sum(Dir_post_odd[-((i[j]-linC-1)/2+1)])) / 2
             }
         }
         return(X)
     }
 
     post_samp <- function(n) {
-        samp <- matrix(0,n,dim+1)
+        samp <- matrix(0,n,dimC+1)
         for (j in I_even)
-            samp[ ,j+lin] <- rgamma(n,Dir_post_even[(j-1)/2+1])
+            samp[ ,j+linC] <- rgamma(n,Dir_post_even[(j-1)/2+1])
         for (j in I_odd)
-            samp[ ,j+lin] <- rgamma(n,Dir_post_odd[(j-2)/2+1])
-        samp[ ,I_even+lin] <- samp[ ,I_even+lin] / rowSums(samp[ ,I_even+lin]) / 2
-        samp[ ,I_odd+lin]  <- samp[ ,I_odd+lin]  / rowSums(samp[ ,I_odd+lin])  / 2
+            samp[ ,j+linC] <- rgamma(n,Dir_post_odd[(j-2)/2+1])
+        samp[ ,I_even+linC] <- samp[ ,I_even+linC] / rowSums(samp[ ,I_even+linC]) / 2
+        samp[ ,I_odd+linC]  <- samp[ ,I_odd+linC]  / rowSums(samp[ ,I_odd+linC])  / 2
         return(samp)
     }
 
@@ -651,8 +677,8 @@ polyh_bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
 #'
 #' @param samples vector of integers representing independent samples from the
 #'                intrinsic volumes distribution of a convex cone
-#' @param dim the dimension of the cone
-#' @param lin the lineality of the cone
+#' @param dimC the dimension of the cone
+#' @param linC the lineality of the cone
 #' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
 #' @param filename filename for output (NA by default, in which case the return is a string)
@@ -682,21 +708,21 @@ polyh_bayes <- function(samples, dim, lin, prior="noninformative", v_prior=NA) {
 #'
 #' @examples
 #' samp <- polyh_rivols_gen(20,matrix(1:12,4,3))
-#' polyh_Bayes(samp$samples, samp$dim, samp$lin)
+#' polyh_Bayes(samp$samples, samp$dimC, samp$linC)
 #'
 #' @export
 #'
-polyh_stan <- function(samples, dim, lin, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+polyh_stan <- function(samples, dimC, linC, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
     # check whether prior is "noninformative" or "informative"
-    # check whether lin==dim
+    # check whether linC==dimC
 
-    d_nonz <- dim-lin
+    d_nonz <- dimC-linC
 
     # put this in the Stan program?
     if (is.na(v_prior)) {
         v_nonz_prior <- rep(1,d_nonz+1)/(d_nonz+1)
     } else {
-        v_nonz_prior <- v_prior[lin:dim]
+        v_nonz_prior <- v_prior[linC:dimC]
     }
 
     # put this in the Stan program?
@@ -709,27 +735,27 @@ polyh_stan <- function(samples, dim, lin, prior="noninformative", v_prior=NA, fi
     }
 
     data_list <- list(
-        dim         = dim ,
-        lin         = lin ,
+        dimC         = dimC ,
+        linC         = linC ,
         samples     = samples ,
         alpha_prior = alpha_prior ,
         beta_prior  = beta_prior
     )
         model_string <- "
 data {
-    int <lower=1> dim;                                       \\ dimension of linear span
-    int <lower=0, upper=dim-1> lin;                          \\ lineality
+    int <lower=1> dimC;                                       \\ dimension of linear span
+    int <lower=0, upper=dimC-1> linC;                          \\ lineality
     int <lower=0> samples[];                                 \\ sample of multinomial distribution (even and odd)
-    vector <lower=0>[dim-lin+1] alpha ;                      \\ prior values for hyperparameters alpha
-    vector <lower=0>[dim-lin+1] beta ;                       \\ prior values for hyperparameters beta
+    vector <lower=0>[dimC-linC+1] alpha ;                      \\ prior values for hyperparameters alpha
+    vector <lower=0>[dimC-linC+1] beta ;                       \\ prior values for hyperparameters beta
 }
 transformed data {
     int d ;                                                  \\ just for convenience
     d = size(samples)-1 ;
     int d_nonz ;                                             \\ just for convenience
-    d_nonz = dim-lin+1 ;
+    d_nonz = dimC-linC+1 ;
     int <lower=0>[d_nonz] samp_nonz ;                        \\ just for convenience
-    samp_nonz = samples[(lin+1):(dim+1)] ;
+    samp_nonz = samples[(linC+1):(dimC+1)] ;
 
     matrix[d_nonz+1,d_nonz+1] T ;                            \\ transformation matrix for u ~> t
     for (i in 1:(d_nonz-1)) {
@@ -769,9 +795,9 @@ model {
 }
 generated quantities {
     vector [d+1] V ;
-    if (lin>0) V[1:lin] = rep_vector(0,lin) ;
-    if (dim<d) V[(dim+2):(d+1)] = rep_vector(0,d-dim) ;
-    V[(lin+1):(dim+1)] = v_nonz / sum(v_nonz) ;
+    if (linC>0) V[1:linC] = rep_vector(0,linC) ;
+    if (dimC<d) V[(dimC+2):(d+1)] = rep_vector(0,d-dimC) ;
+    V[(linC+1):(dimC+1)] = v_nonz / sum(v_nonz) ;
 }
 "
 

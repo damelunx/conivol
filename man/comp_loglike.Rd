@@ -9,7 +9,7 @@ comp_loglike(v, data, mode = 0)
 \arguments{
 \item{v}{vector of mixing weights (conic intrinsic volumes).}
 
-\item{data}{output of \code{prepare_data_em(d, m_samp)}.}
+\item{data}{output of \code{prepare_em(d, m_samp)}.}
 
 \item{mode}{specifies whether the first and last values should be taken into account:
 \describe{
@@ -26,11 +26,11 @@ The output of \code{comp_loglike} is the value of the normalized
 }
 \description{
 \code{comp_loglike} evaluates the (normalized) log-likelihood of a vector
-with respect to given data, the output of \code{prepare_data_em}.
+with respect to given data, the output of \code{prepare_em}.
 }
 \section{See also}{
 
-\code{\link[conivol]{prepare_data_em}}, \code{\link[conivol]{estim_statdim_var}}
+\code{\link[conivol]{prepare_em}}, \code{\link[conivol]{estim_statdim_var}}
 
 Package: \code{\link[conivol]{conivol}}
 }
@@ -44,7 +44,7 @@ v_exact <- circ_ivols( D, alpha, product=TRUE )
 
 # collect sample data
 m_samp <- circ_rbichibarsq(N,D,alpha)
-data <- prepare_data_em(d, m_samp)
+data <- prepare_em(d, m_samp)
 est <- estim_statdim_var(d, m_samp)
 v1 <- init_v( d )
 v2 <- init_v( d, 1, delta=est$delta, var=est$var )

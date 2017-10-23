@@ -7,8 +7,8 @@
 #' @param samples N-by-2 matrix representing independent samples from the
 #'                bivariate chi-bar-squared distribution of a convex cone
 #' @param d the dimension of the ambient space
-#' @param dim the dimension of the cone
-#' @param lin the lineality of the cone
+#' @param dimC the dimension of the cone
+#' @param linC the lineality of the cone
 #' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
 #' @param filename filename for output (NA by default, in which case the return is a string)
@@ -19,7 +19,7 @@
 #'   \item \code{model}: a string that forms the description of the JAGS model,
 #'                    which can be directly used as input (via text connection
 #'                    or external file) for creating a JAGS model object;
-#'                    \code{post_samp(n)} returns an \code{n}-by-\code{(dim+1)}
+#'                    \code{post_samp(n)} returns an \code{n}-by-\code{(dimC+1)}
 #'                    matrix whose rows form a set of \code{n} independent samples
 #'                    of the posterior distribution,
 #'   \item \code{data}: a data list containing the prepared data to be used
@@ -98,7 +98,7 @@
 #'
 #' @export
 #'
-estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
 
     I_pol  <- which(samples[ ,1]==0)
     I_prim <- which(samples[ ,2]==0)
@@ -107,13 +107,13 @@ estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
     N_prim <- length(I_prim)
     N_bulk <- N-N_pol-N_prim
 
-    I_0 <- 2*(0:floor((dim-lin)/2)) + 1       # final +1 is because of R indices start at 1
-    I_1 <- 1+2*(0:floor((dim-lin-1)/2)) + 1   # final +1 is because of R indices start at 1
+    I_0 <- 2*(0:floor((dimC-linC)/2)) + 1       # final +1 is because of R indices start at 1
+    I_1 <- 1+2*(0:floor((dimC-linC-1)/2)) + 1   # final +1 is because of R indices start at 1
 
     if (is.na(v_prior)) {
-        v_prior_adj      <- rep(0,dim-lin+1)
-        v_prior_adj[I_0] <- 1/ceiling((dim-lin+1)/2) / 2
-        v_prior_adj[I_1] <- 1/floor((dim-lin+1)/2) / 2
+        v_prior_adj      <- rep(0,dimC-linC+1)
+        v_prior_adj[I_0] <- 1/ceiling((dimC-linC+1)/2) / 2
+        v_prior_adj[I_1] <- 1/floor((dimC-linC+1)/2) / 2
     } else {
         v_prior_adj <- v_prior
     }
@@ -128,10 +128,10 @@ estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
 
     data_list <- list(
         d           = d ,
-        dim         = dim ,
-        lin         = lin ,
-        d_0         = floor((dim-lin)/2) ,
-        d_1         = ceiling((dim-lin)/2)-1 ,
+        dimC         = dimC ,
+        linC         = linC ,
+        d_0         = floor((dimC-linC)/2) ,
+        d_1         = ceiling((dimC-linC)/2)-1 ,
         N           = N ,
         N_bulk      = N_bulk ,
         count_bulk  = c(N_V0, N_bulk, N_Vd) ,
@@ -142,7 +142,7 @@ estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
     )
 
 
-    if (dim==d && lin==0) {
+    if (dimC==d && linC==0) {
         if (d%%2==1) {
             model_string <- "model {
                 V_0 ~ ddirch(Dir_prior_0)
@@ -192,30 +192,30 @@ estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
                 }
             }"
         }
-    } else if (dim==d && lin>0) {
-        if ((d-lin)%%2==1) {
+    } else if (dimC==d && linC>0) {
+        if ((d-linC)%%2==1) {
             model_string <- "model {
                 V_0 ~ ddirch(Dir_prior_0)
                 V_1 ~ ddirch(Dir_prior_1)
                 V_extreme[1] <- sum(V_0)+sum(V_1)-V_1[d_1+1]
                 V_extreme[2] <- V_1[d_1+1]
                 count_bulk ~ dmulti(V_extreme, N)
-                for (i in 1:lin) {
+                for (i in 1:linC) {
                     V[i] <- 0
                 }
                 V[d+1] <- V_extreme[2]
                 for (i in 1:(d_0+1)) {
                     V_bulk[2*i-1] <- V_0[i]
-                    V[lin+2*i-1]  <- V_0[i]
+                    V[linC+2*i-1]  <- V_0[i]
                 }
                 for (i in 1:d_1) {
                     V_bulk[2*i] <- V_1[i]
-                    V[lin+2*i]  <- V_1[i]
+                    V[linC+2*i]  <- V_1[i]
                 }
                 for (i in 1:N_bulk) {
                     K[i] ~ dcat(V_bulk)
-                    X[i] ~ dchisqr(lin+K[i])
-                    Y[i] ~ dchisqr(d-K[i]-lin)
+                    X[i] ~ dchisqr(linC+K[i])
+                    Y[i] ~ dchisqr(d-K[i]-linC)
                 }
             }"
         } else {
@@ -225,26 +225,26 @@ estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
                 V_extreme[1] <- sum(V_0)+sum(V_1)-V_0[d_0+1]
                 V_extreme[2] <- V_0[d_0+1]
                 count_bulk ~ dmulti(V_extreme, N)
-                for (i in 1:lin) {
+                for (i in 1:linC) {
                     V[i] <- 0
                 }
                 V[d+1] <- V_extreme[2]
                 for (i in 1:d_0) {
                     V_bulk[2*i-1] <- V_0[i]
-                    V[lin+2*i-1]  <- V_0[i]
+                    V[linC+2*i-1]  <- V_0[i]
                 }
                 for (i in 1:(d_1+1)) {
                     V_bulk[2*i] <- V_1[i]
-                    V[lin+2*i]  <- V_1[i]
+                    V[linC+2*i]  <- V_1[i]
                 }
                 for (i in 1:N_bulk) {
                     K[i] ~ dcat(V_bulk)
-                    X[i] ~ dchisqr(lin+K[i])
-                    Y[i] ~ dchisqr(d-K[i]-lin)
+                    X[i] ~ dchisqr(linC+K[i])
+                    Y[i] ~ dchisqr(d-K[i]-linC)
                 }
             }"
         }
-    } else if (dim<d && lin==0) {
+    } else if (dimC<d && linC==0) {
         model_string <- "model {
             V_0 ~ ddirch(Dir_prior_0)
             V_1 ~ ddirch(Dir_prior_1)
@@ -252,7 +252,7 @@ estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
             V_extreme[2] <- sum(V_0)+sum(V_1)-V_0[1]
             count_bulk ~ dmulti(V_extreme, N)
             V[1] <- V_extreme[1]
-            for (i in (dim+2):(d+1)) {
+            for (i in (dimC+2):(d+1)) {
                 V[i] <- 0
             }
             for (i in 1:(d_1+1)) {
@@ -269,28 +269,28 @@ estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
                 Y[i] ~ dchisqr(d-K[i])
             }
         }"
-    } else if (dim<d && lin>0) {
+    } else if (dimC<d && linC>0) {
         model_string <- "model {
             V_0 ~ ddirch(Dir_prior_0)
             V_1 ~ ddirch(Dir_prior_1)
-            for (i in 1:lin) {
+            for (i in 1:linC) {
                 V[i] <- 0
             }
-            for (i in (dim+2):(d+1)) {
+            for (i in (dimC+2):(d+1)) {
                 V[i] <- 0
             }
             for (i in 1:(d_0+1)) {
                 V_bulk[2*i-1] <- V_0[i]
-                V[lin+2*i-1]  <- V_0[i]
+                V[linC+2*i-1]  <- V_0[i]
             }
             for (i in 1:(d_1+1)) {
                 V_bulk[2*i] <- V_1[i]
-                V[lin+2*i]  <- V_1[i]
+                V[linC+2*i]  <- V_1[i]
             }
             for (i in 1:N_bulk) {
                 K[i] ~ dcat(V_bulk)
-                X[i] ~ dchisqr(lin+K[i])
-                Y[i] ~ dchisqr(d-K[i]-lin)
+                X[i] ~ dchisqr(linC+K[i])
+                Y[i] ~ dchisqr(d-K[i]-linC)
             }
         }"
     }
@@ -327,8 +327,8 @@ estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
 #' @param samples N-by-2 matrix representing independent samples from the
 #'                bivariate chi-bar-squared distribution of a convex cone
 #' @param d the dimension of the ambient space
-#' @param dim the dimension of the cone
-#' @param lin the lineality of the cone
+#' @param dimC the dimension of the cone
+#' @param linC the lineality of the cone
 #' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
 #' @param filename filename for output (NA by default, in which case the return is a string)
@@ -414,7 +414,7 @@ estim_jags <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
 #'
 #' @export
 #'
-estim_stan <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+estim_stan <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
 
     I_pol  <- which(samples[ ,1]==0)
     I_prim <- which(samples[ ,2]==0)
@@ -423,11 +423,11 @@ estim_stan <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
     N_prim <- length(I_prim)
     N_bulk <- N-N_pol-N_prim
 
-    I_0 <- 2*(0:floor((dim-lin)/2)) + 1       # final +1 is because of R indices start at 1
-    I_1 <- 1+2*(0:floor((dim-lin-1)/2)) + 1   # final +1 is because of R indices start at 1
+    I_0 <- 2*(0:floor((dimC-linC)/2)) + 1       # final +1 is because of R indices start at 1
+    I_1 <- 1+2*(0:floor((dimC-linC-1)/2)) + 1   # final +1 is because of R indices start at 1
 
     if (is.na(v_prior))
-        v_nonz_prior <- rep(1,dim-lin+1)/(dim-lin+1)
+        v_nonz_prior <- rep(1,dimC-linC+1)/(dimC-linC+1)
 
     if (enforce_logconc==FALSE) {
         if (prior=="informative")
@@ -435,7 +435,7 @@ estim_stan <- function(samples, d, dim=d, lin=0, prior="noninformative", v_prior
         else
             prior_weight <- 0
 
-        if (dim==d && lin==0) {
+        if (dimC==d && linC==0) {
             data_list <- list(
                 d            = d ,
                 N_0          = N_pol ,
@@ -513,10 +513,10 @@ model {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
 }"
-        } else if (dim==d && lin>0) {
+        } else if (dimC==d && linC>0) {
             data_list <- list(
                 d            = d ,
-                lin          = lin ,
+                linC          = linC ,
                 N_bulk       = N_bulk ,
                 N_d          = N_prim ,
                 X            = samples_bulk[ ,1] ,
@@ -527,12 +527,12 @@ model {
             model_string <- "
 data {
     int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1> lin;                                       \\ lineality
+    int <lower=1> linC;                                       \\ lineality
     int <lower=0> N_bulk;                                    \\ number of samples in neither cone
     int <lower=0> N_d;                                       \\ number of samples in primal cone
     vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
     vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[d-lin+1] v_nonz_prior ;                 \\ prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[d-linC+1] v_nonz_prior ;                 \\ prior estimate of nonzero intrinsic volumes
     real <lower=0> prior_weight ;                            \\ added weight for Dirichlet priors (0=noninformative, 1=informative)
 }
 transformed data {
@@ -542,23 +542,23 @@ transformed data {
 
     int d_0 ;                                                \\ dimension of even simplex
     int d_1 ;                                                \\ dimension of odd simplex
-    d_0 =  ceil((d-lin-1)/2) ;
-    d_1 = floor((d-lin-1)/2) ;
+    d_0 =  ceil((d-linC-1)/2) ;
+    d_1 = floor((d-linC-1)/2) ;
 
     int I_0[d_0+1] ;                                         \\ set of even indices of nonzero entries
     int I_1[d_1+1] ;                                         \\ set of odd indices of nonzero entries
-    I_0 = 2*(0:floor((d-lin)/2)) + 1                         \\ final +1 is because indices start at 1
-    I_1 = 1+2*(0:floor((d-lin-1)/2)) + 1                     \\ final +1 is because indices start at 1
+    I_0 = 2*(0:floor((d-linC)/2)) + 1                         \\ final +1 is because indices start at 1
+    I_1 = 1+2*(0:floor((d-linC-1)/2)) + 1                     \\ final +1 is because indices start at 1
 
     vector [d_0+1] alpha ;                                   \\ weight for even Dirichlet prior
     vector [d_1+1] beta ;                                    \\ weight for odd Dirichlet prior
     alpha = v_nonz_prior[I_0] + prior_weight ;
     beta  = v_nonz_prior[I_1] + prior_weight ;
 
-    row_vector[d-lin] log_dens_XY[N_bulk] ;
+    row_vector[d-linC] log_dens_XY[N_bulk] ;
     for (i in 1:N_bulk) {
-        for (k in lin:(d-1)) {
-            log_dens_XY[i][k-lin+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
+        for (k in linC:(d-1)) {
+            log_dens_XY[i][k-linC+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
         }
     }
 }
@@ -568,16 +568,16 @@ parameters {
 }
 transformed parameters {
     simplex[d+1] V ;
-    V[1:lin] = 0 ;
-    V[lin+I_0] = V_0/2 ;
-    V[lin+I_1] = V_1/2 ;
+    V[1:linC] = 0 ;
+    V[linC+I_0] = V_0/2 ;
+    V[linC+I_1] = V_1/2 ;
 
     simplex[2] V_extreme ;
-    V_extreme[1] = sum(V[(lin+1):d]) ;
+    V_extreme[1] = sum(V[(linC+1):d]) ;
     V_extreme[2] = V[d+1] ;
 
-    row_vector[d-lin] logV_bulk ;
-    logV_bulk = to_row_vector( log(V[(lin+1):d]) ) ;
+    row_vector[d-linC] logV_bulk ;
+    logV_bulk = to_row_vector( log(V[(linC+1):d]) ) ;
 }
 model {
     V_0 ~ dirichlet(alpha)
@@ -590,10 +590,10 @@ model {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
 }"
-        } else if (dim<d && lin==0) {
+        } else if (dimC<d && linC==0) {
             data_list <- list(
                 d            = d ,
-                dim          = dim ,
+                dimC          = dimC ,
                 N_0          = N_pol ,
                 N_bulk       = N_bulk ,
                 X            = samples_bulk[ ,1] ,
@@ -604,12 +604,12 @@ model {
             model_string <- "
 data {
     int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1, upper=d-1> dim;                            \\ dimension of linear span
+    int <lower=1, upper=d-1> dimC;                            \\ dimension of linear span
     int <lower=0> N_0;                                       \\ number of samples in polar cone
     int <lower=0> N_bulk;                                    \\ number of samples in neither cone
     vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
     vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[dim+1] v_nonz_prior ;                   \\ prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[dimC+1] v_nonz_prior ;                   \\ prior estimate of nonzero intrinsic volumes
     real <lower=0> prior_weight ;                            \\ added weight for Dirichlet priors (0=noninformative, 1=informative)
 }
 transformed data {
@@ -619,22 +619,22 @@ transformed data {
 
     int d_0 ;                                                \\ dimension of even simplex
     int d_1 ;                                                \\ dimension of odd simplex
-    d_0 =  ceil((dim-1)/2) ;
-    d_1 = floor((dim-1)/2) ;
+    d_0 =  ceil((dimC-1)/2) ;
+    d_1 = floor((dimC-1)/2) ;
 
     int I_0[d_0+1] ;                                         \\ set of even indices of nonzero entries
     int I_1[d_1+1] ;                                         \\ set of odd indices of nonzero entries
-    I_0 = 2*(0:floor(dim/2)) + 1                             \\ final +1 is because indices start at 1
-    I_1 = 1+2*(0:floor((dim-1)/2)) + 1                       \\ final +1 is because indices start at 1
+    I_0 = 2*(0:floor(dimC/2)) + 1                             \\ final +1 is because indices start at 1
+    I_1 = 1+2*(0:floor((dimC-1)/2)) + 1                       \\ final +1 is because indices start at 1
 
     vector [d_0+1] alpha ;                                   \\ weight for even Dirichlet prior
     vector [d_1+1] beta ;                                    \\ weight for odd Dirichlet prior
     alpha = v_nonz_prior[I_0] + prior_weight ;
     beta  = v_nonz_prior[I_1] + prior_weight ;
 
-    row_vector[dim] log_dens_XY[N_bulk] ;
+    row_vector[dimC] log_dens_XY[N_bulk] ;
     for (i in 1:N_bulk) {
-        for (k in 1:dim) {
+        for (k in 1:dimC) {
             log_dens_XY[i][k] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
         }
     }
@@ -645,16 +645,16 @@ parameters {
 }
 transformed parameters {
     simplex[d+1] V ;
-    V[(dim+2):(dim+1)] = 0 ;
+    V[(dimC+2):(dimC+1)] = 0 ;
     V[I_0] = V_0/2 ;
     V[I_1] = V_1/2 ;
 
     simplex[2] V_extreme ;
     V_extreme[1] = V[1] ;
-    V_extreme[2] = sum(V[2:(dim+1)]) ;
+    V_extreme[2] = sum(V[2:(dimC+1)]) ;
 
-    row_vector[dim] logV_bulk ;
-    logV_bulk = to_row_vector( log(V[2:(dim+1)]) ) ;
+    row_vector[dimC] logV_bulk ;
+    logV_bulk = to_row_vector( log(V[2:(dimC+1)]) ) ;
 }
 model {
     V_0 ~ dirichlet(alpha)
@@ -667,11 +667,11 @@ model {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
 }"
-        } else if (dim<d && lin>0) {
+        } else if (dimC<d && linC>0) {
             data_list <- list(
                 d            = d ,
-                dim          = dim ,
-                lin          = lin ,
+                dimC          = dimC ,
+                linC          = linC ,
                 N            = N_bulk ,
                 X            = samples_bulk[ ,1] ,
                 Y            = samples_bulk[ ,2] ,
@@ -681,34 +681,34 @@ model {
             model_string <- "
 data {
     int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1, upper=d-1> dim;                            \\ dimension of linear span
-    int <lower=1, upper=dim-1> lin;                          \\ lineality
+    int <lower=1, upper=d-1> dimC;                            \\ dimension of linear span
+    int <lower=1, upper=dimC-1> linC;                          \\ lineality
     int <lower=0> N;                                         \\ number of samples
     vector <lower=0>[N] X;                                   \\ squared length of projection on primal
     vector <lower=0>[N] Y;                                   \\ squared length of projection on polar
-    vector <lower=0>[dim-lin+1] v_nonz_prior ;               \\ prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[dimC-linC+1] v_nonz_prior ;               \\ prior estimate of nonzero intrinsic volumes
     real <lower=0> prior_weight ;                            \\ added weight for Dirichlet priors (0=noninformative, 1=informative)
 }
 transformed data {
     int d_0 ;                                                \\ dimension of even simplex
     int d_1 ;                                                \\ dimension of odd simplex
-    d_0 =  ceil((dim-lin-1)/2) ;
-    d_1 = floor((dim-lin-1)/2) ;
+    d_0 =  ceil((dimC-linC-1)/2) ;
+    d_1 = floor((dimC-linC-1)/2) ;
 
     int I_0[d_0+1] ;                                         \\ set of even indices of nonzero entries
     int I_1[d_1+1] ;                                         \\ set of odd indices of nonzero entries
-    I_0 = 2*(0:floor((dim-lin)/2)) + 1                       \\ final +1 is because indices start at 1
-    I_1 = 1+2*(0:floor((dim-lin-1)/2)) + 1                   \\ final +1 is because indices start at 1
+    I_0 = 2*(0:floor((dimC-linC)/2)) + 1                       \\ final +1 is because indices start at 1
+    I_1 = 1+2*(0:floor((dimC-linC-1)/2)) + 1                   \\ final +1 is because indices start at 1
 
     vector [d_0+1] alpha ;                                   \\ weight for even Dirichlet prior
     vector [d_1+1] beta ;                                    \\ weight for odd Dirichlet prior
     alpha = v_nonz_prior[I_0] + prior_weight ;
     beta  = v_nonz_prior[I_1] + prior_weight ;
 
-    row_vector[dim-lin+1] log_dens_XY[N] ;
+    row_vector[dimC-linC+1] log_dens_XY[N] ;
     for (i in 1:N) {
-        for (k in lin:dim) {
-            log_dens_XY[i][k-lin+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
+        for (k in linC:dimC) {
+            log_dens_XY[i][k-linC+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
         }
     }
 }
@@ -718,13 +718,13 @@ parameters {
 }
 transformed parameters {
     simplex[d+1] V ;
-    V[1:lin] = 0 ;
-    V[(dim+2):(d+1)] = 0 ;
-    V[lin+I_0] = V_0/2 ;
-    V[lin+I_1] = V_1/2 ;
+    V[1:linC] = 0 ;
+    V[(dimC+2):(d+1)] = 0 ;
+    V[linC+I_0] = V_0/2 ;
+    V[linC+I_1] = V_1/2 ;
 
-    row_vector[dim-lin+1] logV_bulk ;
-    logV_bulk = to_row_vector( log(V[(lin+1):(dim+1)]) ) ;
+    row_vector[dimC-linC+1] logV_bulk ;
+    logV_bulk = to_row_vector( log(V[(linC+1):(dimC+1)]) ) ;
 }
 model {
     V_0 ~ dirichlet(alpha)
@@ -739,13 +739,13 @@ model {
     } else if (enforce_logconc==TRUE) {
         if (prior=="informative"){
             alpha_prior <- v_nonz_prior / 2
-            beta_prior  <- rep(1/2,dim-lin+1)
+            beta_prior  <- rep(1/2,dimC-linC+1)
         } else {
-            alpha_prior <- rep(1,dim-lin+1)
+            alpha_prior <- rep(1,dimC-linC+1)
             beta_prior  <- 1 / v_nonz_prior
         }
 
-        if (dim==d && lin==0) {
+        if (dimC==d && linC==0) {
             data_list <- list(
                 d            = d ,
                 N_0          = N_pol ,
@@ -832,10 +832,10 @@ model {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
 }"
-        } else if (dim==d && lin>0) {
+        } else if (dimC==d && linC>0) {
             data_list <- list(
                 d            = d ,
-                lin          = lin ,
+                linC          = linC ,
                 N_bulk       = N_bulk ,
                 N_d          = N_prim ,
                 X            = samples_bulk[ ,1] ,
@@ -847,67 +847,67 @@ model {
             model_string <- "
 data {
     int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1> lin;                                       \\ lineality
+    int <lower=1> linC;                                       \\ lineality
     int <lower=0> N_bulk;                                    \\ number of samples in neither cone
     int <lower=0> N_d;                                       \\ number of samples in primal cone
     vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
     vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[d-lin+1] v_nonz_prior ;                 \\ prior estimate of nonzero intrinsic volumes
-    vector <lower=0>[d-lin+1] alpha ;                        \\ prior values for hyperparameters alpha
-    vector <lower=0>[d-lin+1] beta ;                         \\ prior values for hyperparameters beta
+    vector <lower=0>[d-linC+1] v_nonz_prior ;                 \\ prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[d-linC+1] alpha ;                        \\ prior values for hyperparameters alpha
+    vector <lower=0>[d-linC+1] beta ;                         \\ prior values for hyperparameters beta
 }
 transformed data {
     int sample_multinom[2] ;                                 \\ collecting numbers of points in primal/polar cone
     sample_mutinom[1] = N_bulk ;
     sample_mutinom[2] = N_d ;
 
-    row_vector[d-lin] log_dens_XY[N_bulk] ;
+    row_vector[d-linC] log_dens_XY[N_bulk] ;
     for (i in 1:N_bulk) {
-        for (k in lin:(d-1)) {
-            log_dens_XY[i][k-lin+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
+        for (k in linC:(d-1)) {
+            log_dens_XY[i][k-linC+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
         }
     }
 
-    matrix[d-lin+1,d-lin+1] T ;                              \\ transformation matrix for u ~> t
-    for (i in 1:(d-lin-1)) {
+    matrix[d-linC+1,d-linC+1] T ;                              \\ transformation matrix for u ~> t
+    for (i in 1:(d-linC-1)) {
         T[i,i] = 1 ;
         T[i,i+1] = -2 ;
         T[i,i+2] = 1 ;
     }
-    if ((d-lin)%2==0) {
-        for (i in 0:((d-lin)/2)) {
-            T[d-lin,2*i+1] = 1 ;
-            T[d-lin+1,2*i+2] = 1 ;
+    if ((d-linC)%2==0) {
+        for (i in 0:((d-linC)/2)) {
+            T[d-linC,2*i+1] = 1 ;
+            T[d-linC+1,2*i+2] = 1 ;
         }
-        T[d-lin+1,1] = 1 ;
+        T[d-linC+1,1] = 1 ;
     } else {
-        for (i in 0:((d-lin-1)/2)) {
-            T[d-lin,2*i+1] = 1 ;
-            T[d-lin+1,2*i+2] = 1 ;
+        for (i in 0:((d-linC-1)/2)) {
+            T[d-linC,2*i+1] = 1 ;
+            T[d-linC+1,2*i+2] = 1 ;
         }
-        T[d-lin,2*(d-lin)+1] = 1 ;
+        T[d-linC,2*(d-linC)+1] = 1 ;
     }
 }
 parameters {
-    vector [d-lin+1] t ;
+    vector [d-linC+1] t ;
 }
 transformed parameters {
-    vector[d-lin+1] u ;
+    vector[d-linC+1] u ;
     u = T \ t ;
 
     vector <lower=0>[d+1] V ;
-    V[1:lin] = 0 ;
-    V[(lin+1):(d+1)] = exp(u) ;
+    V[1:linC] = 0 ;
+    V[(linC+1):(d+1)] = exp(u) ;
 
     vector[2] V_extreme ;
-    V_extreme[1] = sum(V[(lin+1):d]) ;
+    V_extreme[1] = sum(V[(linC+1):d]) ;
     V_extreme[2] = V[d+1] ;
 
-    row_vector[d-lin] logV_bulk ;
-    logV_bulk = to_row_vector( log(V[(lin+1):d]) ) ;
+    row_vector[d-linC] logV_bulk ;
+    logV_bulk = to_row_vector( log(V[(linC+1):d]) ) ;
 }
 model {
-    for (k in 0:(d-lin)) {
+    for (k in 0:(d-linC)) {
         t[k+1] ~ gamma(alpha[k+1], beta[k+1])
     }
 
@@ -918,10 +918,10 @@ model {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
 }"
-        } else if (dim<d && lin==0) {
+        } else if (dimC<d && linC==0) {
             data_list <- list(
                 d            = d ,
-                dim          = dim ,
+                dimC          = dimC ,
                 N_0          = N_pol ,
                 N_bulk       = N_bulk ,
                 X            = samples_bulk[ ,1] ,
@@ -933,67 +933,67 @@ model {
             model_string <- "
 data {
     int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1, upper=d-1> dim;                            \\ dimension of linear span
+    int <lower=1, upper=d-1> dimC;                            \\ dimension of linear span
     int <lower=0> N_0;                                       \\ number of samples in polar cone
     int <lower=0> N_bulk;                                    \\ number of samples in neither cone
     vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
     vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[dim+1] v_nonz_prior ;                   \\ prior estimate of nonzero intrinsic volumes
-    vector <lower=0>[dim+1] alpha ;                          \\ prior values for hyperparameters alpha
-    vector <lower=0>[dim+1] beta ;                           \\ prior values for hyperparameters beta
+    vector <lower=0>[dimC+1] v_nonz_prior ;                   \\ prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[dimC+1] alpha ;                          \\ prior values for hyperparameters alpha
+    vector <lower=0>[dimC+1] beta ;                           \\ prior values for hyperparameters beta
 }
 transformed data {
     int sample_multinom[2] ;                                 \\ collecting numbers of points in primal/polar cone
     sample_mutinom[1] = N_0 ;
     sample_mutinom[2] = N_bulk ;
 
-    row_vector[dim] log_dens_XY[N_bulk] ;
+    row_vector[dimC] log_dens_XY[N_bulk] ;
     for (i in 1:N_bulk) {
-        for (k in 1:dim) {
+        for (k in 1:dimC) {
             log_dens_XY[i][k] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
         }
     }
 
-    matrix[dim+1,dim+1] T ;                              \\ transformation matrix for u ~> t
-    for (i in 1:(dim-1)) {
+    matrix[dimC+1,dimC+1] T ;                              \\ transformation matrix for u ~> t
+    for (i in 1:(dimC-1)) {
         T[i,i] = 1 ;
         T[i,i+1] = -2 ;
         T[i,i+2] = 1 ;
     }
-    if (dim%2==0) {
-        for (i in 0:(dim/2)) {
-            T[dim,2*i+1] = 1 ;
-            T[dim+1,2*i+2] = 1 ;
+    if (dimC%2==0) {
+        for (i in 0:(dimC/2)) {
+            T[dimC,2*i+1] = 1 ;
+            T[dimC+1,2*i+2] = 1 ;
         }
-        T[dim+1,1] = 1 ;
+        T[dimC+1,1] = 1 ;
     } else {
-        for (i in 0:((dim-1)/2)) {
-            T[dim,2*i+1] = 1 ;
-            T[dim+1,2*i+2] = 1 ;
+        for (i in 0:((dimC-1)/2)) {
+            T[dimC,2*i+1] = 1 ;
+            T[dimC+1,2*i+2] = 1 ;
         }
-        T[dim,2*dim+1] = 1 ;
+        T[dimC,2*dimC+1] = 1 ;
     }
 }
 parameters {
-    vector [dim+1] t ;
+    vector [dimC+1] t ;
 }
 transformed parameters {
-    vector[dim+1] u ;
+    vector[dimC+1] u ;
     u = T \ t ;
 
     vector <lower=0>[d+1] V ;
-    V[(dim+2):(d+1)] = 0 ;
-    V[1:(dim+1)] = exp(u) ;
+    V[(dimC+2):(d+1)] = 0 ;
+    V[1:(dimC+1)] = exp(u) ;
 
     vector[2] V_extreme ;
     V_extreme[1] = V[1] ;
-    V_extreme[2] = sum(V[2:(dim+1)]) ;
+    V_extreme[2] = sum(V[2:(dimC+1)]) ;
 
-    row_vector[dim] logV_bulk ;
-    logV_bulk = to_row_vector( log(V[2:(dim+1)]) ) ;
+    row_vector[dimC] logV_bulk ;
+    logV_bulk = to_row_vector( log(V[2:(dimC+1)]) ) ;
 }
 model {
-    for (k in 0:dim) {
+    for (k in 0:dimC) {
         t[k+1] ~ gamma(alpha[k+1], beta[k+1])
     }
 
@@ -1004,11 +1004,11 @@ model {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
 }"
-        } else if (dim<d && lin<0) {
+        } else if (dimC<d && linC<0) {
             data_list <- list(
                 d            = d ,
-                dim          = dim ,
-                lin          = lin ,
+                dimC          = dimC ,
+                linC          = linC ,
                 N            = N_bulk ,
                 X            = samples_bulk[ ,1] ,
                 Y            = samples_bulk[ ,2] ,
@@ -1019,61 +1019,61 @@ model {
             model_string <- "
 data {
     int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1, upper=d-1> dim;                            \\ dimension of linear span
-    int <lower=1, upper=dim-1> lin;                          \\ lineality
+    int <lower=1, upper=d-1> dimC;                            \\ dimension of linear span
+    int <lower=1, upper=dimC-1> linC;                          \\ lineality
     int <lower=0> N;                                         \\ number of samples
     vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
     vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[dim-lin+1] v_nonz_prior ;               \\ prior estimate of nonzero intrinsic volumes
-    vector <lower=0>[dim-lin+1] alpha ;                      \\ prior values for hyperparameters alpha
-    vector <lower=0>[dim-lin+1] beta ;                       \\ prior values for hyperparameters beta
+    vector <lower=0>[dimC-linC+1] v_nonz_prior ;               \\ prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[dimC-linC+1] alpha ;                      \\ prior values for hyperparameters alpha
+    vector <lower=0>[dimC-linC+1] beta ;                       \\ prior values for hyperparameters beta
 }
 transformed data {
-    row_vector[dim-lin+1] log_dens_XY[N] ;
+    row_vector[dimC-linC+1] log_dens_XY[N] ;
     for (i in 1:N) {
-        for (k in lin:dim) {
-            log_dens_XY[i][k-lin+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
+        for (k in linC:dimC) {
+            log_dens_XY[i][k-linC+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
         }
     }
 
-    matrix[dim-lin+1,dim-lin+1] T ;                          \\ transformation matrix for u ~> t
-    for (i in 1:(dim-lin-1)) {
+    matrix[dimC-linC+1,dimC-linC+1] T ;                          \\ transformation matrix for u ~> t
+    for (i in 1:(dimC-linC-1)) {
         T[i,i] = 1 ;
         T[i,i+1] = -2 ;
         T[i,i+2] = 1 ;
     }
-    if ((dim-lin)%2==0) {
-        for (i in 0:((dim-lin)/2)) {
-            T[dim-lin,2*i+1] = 1 ;
-            T[dim-lin+1,2*i+2] = 1 ;
+    if ((dimC-linC)%2==0) {
+        for (i in 0:((dimC-linC)/2)) {
+            T[dimC-linC,2*i+1] = 1 ;
+            T[dimC-linC+1,2*i+2] = 1 ;
         }
-        T[dim-lin+1,1] = 1 ;
+        T[dimC-linC+1,1] = 1 ;
     } else {
-        for (i in 0:((dim-lin-1)/2)) {
-            T[dim-lin,2*i+1] = 1 ;
-            T[dim-lin+1,2*i+2] = 1 ;
+        for (i in 0:((dimC-linC-1)/2)) {
+            T[dimC-linC,2*i+1] = 1 ;
+            T[dimC-linC+1,2*i+2] = 1 ;
         }
-        T[dim-lin,2*(dim-lin)+1] = 1 ;
+        T[dimC-linC,2*(dimC-linC)+1] = 1 ;
     }
 }
 parameters {
-    vector [dim-lin+1] t ;
+    vector [dimC-linC+1] t ;
 }
 transformed parameters {
-    vector[dim-lin+1] u ;
+    vector[dimC-linC+1] u ;
     u = T \ t ;
 
     vector <lower=0>[d+1] V ;
-    V[1:lin] = 0 ;
-    V[(dim+2):(d+1)] = 0 ;
-    V[(lin+1):(dim+1)] = exp(u) ;
+    V[1:linC] = 0 ;
+    V[(dimC+2):(d+1)] = 0 ;
+    V[(linC+1):(dimC+1)] = exp(u) ;
 
-    row_vector[dim-lin+1] logV_bulk ;
-    logV_bulk = to_row_vector( log(V[(lin+1):(dim+1)]) ) ;
+    row_vector[dimC-linC+1] logV_bulk ;
+    logV_bulk = to_row_vector( log(V[(linC+1):(dimC+1)]) ) ;
 }
 model {
-    for (k in lin:dim) {
-        t[k-lin+1] ~ gamma(alpha[k+1], beta[k+1])
+    for (k in linC:dimC) {
+        t[k-linC+1] ~ gamma(alpha[k+1], beta[k+1])
     }
 
     \\ the following is the main part of the modelling where we marginalized the discrete latent variable K
