@@ -92,6 +92,7 @@ based on the expectation maximization (EM) method.
                      given samples of the bivariate chi-bar-squared distribution
 }
 }
+}
 
 \section{Vignettes}{
 
