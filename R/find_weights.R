@@ -54,7 +54,7 @@ prepare_em <- function(d, m_samp) {
 
 #' Evaluate the log-likelihood of the estimated intrinsic volumes
 #'
-#' \code{comp_loglike} evaluates the (normalized) log-likelihood of a vector
+#' \code{loglike_ivols} evaluates the (normalized) log-likelihood of a vector
 #' with respect to given data, the output of \code{prepare_em}.
 #'
 #' @param v vector of mixing weights (conic intrinsic volumes).
@@ -67,7 +67,7 @@ prepare_em <- function(d, m_samp) {
 #'               \item{\code{init_mode==3}:}{leave out both estimates of the 0th and dth intrinsic volume}
 #'             }
 #'
-#' @return The output of \code{comp_loglike} is the value of the normalized
+#' @return The output of \code{loglike_ivols} is the value of the normalized
 #'         log-likelihood of the mixing weights \code{v} with respect to the
 #'         sample data given in \code{data}
 #'
@@ -87,23 +87,23 @@ prepare_em <- function(d, m_samp) {
 #' m_samp <- circ_rbichibarsq(N,D,alpha)
 #' data <- prepare_em(d, m_samp)
 #' est <- estim_statdim_var(d, m_samp)
-#' v1 <- init_v( d )
-#' v2 <- init_v( d, 1, delta=est$delta, var=est$var )
-#' v3 <- init_v( d, 2, delta=est$delta )
-#' v4 <- init_v( d, 3, var=est$var )
-#' v5 <- init_v( d, 4, delta=est$delta, var=est$var )
+#' v1 <- init_ivols( d )
+#' v2 <- init_ivols( d, 1, delta=est$delta, var=est$var )
+#' v3 <- init_ivols( d, 2, delta=est$delta )
+#' v4 <- init_ivols( d, 3, var=est$var )
+#' v5 <- init_ivols( d, 4, delta=est$delta, var=est$var )
 #'
 #' # evaluate log-likelihood function
-#' comp_loglike(v_exact, data)
-#' comp_loglike(v1, data)
-#' comp_loglike(v2, data)
-#' comp_loglike(v3, data)
-#' comp_loglike(v4, data)
-#' comp_loglike(v5, data)
+#' loglike_ivols(v_exact, data)
+#' loglike_ivols(v1, data)
+#' loglike_ivols(v2, data)
+#' loglike_ivols(v3, data)
+#' loglike_ivols(v4, data)
+#' loglike_ivols(v5, data)
 #'
 #' @export
 #'
-comp_loglike <- function(v, data, mode=0){
+loglike_ivols <- function(v, data, mode=0){
     conivol:::.test_vector(v)
     d <- length(v)-1
     if (dim(data$dens)[1]!=d-1)
@@ -126,7 +126,7 @@ comp_loglike <- function(v, data, mode=0){
 
 #' Finding an initial estimate of the intrinsic volumes
 #'
-#' \code{init_v} find an initial estimate of the intrinsic volumes via
+#' \code{init_ivols} find an initial estimate of the intrinsic volumes via
 #' moment-fitting.
 #'
 #' @param d the dimension of the bivariate chi-bar squared distribution.
@@ -141,7 +141,7 @@ comp_loglike <- function(v, data, mode=0){
 #' @param delta an estimate of the statistical dimension of the cone.
 #' @param var an estimate of the variane of the intrinsic volumes.
 #'
-#' @return The output of \code{init_v} is a \code{(d+1)}-column vector.
+#' @return The output of \code{init_ivols} is a \code{(d+1)}-column vector.
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
@@ -152,17 +152,17 @@ comp_loglike <- function(v, data, mode=0){
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
 #' est <- estim_statdim_var(d, m_samp)
-#' init_v( 10 )
-#' init_v( 10, 1, delta=est$delta, var=est$var )
-#' init_v( 10, 2, delta=est$delta )
-#' init_v( 10, 3, delta=est$delta, var=est$var )
-#' init_v( 10, 4, delta=est$delta, var=est$var )
+#' init_ivols( 10 )
+#' init_ivols( 10, 1, delta=est$delta, var=est$var )
+#' init_ivols( 10, 2, delta=est$delta )
+#' init_ivols( 10, 3, delta=est$delta, var=est$var )
+#' init_ivols( 10, 4, delta=est$delta, var=est$var )
 #'
 # creating the starting point for the EM algorithm
 #
 #' @export
 #'
-init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
+init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
     if (init_mode==1) {
         v <- sapply( 0:d, function(k){pnorm((k+0.5-delta)/sqrt(var)) - pnorm((k-0.5-delta)/sqrt(var))})
         return(v/sum(v))
@@ -349,7 +349,7 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
 #' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{prepare_em}},
-#' \code{\link[conivol]{init_v}}, \code{\link[conivol]{comp_loglike}}
+#' \code{\link[conivol]{init_ivols}}, \code{\link[conivol]{loglike_ivols}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -399,10 +399,10 @@ estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         v <- v_init
     else {
         est <- conivol::estim_statdim_var(d, m_samp)
-        v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
+        v <- conivol::init_ivols(d,init_mode,delta=est$delta,var=est$var)
     }
     out_iterates[1, ] <- v
-    out_loglike[1] <- comp_loglike(v,data)
+    out_loglike[1] <- loglike_ivols(v,data)
 
     # prepare Mosek inputs
     mos_inp <- .create_mosek_input_em(rep(0,d+1),extrap_pol,extrap_prim,selfdual)
@@ -488,7 +488,7 @@ estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         }
 
         out_iterates[i+1, ] <- v
-        out_loglike[i+1] <- comp_loglike(v,data)
+        out_loglike[i+1] <- loglike_ivols(v,data)
     }
 
     return(list(iterates=out_iterates, loglike=out_loglike))
@@ -567,10 +567,10 @@ estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         v <- v_init
     else {
         est <- conivol::estim_statdim_var(d, m_samp)
-        v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
+        v <- conivol::init_ivols(d,init_mode,delta=est$delta,var=est$var)
     }
     out_iterates[1, ] <- v
-    out_loglike[1] <- comp_loglike(v,data)
+    out_loglike[1] <- loglike_ivols(v,data)
 
     # decide whether v0 or vd shall be extrapolated
     extrap_prim = (data$prop_prim==0 & extrapolate==0) | extrapolate==1 | extrapolate==3
@@ -632,7 +632,7 @@ estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
         }
         out_iterates[i+1, ] <- v
-        # out_loglike[i+1] <- comp_loglike(v,data)
+        # out_loglike[i+1] <- loglike_ivols(v,data)
     }
     return(list(iterates=out_iterates, loglike=out_loglike))
 }
@@ -712,7 +712,7 @@ estim_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         v <- v_init
     else {
         est <- conivol::estim_statdim_var(d, m_samp)
-        v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
+        v <- conivol::init_ivols(d,init_mode,delta=est$delta,var=est$var)
     }
     out_iterates[1, ] <- v
 
@@ -823,7 +823,7 @@ estim_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
         }
         out_iterates[i+1, ] <- v
-        out_loglike[i+1] <- comp_loglike(v,data)
+        out_loglike[i+1] <- loglike_ivols(v,data)
     }
     return(list(iterates=out_iterates, loglike=out_loglike))
 }

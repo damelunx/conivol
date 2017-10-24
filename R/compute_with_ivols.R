@@ -1,24 +1,24 @@
 #' Compute intrinsic volumes of product cone from intrinsic volumes of components
 #'
-#' \code{comp_ivols_product} computes the intrinsic volumes of a product cone
+#' \code{prod_ivols} computes the intrinsic volumes of a product cone
 #' from the intrinsic volumes of its components. That is, it returns the
 #' convolution of the vectors of intrinsic volumes given in \code{V}.
 #'
 #' @param V list of vectors of intrinsic volumes
 #'
-#' @return The output of \code{comp_ivols_product(V)} is the vector that is
+#' @return The output of \code{prod_ivols(V)} is the vector that is
 #'         obtained from convolving the components of \code{V}.
 #'
 #' @section See also:
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' comp_ivols_product(list( c(0.5,0.5), c(0.1,0.4,0.5) ))
-#' comp_ivols_product(list( c(0.5,0.5), c(0.5,0.5), c(0.5, 0.5) ))
+#' prod_ivols(list( c(0.5,0.5), c(0.1,0.4,0.5) ))
+#' prod_ivols(list( c(0.5,0.5), c(0.5,0.5), c(0.5, 0.5) ))
 #'
 #' @export
 #'
-comp_ivols_product <- function(V) {
+prod_ivols <- function(V) {
     lapply(V, conivol:::.test_vector)
     for (i in 2:length(V))
         V[[1]] <- convolve(V[[1]],rev(V[[i]]),type="o")

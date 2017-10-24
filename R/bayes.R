@@ -60,7 +60,7 @@
 #'
 #' # compute initial guess
 #' est <- estim_statdim_var(d, m_samp)
-#' v0 <- init_v(d,init_mode=1,delta=est$delta,var=est$var)
+#' v0 <- init_ivols(d,init_mode=1,delta=est$delta,var=est$var)
 #'
 #' # obtain input data for JAGS model; use v0 as prior
 #' in_jags <- estim_jags(samples, d, prior="informative", v_prior=v0)
@@ -376,7 +376,7 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
 #'
 #' # compute initial guess
 #' est <- estim_statdim_var(d, m_samp)
-#' v0 <- init_v(d,init_mode=1,delta=est$delta,var=est$var)
+#' v0 <- init_ivols(d,init_mode=1,delta=est$delta,var=est$var)
 #'
 #' # obtain input data for JAGS model; use v0 as prior
 #' in_jags <- estim_jags(samples, d, prior="informative", v_prior=v0)
@@ -448,33 +448,33 @@ estim_stan <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
             )
             model_string <- "
 data {
-    int <lower=1> d;                                         \\ ambient dimension
-    int <lower=0> N_0;                                       \\ number of samples in polar cone
-    int <lower=0> N_bulk;                                    \\ number of samples in neither cone
-    int <lower=0> N_d;                                       \\ number of samples in primal cone
-    vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
-    vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[d+1] v_nonz_prior ;                     \\ prior estimate of nonzero intrinsic volumes
-    real <lower=0> prior_weight ;                            \\ added weight for Dirichlet priors (0=noninformative, 1=informative)
+    int <lower=1> d;                                         // ambient dimension
+    int <lower=0> N_0;                                       // number of samples in polar cone
+    int <lower=0> N_bulk;                                    // number of samples in neither cone
+    int <lower=0> N_d;                                       // number of samples in primal cone
+    vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
+    vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
+    vector <lower=0>[d+1] v_nonz_prior ;                     // prior estimate of nonzero intrinsic volumes
+    real <lower=0> prior_weight ;                            // added weight for Dirichlet priors (0=noninformative, 1=informative)
 }
 transformed data {
-    int sample_multinom[3] ;                                 \\ collecting numbers of points in primal/polar cone
+    int sample_multinom[3] ;                                 // collecting numbers of points in primal/polar cone
     sample_mutinom[1] = N_0 ;
     sample_mutinom[2] = N_bulk ;
     sample_mutinom[3] = N_d ;
 
-    int d_0 ;                                                \\ dimension of even simplex
-    int d_1 ;                                                \\ dimension of odd simplex
+    int d_0 ;                                                // dimension of even simplex
+    int d_1 ;                                                // dimension of odd simplex
     d_0 =  ceil((d-1)/2) ;
     d_1 = floor((d-1)/2) ;
 
-    int I_0[d_0+1] ;                                         \\ set of even indices of nonzero entries
-    int I_1[d_1+1] ;                                         \\ set of odd indices of nonzero entries
-    I_0 = 2*(0:floor(d/2)) + 1                               \\ final +1 is because indices start at 1
-    I_1 = 1+2*(0:floor((d-1)/2)) + 1                         \\ final +1 is because indices start at 1
+    int I_0[d_0+1] ;                                         // set of even indices of nonzero entries
+    int I_1[d_1+1] ;                                         // set of odd indices of nonzero entries
+    I_0 = 2*(0:floor(d/2)) + 1                               // final +1 is because indices start at 1
+    I_1 = 1+2*(0:floor((d-1)/2)) + 1                         // final +1 is because indices start at 1
 
-    vector [d_0+1] alpha ;                                   \\ weight for even Dirichlet prior
-    vector [d_1+1] beta ;                                    \\ weight for odd Dirichlet prior
+    vector [d_0+1] alpha ;                                   // weight for even Dirichlet prior
+    vector [d_1+1] beta ;                                    // weight for odd Dirichlet prior
     alpha = v_nonz_prior[I_0] + prior_weight ;
     beta  = v_nonz_prior[I_1] + prior_weight ;
 
@@ -508,7 +508,7 @@ model {
 
     sample_multinom ~ multinomial(V_extreme)
 
-    \\ the following is the main part of the modelling where we marginalized the discrete latent variable K
+    // the following is the main part of the modelling where we marginalized the discrete latent variable K
     for (i in 1:N_bulk) {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
@@ -526,32 +526,32 @@ model {
             )
             model_string <- "
 data {
-    int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1> linC;                                       \\ lineality
-    int <lower=0> N_bulk;                                    \\ number of samples in neither cone
-    int <lower=0> N_d;                                       \\ number of samples in primal cone
-    vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
-    vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[d-linC+1] v_nonz_prior ;                 \\ prior estimate of nonzero intrinsic volumes
-    real <lower=0> prior_weight ;                            \\ added weight for Dirichlet priors (0=noninformative, 1=informative)
+    int <lower=1> d;                                         // ambient dimension
+    int <lower=1> linC;                                      // lineality
+    int <lower=0> N_bulk;                                    // number of samples in neither cone
+    int <lower=0> N_d;                                       // number of samples in primal cone
+    vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
+    vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
+    vector <lower=0>[d-linC+1] v_nonz_prior ;                // prior estimate of nonzero intrinsic volumes
+    real <lower=0> prior_weight ;                            // added weight for Dirichlet priors (0=noninformative, 1=informative)
 }
 transformed data {
-    int sample_multinom[2] ;                                 \\ collecting numbers of points in primal/polar cone
+    int sample_multinom[2] ;                                 // collecting numbers of points in primal/polar cone
     sample_mutinom[1] = N_bulk ;
     sample_mutinom[2] = N_d ;
 
-    int d_0 ;                                                \\ dimension of even simplex
-    int d_1 ;                                                \\ dimension of odd simplex
+    int d_0 ;                                                // dimension of even simplex
+    int d_1 ;                                                // dimension of odd simplex
     d_0 =  ceil((d-linC-1)/2) ;
     d_1 = floor((d-linC-1)/2) ;
 
-    int I_0[d_0+1] ;                                         \\ set of even indices of nonzero entries
-    int I_1[d_1+1] ;                                         \\ set of odd indices of nonzero entries
-    I_0 = 2*(0:floor((d-linC)/2)) + 1                         \\ final +1 is because indices start at 1
-    I_1 = 1+2*(0:floor((d-linC-1)/2)) + 1                     \\ final +1 is because indices start at 1
+    int I_0[d_0+1] ;                                         // set of even indices of nonzero entries
+    int I_1[d_1+1] ;                                         // set of odd indices of nonzero entries
+    I_0 = 2*(0:floor((d-linC)/2)) + 1                        // final +1 is because indices start at 1
+    I_1 = 1+2*(0:floor((d-linC-1)/2)) + 1                    // final +1 is because indices start at 1
 
-    vector [d_0+1] alpha ;                                   \\ weight for even Dirichlet prior
-    vector [d_1+1] beta ;                                    \\ weight for odd Dirichlet prior
+    vector [d_0+1] alpha ;                                   // weight for even Dirichlet prior
+    vector [d_1+1] beta ;                                    // weight for odd Dirichlet prior
     alpha = v_nonz_prior[I_0] + prior_weight ;
     beta  = v_nonz_prior[I_1] + prior_weight ;
 
@@ -585,7 +585,7 @@ model {
 
     sample_multinom ~ multinomial(V_extreme)
 
-    \\ the following is the main part of the modelling where we marginalized the discrete latent variable K
+    // the following is the main part of the modelling where we marginalized the discrete latent variable K
     for (i in 1:N_bulk) {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
@@ -603,32 +603,32 @@ model {
             )
             model_string <- "
 data {
-    int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1, upper=d-1> dimC;                            \\ dimension of linear span
-    int <lower=0> N_0;                                       \\ number of samples in polar cone
-    int <lower=0> N_bulk;                                    \\ number of samples in neither cone
-    vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
-    vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[dimC+1] v_nonz_prior ;                   \\ prior estimate of nonzero intrinsic volumes
-    real <lower=0> prior_weight ;                            \\ added weight for Dirichlet priors (0=noninformative, 1=informative)
+    int <lower=1> d;                                         // ambient dimension
+    int <lower=1, upper=d-1> dimC;                           // dimension of linear span
+    int <lower=0> N_0;                                       // number of samples in polar cone
+    int <lower=0> N_bulk;                                    // number of samples in neither cone
+    vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
+    vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
+    vector <lower=0>[dimC+1] v_nonz_prior ;                  // prior estimate of nonzero intrinsic volumes
+    real <lower=0> prior_weight ;                            // added weight for Dirichlet priors (0=noninformative, 1=informative)
 }
 transformed data {
-    int sample_multinom[2] ;                                 \\ collecting numbers of points in primal/polar cone
+    int sample_multinom[2] ;                                 // collecting numbers of points in primal/polar cone
     sample_mutinom[1] = N_0 ;
     sample_mutinom[2] = N_bulk ;
 
-    int d_0 ;                                                \\ dimension of even simplex
-    int d_1 ;                                                \\ dimension of odd simplex
+    int d_0 ;                                                // dimension of even simplex
+    int d_1 ;                                                // dimension of odd simplex
     d_0 =  ceil((dimC-1)/2) ;
     d_1 = floor((dimC-1)/2) ;
 
-    int I_0[d_0+1] ;                                         \\ set of even indices of nonzero entries
-    int I_1[d_1+1] ;                                         \\ set of odd indices of nonzero entries
-    I_0 = 2*(0:floor(dimC/2)) + 1                             \\ final +1 is because indices start at 1
-    I_1 = 1+2*(0:floor((dimC-1)/2)) + 1                       \\ final +1 is because indices start at 1
+    int I_0[d_0+1] ;                                         // set of even indices of nonzero entries
+    int I_1[d_1+1] ;                                         // set of odd indices of nonzero entries
+    I_0 = 2*(0:floor(dimC/2)) + 1                            // final +1 is because indices start at 1
+    I_1 = 1+2*(0:floor((dimC-1)/2)) + 1                      // final +1 is because indices start at 1
 
-    vector [d_0+1] alpha ;                                   \\ weight for even Dirichlet prior
-    vector [d_1+1] beta ;                                    \\ weight for odd Dirichlet prior
+    vector [d_0+1] alpha ;                                   // weight for even Dirichlet prior
+    vector [d_1+1] beta ;                                    // weight for odd Dirichlet prior
     alpha = v_nonz_prior[I_0] + prior_weight ;
     beta  = v_nonz_prior[I_1] + prior_weight ;
 
@@ -662,7 +662,7 @@ model {
 
     sample_multinom ~ multinomial(V_extreme)
 
-    \\ the following is the main part of the modelling where we marginalized the discrete latent variable K
+    // the following is the main part of the modelling where we marginalized the discrete latent variable K
     for (i in 1:N_bulk) {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
@@ -680,28 +680,28 @@ model {
             )
             model_string <- "
 data {
-    int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1, upper=d-1> dimC;                            \\ dimension of linear span
-    int <lower=1, upper=dimC-1> linC;                          \\ lineality
-    int <lower=0> N;                                         \\ number of samples
-    vector <lower=0>[N] X;                                   \\ squared length of projection on primal
-    vector <lower=0>[N] Y;                                   \\ squared length of projection on polar
-    vector <lower=0>[dimC-linC+1] v_nonz_prior ;               \\ prior estimate of nonzero intrinsic volumes
-    real <lower=0> prior_weight ;                            \\ added weight for Dirichlet priors (0=noninformative, 1=informative)
+    int <lower=1> d;                                         // ambient dimension
+    int <lower=1, upper=d-1> dimC;                           // dimension of linear span
+    int <lower=1, upper=dimC-1> linC;                        // lineality
+    int <lower=0> N;                                         // number of samples
+    vector <lower=0>[N] X;                                   // squared length of projection on primal
+    vector <lower=0>[N] Y;                                   // squared length of projection on polar
+    vector <lower=0>[dimC-linC+1] v_nonz_prior ;             // prior estimate of nonzero intrinsic volumes
+    real <lower=0> prior_weight ;                            // added weight for Dirichlet priors (0=noninformative, 1=informative)
 }
 transformed data {
-    int d_0 ;                                                \\ dimension of even simplex
-    int d_1 ;                                                \\ dimension of odd simplex
+    int d_0 ;                                                // dimension of even simplex
+    int d_1 ;                                                // dimension of odd simplex
     d_0 =  ceil((dimC-linC-1)/2) ;
     d_1 = floor((dimC-linC-1)/2) ;
 
-    int I_0[d_0+1] ;                                         \\ set of even indices of nonzero entries
-    int I_1[d_1+1] ;                                         \\ set of odd indices of nonzero entries
-    I_0 = 2*(0:floor((dimC-linC)/2)) + 1                       \\ final +1 is because indices start at 1
-    I_1 = 1+2*(0:floor((dimC-linC-1)/2)) + 1                   \\ final +1 is because indices start at 1
+    int I_0[d_0+1] ;                                         // set of even indices of nonzero entries
+    int I_1[d_1+1] ;                                         // set of odd indices of nonzero entries
+    I_0 = 2*(0:floor((dimC-linC)/2)) + 1                     // final +1 is because indices start at 1
+    I_1 = 1+2*(0:floor((dimC-linC-1)/2)) + 1                 // final +1 is because indices start at 1
 
-    vector [d_0+1] alpha ;                                   \\ weight for even Dirichlet prior
-    vector [d_1+1] beta ;                                    \\ weight for odd Dirichlet prior
+    vector [d_0+1] alpha ;                                   // weight for even Dirichlet prior
+    vector [d_1+1] beta ;                                    // weight for odd Dirichlet prior
     alpha = v_nonz_prior[I_0] + prior_weight ;
     beta  = v_nonz_prior[I_1] + prior_weight ;
 
@@ -730,7 +730,7 @@ model {
     V_0 ~ dirichlet(alpha)
     V_1 ~ dirichlet(beta)
 
-    \\ the following is the main part of the modelling where we marginalized the discrete latent variable K
+    // the following is the main part of the modelling where we marginalized the discrete latent variable K
     for (i in 1:N) {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
@@ -759,18 +759,18 @@ model {
             )
             model_string <- "
 data {
-    int <lower=1> d;                                         \\ ambient dimension
-    int <lower=0> N_0;                                       \\ number of samples in polar cone
-    int <lower=0> N_bulk;                                    \\ number of samples in neither cone
-    int <lower=0> N_d;                                       \\ number of samples in primal cone
-    vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
-    vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[d+1] v_nonz_prior ;                     \\ prior estimate of nonzero intrinsic volumes
-    vector <lower=0>[d+1] alpha ;                            \\ prior values for hyperparameters alpha
-    vector <lower=0>[d+1] beta ;                             \\ prior values for hyperparameters beta
+    int <lower=1> d;                                         // ambient dimension
+    int <lower=0> N_0;                                       // number of samples in polar cone
+    int <lower=0> N_bulk;                                    // number of samples in neither cone
+    int <lower=0> N_d;                                       // number of samples in primal cone
+    vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
+    vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
+    vector <lower=0>[d+1] v_nonz_prior ;                     // prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[d+1] alpha ;                            // prior values for hyperparameters alpha
+    vector <lower=0>[d+1] beta ;                             // prior values for hyperparameters beta
 }
 transformed data {
-    int sample_multinom[3] ;                                 \\ collecting numbers of points in primal/polar cone
+    int sample_multinom[3] ;                                 // collecting numbers of points in primal/polar cone
     sample_mutinom[1] = N_0 ;
     sample_mutinom[2] = N_bulk ;
     sample_mutinom[3] = N_d ;
@@ -782,7 +782,7 @@ transformed data {
         }
     }
 
-    matrix[d+1,d+1] T ;                                      \\ transformation matrix for u ~> t
+    matrix[d+1,d+1] T ;                                      // transformation matrix for u ~> t
     for (i in 1:(d-1)) {
         T[i,i] = 1 ;
         T[i,i+1] = -2 ;
@@ -827,7 +827,7 @@ model {
 
     sample_multinom ~ multinomial(V_extreme)
 
-    \\ the following is the main part of the modelling where we marginalized the discrete latent variable K
+    // the following is the main part of the modelling where we marginalized the discrete latent variable K
     for (i in 1:N_bulk) {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
@@ -846,18 +846,18 @@ model {
             )
             model_string <- "
 data {
-    int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1> linC;                                       \\ lineality
-    int <lower=0> N_bulk;                                    \\ number of samples in neither cone
-    int <lower=0> N_d;                                       \\ number of samples in primal cone
-    vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
-    vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[d-linC+1] v_nonz_prior ;                 \\ prior estimate of nonzero intrinsic volumes
-    vector <lower=0>[d-linC+1] alpha ;                        \\ prior values for hyperparameters alpha
-    vector <lower=0>[d-linC+1] beta ;                         \\ prior values for hyperparameters beta
+    int <lower=1> d;                                         // ambient dimension
+    int <lower=1> linC;                                      // lineality
+    int <lower=0> N_bulk;                                    // number of samples in neither cone
+    int <lower=0> N_d;                                       // number of samples in primal cone
+    vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
+    vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
+    vector <lower=0>[d-linC+1] v_nonz_prior ;                // prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[d-linC+1] alpha ;                       // prior values for hyperparameters alpha
+    vector <lower=0>[d-linC+1] beta ;                        // prior values for hyperparameters beta
 }
 transformed data {
-    int sample_multinom[2] ;                                 \\ collecting numbers of points in primal/polar cone
+    int sample_multinom[2] ;                                 // collecting numbers of points in primal/polar cone
     sample_mutinom[1] = N_bulk ;
     sample_mutinom[2] = N_d ;
 
@@ -868,7 +868,7 @@ transformed data {
         }
     }
 
-    matrix[d-linC+1,d-linC+1] T ;                              \\ transformation matrix for u ~> t
+    matrix[d-linC+1,d-linC+1] T ;                            // transformation matrix for u ~> t
     for (i in 1:(d-linC-1)) {
         T[i,i] = 1 ;
         T[i,i+1] = -2 ;
@@ -913,7 +913,7 @@ model {
 
     sample_multinom ~ multinomial(V_extreme)
 
-    \\ the following is the main part of the modelling where we marginalized the discrete latent variable K
+    // the following is the main part of the modelling where we marginalized the discrete latent variable K
     for (i in 1:N_bulk) {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
@@ -932,18 +932,18 @@ model {
             )
             model_string <- "
 data {
-    int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1, upper=d-1> dimC;                            \\ dimension of linear span
-    int <lower=0> N_0;                                       \\ number of samples in polar cone
-    int <lower=0> N_bulk;                                    \\ number of samples in neither cone
-    vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
-    vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[dimC+1] v_nonz_prior ;                   \\ prior estimate of nonzero intrinsic volumes
-    vector <lower=0>[dimC+1] alpha ;                          \\ prior values for hyperparameters alpha
-    vector <lower=0>[dimC+1] beta ;                           \\ prior values for hyperparameters beta
+    int <lower=1> d;                                         // ambient dimension
+    int <lower=1, upper=d-1> dimC;                           // dimension of linear span
+    int <lower=0> N_0;                                       // number of samples in polar cone
+    int <lower=0> N_bulk;                                    // number of samples in neither cone
+    vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
+    vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
+    vector <lower=0>[dimC+1] v_nonz_prior ;                  // prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[dimC+1] alpha ;                         // prior values for hyperparameters alpha
+    vector <lower=0>[dimC+1] beta ;                          // prior values for hyperparameters beta
 }
 transformed data {
-    int sample_multinom[2] ;                                 \\ collecting numbers of points in primal/polar cone
+    int sample_multinom[2] ;                                 // collecting numbers of points in primal/polar cone
     sample_mutinom[1] = N_0 ;
     sample_mutinom[2] = N_bulk ;
 
@@ -954,7 +954,7 @@ transformed data {
         }
     }
 
-    matrix[dimC+1,dimC+1] T ;                              \\ transformation matrix for u ~> t
+    matrix[dimC+1,dimC+1] T ;                                // transformation matrix for u ~> t
     for (i in 1:(dimC-1)) {
         T[i,i] = 1 ;
         T[i,i+1] = -2 ;
@@ -999,7 +999,7 @@ model {
 
     sample_multinom ~ multinomial(V_extreme)
 
-    \\ the following is the main part of the modelling where we marginalized the discrete latent variable K
+    // the following is the main part of the modelling where we marginalized the discrete latent variable K
     for (i in 1:N_bulk) {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
@@ -1018,15 +1018,15 @@ model {
             )
             model_string <- "
 data {
-    int <lower=1> d;                                         \\ ambient dimension
-    int <lower=1, upper=d-1> dimC;                            \\ dimension of linear span
-    int <lower=1, upper=dimC-1> linC;                          \\ lineality
-    int <lower=0> N;                                         \\ number of samples
-    vector <lower=0>[N_bulk] X;                              \\ squared length of projection on primal
-    vector <lower=0>[N_bulk] Y;                              \\ squared length of projection on polar
-    vector <lower=0>[dimC-linC+1] v_nonz_prior ;               \\ prior estimate of nonzero intrinsic volumes
-    vector <lower=0>[dimC-linC+1] alpha ;                      \\ prior values for hyperparameters alpha
-    vector <lower=0>[dimC-linC+1] beta ;                       \\ prior values for hyperparameters beta
+    int <lower=1> d;                                         // ambient dimension
+    int <lower=1, upper=d-1> dimC;                           // dimension of linear span
+    int <lower=1, upper=dimC-1> linC;                        // lineality
+    int <lower=0> N;                                         // number of samples
+    vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
+    vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
+    vector <lower=0>[dimC-linC+1] v_nonz_prior ;             // prior estimate of nonzero intrinsic volumes
+    vector <lower=0>[dimC-linC+1] alpha ;                    // prior values for hyperparameters alpha
+    vector <lower=0>[dimC-linC+1] beta ;                     // prior values for hyperparameters beta
 }
 transformed data {
     row_vector[dimC-linC+1] log_dens_XY[N] ;
@@ -1036,7 +1036,7 @@ transformed data {
         }
     }
 
-    matrix[dimC-linC+1,dimC-linC+1] T ;                          \\ transformation matrix for u ~> t
+    matrix[dimC-linC+1,dimC-linC+1] T ;                      // transformation matrix for u ~> t
     for (i in 1:(dimC-linC-1)) {
         T[i,i] = 1 ;
         T[i,i+1] = -2 ;
@@ -1076,7 +1076,7 @@ model {
         t[k-linC+1] ~ gamma(alpha[k+1], beta[k+1])
     }
 
-    \\ the following is the main part of the modelling where we marginalized the discrete latent variable K
+    // the following is the main part of the modelling where we marginalized the discrete latent variable K
     for (i in 1:N) {
         target += log_sum_exp( logV_bulk + log_dens_XY[i] ) ;
     }
