@@ -57,7 +57,7 @@ circ_ivols <- function(d, alpha, product = FALSE) {
     if (length(d)==1)
         return(V[[1]])
     else if (product)
-        return(conivol::comp_ivols_product(V))
+        return(conivol::prod_ivols(V))
     else return(V)
 }
 
@@ -387,6 +387,6 @@ weyl_ivols <- function(d, cone_type, product = FALSE) {
     if (length(d)==1)
         return(V[[1]])
     else if (product)
-        return(conivol::comp_ivols_product(V))
+        return(conivol::prod_ivols(V))
     else return(V)
 }

@@ -60,7 +60,7 @@
 #'
 #' # compute initial guess
 #' est <- estim_statdim_var(d, m_samp)
-#' v0 <- init_v(d,init_mode=1,delta=est$delta,var=est$var)
+#' v0 <- init_ivols(d,init_mode=1,delta=est$delta,var=est$var)
 #'
 #' # obtain input data for JAGS model; use v0 as prior
 #' in_jags <- estim_jags(samples, d, prior="informative", v_prior=v0)
@@ -376,7 +376,7 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
 #'
 #' # compute initial guess
 #' est <- estim_statdim_var(d, m_samp)
-#' v0 <- init_v(d,init_mode=1,delta=est$delta,var=est$var)
+#' v0 <- init_ivols(d,init_mode=1,delta=est$delta,var=est$var)
 #'
 #' # obtain input data for JAGS model; use v0 as prior
 #' in_jags <- estim_jags(samples, d, prior="informative", v_prior=v0)

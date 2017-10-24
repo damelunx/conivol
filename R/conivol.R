@@ -21,7 +21,7 @@
 #'
 #' @section Special classes of cones:
 #' \itemize{
-#'   \item \code{\link[conivol]{comp_ivols_product}}: computes the intrinsic volumes of a product cone
+#'   \item \code{\link[conivol]{prod_ivols}}: computes the intrinsic volumes of a product cone
 #'                                    by convolving the intrinsic volumes of
 #'                                    its elements
 #'   \item \code{\link[conivol]{circ_ivols}}: computes the intrinsic volumes of (a product of)
@@ -63,9 +63,9 @@
 #'   \item \code{\link[conivol]{estim_statdim_var}}: estimates the statistical dimension and
 #'                      the variance of the intrinsic volumes from samples of the
 #'                      corresponding bivariate chi-bar-squared distribution
-#'   \item \code{\link[conivol]{init_v}}: find an initial estimate of the weights, potentially
+#'   \item \code{\link[conivol]{init_ivols}}: find an initial estimate of the weights, potentially
 #'                      based on first and/or second moment
-#'   \item \code{\link[conivol]{comp_loglike}}: compute the log-likelihood of a weight vector
+#'   \item \code{\link[conivol]{loglike_ivols}}: compute the log-likelihood of a weight vector
 #'                      for specific sample data
 #'   \item \code{\link[conivol]{prepare_em}}: evaluates the sample data of the bivariate chi-bar-squared
 #'                      data (find the corresponding chi-squared density values)

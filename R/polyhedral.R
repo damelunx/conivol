@@ -590,23 +590,36 @@ polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
+#' # set parameters of cones
 #' D <- c(5,7)
 #' cone_types <- c("BC","BCp")
+#' d <- sum(D)
 #'
+#' # collect matrix representation and true intrinsic volumes
 #' v <- weyl_ivols(D, cone_types, product = TRUE)
 #' A <- weyl_matrix(D, cone_types, product = TRUE)
 #' true_data <- list( ivols=v, A=A )
 #' print(true_data)
 #'
-#' n <- 10^5
+#' # collect sample data from intrinsic volumes distribution
+#' n <- 10^4
 #' out <- polyh_rivols_ineq(n,A)
 #' str(out)
 #'
+#' # evaluate posterior distribution
 #' bayes_est <- polyh_bayes( out$samples, out$dim, out$lin )
 #' str(bayes_est)
 #'
-#' bayes_est$post_marg_quant(0:sum(D),0.5) / v
-#' sum( (bayes_est$post_marg_quant(0:sum(D),0.5)-v)^2 )
+#' # compare posterior median with true values
+#' v_est_med <- bayes_est$post_marg_quant(0:sum(D),0.5)
+#' v_est_med / v
+#' sum( (v_est_med-v)^2 )
+#'
+#' # display boxplot of posterior distribution, overlayed with true values
+#' data <- as.data.frame( bayes_est$post_samp(1e4) )
+#' colnames(data) <- paste0(rep("V",d+1),as.character(0:d))
+#' boxplot( value~key, tidyr::gather( data, factor_key=TRUE ) )
+#' lines(1+0:d, v, col="red")
 #'
 #' @export
 #'
