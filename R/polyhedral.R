@@ -384,6 +384,8 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'
 #' @param n number of samples
 #' @param A matrix
+#' @param multinom logical; if \code{TRUE}, the categorical samples will be converted
+#'                 into one sample from the corresponding multinomial distribution
 #' @param solver either "nnls" or "mosek"
 #' @param reduce logical; if \code{TRUE}, the cone defined by \code{A} will be
 #'               decomposed orthogonally w.r.t. its lineality space
@@ -402,9 +404,14 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'                    the orthogonal complement of the lineality space of \code{C},
 #'                    set to \code{NA} if \code{C} is a linear space,
 #'   \item \code{A_reduced}: a matrix defining the reduced cone,
-#'   \item \code{samples}: an \code{n}-element vector whose elements form
+#'   \item \code{samples}: either an \code{n}-element vector of integers in \code{0,...,dimC},
+#'         if \code{multinom==FALSE}, or a \code{(dimC+1)}-element vector of integers
+#'         in \code{0,...,n} that sum up to \code{n}, if \code{multinom==TRUE};
+#'         the \code{n}-element vector represents
 #'         iid samples from the distribution on \code{{0,1,...,d}} with the
-#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={Ax|x>=0}}.
+#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={Ax|x>=0}};
+#'         the \code{(dimC+1)}-element vector represents the corresponding sample
+#'         of the multinomial distribution.
 #' }
 #'         If \code{reduce==FALSE} then the output is only the above vector of samples.
 #'
@@ -424,9 +431,12 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #' set.seed(1234)
 #' out$linC + polyh_rivols_gen(20, out$A_reduced, solver="mosek", reduce=FALSE)
 #'
+#' set.seed(1234)
+#' polyh_rivols_gen(20, matrix(1:12,4,3), multinom=TRUE, reduce=TRUE)$samples
+#'
 #' @export
 #'
-polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
+polyh_rivols_gen <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, tol=1e-7) {
     if (solver=="nnls") {
         if (!requireNamespace("nnls", quietly = TRUE))
             stop("\n Could not find package 'nnls'.")
@@ -473,10 +483,31 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
         }
     }
 
-    if (!reduce)
-        return(out)
-    else
-        return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A, samples=out+linC) )
+    if (!reduce) {
+        if (!multinom)
+            return(out)
+        else {
+            tab <- table(out)
+            dnames <- as.integer( dimnames(tab)[[1]] )
+            multsamp <- rep(0,d+1)
+            for (k in 0:d)
+                if (length(which( dnames==k ))>0)
+                    multsamp[k+1] <- tab[which( dnames==k )]
+            return(multsamp)
+        }
+    } else {
+        if (!multinom)
+            return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A, samples=out+linC) )
+        else {
+            tab <- table(out+linC)
+            dnames <- as.integer( dimnames(tab)[[1]] )
+            multsamp <- rep(0,d+linC+1)
+            for (k in 0:d+linC)
+                if (length(which( dnames==k ))>0)
+                    multsamp[k+1] <- tab[which( dnames==k )]
+            return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A, samples=multsamp) )
+        }
+    }
 }
 
 
@@ -493,6 +524,8 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'
 #' @param n number of samples
 #' @param A matrix
+#' @param multinom logical; if \code{TRUE}, the categorical samples will be converted
+#'                 into one sample from the corresponding multinomial distribution
 #' @param solver either "nnls" or "mosek"
 #' @param reduce logical; if \code{TRUE}, the cone defined by \code{A} will be
 #'               decomposed orthogonally w.r.t. its lineality space
@@ -511,9 +544,14 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'                    the orthogonal complement of the lineality space of \code{C},
 #'                    set to \code{NA} if \code{C} is a linear space,
 #'   \item \code{A_reduced}: a matrix defining the reduced cone,
-#'   \item \code{samples}: an \code{n}-element vector whose elements form
+#'   \item \code{samples}: either an \code{n}-element vector of integers in \code{0,...,dimC},
+#'         if \code{multinom==FALSE}, or a \code{(dimC+1)}-element vector of integers
+#'         in \code{0,...,n} that sum up to \code{n}, if \code{multinom==TRUE};
+#'         the \code{n}-element vector represents
 #'         iid samples from the distribution on \code{{0,1,...,d}} with the
-#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={y|A^Ty<=0}}.
+#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={y|A^Ty<=0}};
+#'         the \code{(dimC+1)}-element vector represents the corresponding sample
+#'         of the multinomial distribution.
 #' }
 #'         If \code{reduce==FALSE} then the output is only the above vector of samples.
 #'
@@ -533,21 +571,31 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #' set.seed(1234)
 #' out$linC + polyh_rivols_ineq(20, out$A_reduced, solver="mosek", reduce=FALSE)
 #'
+#' set.seed(1234)
+#' polyh_rivols_ineq(20, matrix(1:12,4,3), multinom=TRUE, reduce=TRUE)$samples
+#'
 #' @export
 #'
-polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
+polyh_rivols_ineq <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, tol=1e-7) {
     d <- dim(A)[1]
     if (reduce) {
-        out <- polyh_rivols_gen(n, A, solver=solver, reduce=TRUE, tol=tol)
+        out <- polyh_rivols_gen(n, A, multinom=multinom, solver=solver, reduce=TRUE, tol=tol)
         dimCpol <- out$dimC
         linCpol <- out$linC
 
         out$dimC <- d-linCpol
         out$linC <- d-dimCpol
-        out$samples <- d-out$samples
+        if (!multinom)
+            out$samples <- d-out$samples
+        else
+            out$samples <- c(rep(0,out$linC),rev(out$samples))
         return(out)
-    } else
-        return( d-polyh_rivols_gen(n, A, solver=solver, reduce=FALSE, tol=tol) )
+    } else {
+        if (!multinom)
+            return( d-polyh_rivols_gen(n, A, FALSE, solver=solver, reduce=FALSE, tol=tol) )
+        else
+            return( rev(polyh_rivols_gen(n, A, TRUE, solver=solver, reduce=FALSE, tol=tol)) )
+    }
 }
 
 
@@ -773,7 +821,8 @@ polyh_stan <- function(samples, dimC, linC, prior="noninformative", v_prior=NA, 
 data {
     int <lower=1> dimC;                                      // dimension of linear span
     int <lower=0, upper=dimC-1> linC;                        // lineality
-    int <lower=0> samples[];                                 // sample of multinomial distribution (even and odd)
+    int <lower=0> n;                                         // number of samples
+    int <lower=0> samples[n];                                // sample of multinomial distribution (even and odd)
     vector <lower=0>[dimC-linC+1] alpha ;                    // prior values for hyperparameters alpha
     vector <lower=0>[dimC-linC+1] beta ;                     // prior values for hyperparameters beta
 }
