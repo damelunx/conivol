@@ -9,19 +9,19 @@
 #'               chi-bar-squared distribution.
 #'
 #' @return The output of \code{prepare_em} is a list of four elements:
-#'         \describe{
-#'           \item{\code{n}:}{the number of overall sample points
-#'                            (including those in primal or polar cone)}
-#'           \item{\code{prop_prim}:}{proportion of points in primal cone}
-#'           \item{\code{prop_pol}:}{proportion of points}
-#'           \item{\code{dens}:}{the density values of the effective sample points
+#'         \itemize{
+#'           \item \code{n}: the number of overall sample points
+#'                            (including those in primal or polar cone)
+#'           \item \code{prop_prim}: proportion of points in primal cone
+#'           \item \code{prop_pol}: proportion of points
+#'           \item \code{dens}: the density values of the effective sample points
 #'                               (neither in primal nor polar cone); that is,
 #'                               \code{dens} is a \code{(d-1)} row matrix
 #'                               such that the \code{k}th row contains the products
 #'                               of the density values of the chi_k^2 and chi_(d-k)^2
 #'                               distributions evaluated in the effective sample points;
 #'                               the row-form of the matrix is more convenient for
-#'                               the computations}
+#'                               the computations
 #'         }
 #'
 #' @section See also:
@@ -31,8 +31,13 @@
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' prepare_em( 10, m_samp )
+#' D <- c(5,5)
+#' alpha <- c(pi/3,pi/4)
+#' d <- sum(D)
+#' N <- 10^5
+#' v_exact <- circ_ivols( D, alpha, product=TRUE )
+#' m_samp <- rbichibarsq(N,v_exact)
+#' prepare_em( d, m_samp )
 #'
 #' @export
 #'
@@ -84,22 +89,23 @@ prepare_em <- function(d, m_samp) {
 #' v_exact <- circ_ivols( D, alpha, product=TRUE )
 #'
 #' # collect sample data
-#' m_samp <- circ_rbichibarsq(N,D,alpha)
+#' m_samp <- rbichibarsq(N,v_exact)
 #' data <- prepare_em(d, m_samp)
 #' est <- estim_statdim_var(d, m_samp)
-#' v1 <- init_ivols( d )
-#' v2 <- init_ivols( d, 1, delta=est$delta, var=est$var )
-#' v3 <- init_ivols( d, 2, delta=est$delta )
-#' v4 <- init_ivols( d, 3, var=est$var )
-#' v5 <- init_ivols( d, 4, delta=est$delta, var=est$var )
+#' v_estim <- list(
+#'     init0 = init_ivols( d ) ,
+#'     init1 = init_ivols( d, 1, delta=est$delta, var=est$var ) ,
+#'     init2 = init_ivols( d, 2, delta=est$delta ) ,
+#'     init3 = init_ivols( d, 3, var=est$var ) ,
+#'     init4 = init_ivols( d, 4, delta=est$delta, var=est$var ) )
 #'
 #' # evaluate log-likelihood function
 #' loglike_ivols(v_exact, data)
-#' loglike_ivols(v1, data)
-#' loglike_ivols(v2, data)
-#' loglike_ivols(v3, data)
-#' loglike_ivols(v4, data)
-#' loglike_ivols(v5, data)
+#' loglike_ivols(v_estim$init0, data)
+#' loglike_ivols(v_estim$init1, data)
+#' loglike_ivols(v_estim$init2, data)
+#' loglike_ivols(v_estim$init3, data)
+#' loglike_ivols(v_estim$init4, data)
 #'
 #' @export
 #'
@@ -131,12 +137,12 @@ loglike_ivols <- function(v, data, mode=0){
 #'
 #' @param d the dimension of the bivariate chi-bar squared distribution.
 #' @param init_mode specifies the way through which the initial estimate is found:
-#'             \describe{
-#'               \item{\code{init_mode==0}:}{uniform distribution}
-#'               \item{\code{init_mode==1}:}{discretized normal distribution}
-#'               \item{\code{init_mode==2}:}{circular cone fitting statdim}
-#'               \item{\code{init_mode==3}:}{circular cone fitting variance}
-#'               \item{\code{init_mode==4}:}{circular cone fitting statdim and variance (geometric mean)}
+#'             \itemize{
+#'               \item \code{init_mode==0}: uniform distribution
+#'               \item \code{init_mode==1}: discretized normal distribution
+#'               \item \code{init_mode==2}: circular cone fitting statdim
+#'               \item \code{init_mode==3}: circular cone fitting variance
+#'               \item \code{init_mode==4}: circular cone fitting statdim and variance (geometric mean)
 #'             }
 #' @param delta an estimate of the statistical dimension of the cone.
 #' @param var an estimate of the variane of the intrinsic volumes.
@@ -150,16 +156,19 @@ loglike_ivols <- function(v, data, mode=0){
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
+#' D <- c(5,5)
+#' d <- sum(D)
+#' alpha <- c(pi/3,pi/4)
+#' v_exact <- circ_ivols(D, alpha, product=TRUE)
+#' m_samp <- rbichibarsq(10^6,v)
 #' est <- estim_statdim_var(d, m_samp)
-#' init_ivols( 10 )
-#' init_ivols( 10, 1, delta=est$delta, var=est$var )
-#' init_ivols( 10, 2, delta=est$delta )
-#' init_ivols( 10, 3, delta=est$delta, var=est$var )
-#' init_ivols( 10, 4, delta=est$delta, var=est$var )
 #'
-# creating the starting point for the EM algorithm
-#
+#' list( v_exact = v_exact , v_init0 = init_ivols( d ) ,
+#'       v_init1 = init_ivols( d, 1, delta=est$delta, var=est$var ) ,
+#'       v_init2 = init_ivols( d, 2, delta=est$delta ) ,
+#'       v_init3 = init_ivols( d, 3, delta=est$delta, var=est$var ) ,
+#'       v_init4 = init_ivols( d, 4, delta=est$delta, var=est$var ) )
+#'
 #' @export
 #'
 init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
@@ -310,12 +319,12 @@ init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @param v_init the starting point for the EM iterates; if none are provided,
 #'                the starting point is found in a way specified by the input \code{init_mode}.
 #' @param init_mode specifies the way through which the initial estimate is found:
-#'             \describe{
-#'               \item{\code{init_mode==0}:}{uniform distribution}
-#'               \item{\code{init_mode==1}:}{discretized normal distribution}
-#'               \item{\code{init_mode==2}:}{circular cone fitting statdim}
-#'               \item{\code{init_mode==3}:}{circular cone fitting variance}
-#'               \item{\code{init_mode==4}:}{circular cone fitting statdim and variance (geometric mean)}
+#'             \itemize{
+#'               \item \code{init_mode==0}: uniform distribution
+#'               \item \code{init_mode==1}: discretized normal distribution
+#'               \item \code{init_mode==2}: circular cone fitting statdim
+#'               \item \code{init_mode==3}: circular cone fitting variance
+#'               \item \code{init_mode==4}: circular cone fitting statdim and variance (geometric mean)
 #'             }
 #'             The starting point will be returned as the first row in the
 #'             output matrix.
@@ -325,13 +334,13 @@ init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @param no_of_lcc_projections number of projections on the log-concavity cone
 #' @param lcc_amount constant for strict log-concavity
 #' @param extrapolate specifies the way the edge cases are handled:
-#'             \describe{
-#'               \item{\code{extrapolate==0}:}{extrapolate \code{v_d} if no \code{x in C} and
-#'                                      extrapolate \code{v_0} if no \code{x in C°}}
-#'               \item{\code{extrapolate==1}:}{extrapolate \code{v_d}, do not extrapolate \code{v_0}}
-#'               \item{\code{extrapolate==2}:}{extrapolate \code{v_0}, do not extrapolate \code{v_d}}
-#'               \item{\code{extrapolate==3}:}{extrapolate \code{v_0} and \code{v_d}}
-#'               \item{\code{extrapolate<0}:}{neither extrapolate \code{v_0} nor \code{v_d}}
+#'             \itemize{
+#'               \item \code{extrapolate==0}: extrapolate \code{v_d} if no \code{x in C} and
+#'                                      extrapolate \code{v_0} if no \code{x in C°}
+#'               \item \code{extrapolate==1}: extrapolate \code{v_d}, do not extrapolate \code{v_0}
+#'               \item \code{extrapolate==2}: extrapolate \code{v_0}, do not extrapolate \code{v_d}
+#'               \item \code{extrapolate==3}: extrapolate \code{v_0} and \code{v_d}
+#'               \item \code{extrapolate<0}: neither extrapolate \code{v_0} nor \code{v_d}
 #'             }
 #' @param selfdual logical; if \code{TRUE}, the symmetry equations \code{v[k+1]==v[d-k+1]},
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
@@ -354,9 +363,34 @@ init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' estim_em( 10, m_samp )
-#' estim_em( 10, m_samp, init_mode=1 )
+#' # define cone and find sample data
+#' D <- c(5,5)
+#' alpha <- c(pi/3,pi/4)
+#' d <- sum(D)
+#' N <- 10^5
+#' v_exact <- circ_ivols( D, alpha, product=TRUE )
+#' m_samp <- rbichibarsq(N,v_exact)
+#'
+#' # prepare data and run EM algorithm twice with different inits
+#' data <- prepare_em( d, m_samp )
+#' est1 <- estim_em( d, m_samp, data=data )
+#' est2 <- estim_em( d, m_samp, init_mode=1, data=data )
+#'
+#' # plot the iterates of the first EM run
+#' plot(1+0:d, v_exact)
+#' lines(1+0:d, v_exact, col="red")
+#' lines(1+0:d, est1$iterates[1,])
+#' lines(1+0:d, est1$iterates[5,])
+#' lines(1+0:d, est1$iterates[10,])
+#' lines(1+0:d, est1$iterates[21,])
+#'
+#' # plot the iterates of the second EM run
+#' plot(1+0:d, v_exact)
+#' lines(1+0:d, v_exact, col="red")
+#' lines(1+0:d, est2$iterates[1,])
+#' lines(1+0:d, est2$iterates[5,])
+#' lines(1+0:d, est2$iterates[10,])
+#' lines(1+0:d, est2$iterates[21,])
 #'
 #' @export
 #'

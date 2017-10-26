@@ -43,27 +43,26 @@
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#'
 #' library(rjags)
 #' options(mc.cores = parallel::detectCores())
 #'
 #' # defining the example cone
 #' D <- c(5,8)
 #' alpha <- c( asin(sqrt(0.9)) , asin(sqrt(0.8)))
-#' v <- circ_ivols(D, alpha, product = TRUE)
+#' v_exact <- circ_ivols(D, alpha, product = TRUE)
 #' d <- sum(D)
 #'
 #' # getting the sample data
 #' N <- 10^3
 #' set.seed(1234)
-#' samples <- circ_rbichibarsq(N,D,alpha)
+#' m_samp <- circ_rbichibarsq(N,D,alpha)
 #'
 #' # compute initial guess
 #' est <- estim_statdim_var(d, m_samp)
 #' v0 <- init_ivols(d,init_mode=1,delta=est$delta,var=est$var)
 #'
 #' # obtain input data for JAGS model; use v0 as prior
-#' in_jags <- estim_jags(samples, d, prior="informative", v_prior=v0)
+#' in_jags <- estim_jags(m_samp, d, prior="informative", v_prior=v0)
 #'
 #' # create JAGS model
 #' model_connection <- textConnection(in_jags$model)
@@ -75,22 +74,23 @@
 #' update(mod, 1e3)
 #'
 #' # simulate posterior distribution and display trace plots and summaries
-#' mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)\
+#' mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
 #' plot(mod_sim, ask=TRUE)
 #' mod_csim <- as.mcmc(do.call(rbind, mod_sim))
 #' tmp <- summary(mod_csim)
+#' tmp
 #'
 #' # plot true values, the estimate v0, and marginals of the posterior samples
 #' library(tidyverse)
 #' ggplot(data=tibble(x=0:d,
-#'                    y_true=v,
+#'                    y_true=v_exact,
 #'                    y_est=v0,
 #'                    y_bayes_mean=tmp$statistics[ ,'Mean'],
 #'                    y_bayes_quant25=tmp$quantiles[ ,'25%'],
 #'                    y_bayes_quant50=tmp$quantiles[ ,'50%'],
 #'                    y_bayes_quant75=tmp$quantiles[ ,'75%'])) +
-#'      geom_line(aes(x=x, y=y_true)) +
-#'      geom_line(aes(x=x, y=y_est), color="red") +
+#'      geom_line(aes(x=x, y=y_true), color="red") +
+#'      geom_line(aes(x=x, y=y_est), color="black") +
 #'      geom_line(aes(x=x, y=y_bayes_mean), color="blue") +
 #'      geom_line(aes(x=x, y=y_bayes_quant25), color="green") +
 #'      geom_line(aes(x=x, y=y_bayes_quant50), color="green") +
@@ -110,7 +110,7 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
     I_0 <- 2*(0:floor((dimC-linC)/2)) + 1       # final +1 is because of R indices start at 1
     I_1 <- 1+2*(0:floor((dimC-linC-1)/2)) + 1   # final +1 is because of R indices start at 1
 
-    if (is.na(v_prior)) {
+    if (any(is.na(v_prior))) {
         v_prior_adj      <- rep(0,dimC-linC+1)
         v_prior_adj[I_0] <- 1/ceiling((dimC-linC+1)/2) / 2
         v_prior_adj[I_1] <- 1/floor((dimC-linC+1)/2) / 2
@@ -134,7 +134,7 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
         d_1         = ceiling((dimC-linC)/2)-1 ,
         N           = N ,
         N_bulk      = N_bulk ,
-        count_bulk  = c(N_V0, N_bulk, N_Vd) ,
+        count_bulk  = c(N_pol, N_bulk, N_prim) ,
         X           = samples_bulk[ ,1] ,
         Y           = samples_bulk[ ,2] ,
         Dir_prior_0 = Dir_prior_0 ,
@@ -151,15 +151,15 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
                 V_extreme[2] <- sum(V_0)+sum(V_1)-V_0[1]-V_1[d_1+1]
                 V_extreme[3] <- V_1[d_1+1]
                 count_bulk ~ dmulti(V_extreme, N)
-                V[1]   <- V_extreme[1]
-                V[d+1] <- V_extreme[3]
+                V[1]   <- V_extreme[1]/2
+                V[d+1] <- V_extreme[3]/2
                 for (i in 1:d_1) {
                     V_bulk[2*i-1] <- V_1[i]
-                    V[2*i]        <- V_1[i]
+                    V[2*i]        <- V_1[i]/2
                 }
                 for (i in 2:(d_0+1)) {
                     V_bulk[2*(i-1)] <- V_0[i]
-                    V[2*i-1]        <- V_0[i]
+                    V[2*i-1]        <- V_0[i]/2
                 }
                 for (i in 1:N_bulk) {
                     K[i] ~ dcat(V_bulk)
@@ -175,15 +175,15 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
                 V_extreme[2] <- sum(V_0)+sum(V_1)-V_0[1]-V_0[d_0+1]
                 V_extreme[3] <- V_0[d_0+1]
                 count_bulk ~ dmulti(V_extreme, N)
-                V[1]   <- V_extreme[1]
-                V[d+1] <- V_extreme[3]
+                V[1]   <- V_extreme[1]/2
+                V[d+1] <- V_extreme[3]/2
                 for (i in 1:(d_1+1)) {
                     V_bulk[2*i-1] <- V_1[i]
-                    V[2*i]        <- V_1[i]
+                    V[2*i]        <- V_1[i]/2
                 }
                 for (i in 2:d_0) {
                     V_bulk[2*(i-1)] <- V_0[i]
-                    V[2*i-1]        <- V_0[i]
+                    V[2*i-1]        <- V_0[i]/2
                 }
                 for (i in 1:N_bulk) {
                     K[i] ~ dcat(V_bulk)
@@ -203,14 +203,14 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
                 for (i in 1:linC) {
                     V[i] <- 0
                 }
-                V[d+1] <- V_extreme[2]
+                V[d+1] <- V_extreme[2]/2
                 for (i in 1:(d_0+1)) {
                     V_bulk[2*i-1] <- V_0[i]
-                    V[linC+2*i-1]  <- V_0[i]
+                    V[linC+2*i-1]  <- V_0[i]/2
                 }
                 for (i in 1:d_1) {
                     V_bulk[2*i] <- V_1[i]
-                    V[linC+2*i]  <- V_1[i]
+                    V[linC+2*i]  <- V_1[i]/2
                 }
                 for (i in 1:N_bulk) {
                     K[i] ~ dcat(V_bulk)
@@ -228,14 +228,14 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
                 for (i in 1:linC) {
                     V[i] <- 0
                 }
-                V[d+1] <- V_extreme[2]
+                V[d+1] <- V_extreme[2]/2
                 for (i in 1:d_0) {
                     V_bulk[2*i-1] <- V_0[i]
-                    V[linC+2*i-1]  <- V_0[i]
+                    V[linC+2*i-1]  <- V_0[i]/2
                 }
                 for (i in 1:(d_1+1)) {
                     V_bulk[2*i] <- V_1[i]
-                    V[linC+2*i]  <- V_1[i]
+                    V[linC+2*i]  <- V_1[i]/2
                 }
                 for (i in 1:N_bulk) {
                     K[i] ~ dcat(V_bulk)
@@ -251,17 +251,17 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
             V_extreme[1] <- V_0[1]
             V_extreme[2] <- sum(V_0)+sum(V_1)-V_0[1]
             count_bulk ~ dmulti(V_extreme, N)
-            V[1] <- V_extreme[1]
+            V[1] <- V_extreme[1]/2
             for (i in (dimC+2):(d+1)) {
                 V[i] <- 0
             }
             for (i in 1:(d_1+1)) {
                 V_bulk[2*i-1] <- V_1[i]
-                V[2*i]        <- V_1[i]
+                V[2*i]        <- V_1[i]/2
             }
             for (i in 2:(d_0+1)) {
                 V_bulk[2*(i-1)] <- V_0[i]
-                V[2*i-1]        <- V_0[i]
+                V[2*i-1]        <- V_0[i]/2
             }
             for (i in 1:N_bulk) {
                 K[i] ~ dcat(V_bulk)
@@ -281,11 +281,11 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
             }
             for (i in 1:(d_0+1)) {
                 V_bulk[2*i-1] <- V_0[i]
-                V[linC+2*i-1]  <- V_0[i]
+                V[linC+2*i-1]  <- V_0[i]/2
             }
             for (i in 1:(d_1+1)) {
                 V_bulk[2*i] <- V_1[i]
-                V[linC+2*i]  <- V_1[i]
+                V[linC+2*i]  <- V_1[i]/2
             }
             for (i in 1:N_bulk) {
                 K[i] ~ dcat(V_bulk)

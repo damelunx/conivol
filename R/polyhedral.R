@@ -796,6 +796,9 @@ polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA
 #'                  warmup = 1000, iter = 2000, cores = 2, refresh = 200 )
 #' str(extract(stanfit))
 #'
+#' # remove stan file
+#' file.remove(filename)
+#'
 #' # compare posterior median with true values
 #' v_est_med <- apply(extract(stanfit)$V, 2, FUN = median)
 #' v_est_med / v
