@@ -78,11 +78,12 @@
 #'   \item \code{A_reduced}: a matrix defining the reduced cone.
 #' }
 #'
+#' @section See also:
+#'
+#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
 #'       for further info.
-#'
-#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
 #' A <- cbind(diag(1,3),diag(1,3)+matrix(1,ncol=3,nrow=3),c(-1,0,0))
@@ -332,14 +333,14 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'         weights given by the intrinsic volumes of the cone \code{{y|A^Ty<=0}},
 #'         set to \code{NA} if \code{C} is a linear space.
 #'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
-#'       for further info.
-#'
 #' @section See also:
 #' \code{\link[conivol]{polyh_rbichibarsq_gen}}, \code{\link[conivol]{rbichibarsq}},
 #' \code{\link[conivol]{circ_rbichibarsq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
+#'
+#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#'       for further info.
 #'
 #' @examples
 #' set.seed(1234)
@@ -384,8 +385,6 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'
 #' @param n number of samples
 #' @param A matrix
-#' @param multinom logical; if \code{TRUE}, the categorical samples will be converted
-#'                 into one sample from the corresponding multinomial distribution
 #' @param solver either "nnls" or "mosek"
 #' @param reduce logical; if \code{TRUE}, the cone defined by \code{A} will be
 #'               decomposed orthogonally w.r.t. its lineality space
@@ -404,24 +403,23 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'                    the orthogonal complement of the lineality space of \code{C},
 #'                    set to \code{NA} if \code{C} is a linear space,
 #'   \item \code{A_reduced}: a matrix defining the reduced cone,
-#'   \item \code{samples}: either an \code{n}-element vector of integers in \code{0,...,dimC},
-#'         if \code{multinom==FALSE}, or a \code{(dimC+1)}-element vector of integers
-#'         in \code{0,...,n} that sum up to \code{n}, if \code{multinom==TRUE};
-#'         the \code{n}-element vector represents
-#'         iid samples from the distribution on \code{{0,1,...,d}} with the
-#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={Ax|x>=0}};
-#'         the \code{(dimC+1)}-element vector represents the corresponding sample
-#'         of the multinomial distribution.
+#'   \item \code{samples}: an \code{n}-element vector of integers in \code{linC,...,dimC}
+#'         representing iid samples from the distribution on \code{{0,1,...,d}} with the
+#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={Ax|x>=0}},
+#'   \item \code{multsamp}: a \code{(d+1)}-element vector of integers
+#'         in \code{0,...,n} that sum up to \code{n} representing the frequency
+#'         table of the above categorical samples.
 #' }
-#'         If \code{reduce==FALSE} then the output is only the above vector of samples.
-#'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
-#'       for further info.
+#'         If \code{reduce==FALSE} then the output is a list containing only
+#'         the vectors \code{samples} and \code{multsamp}.
 #'
 #' @section See also:
 #' \code{\link[conivol]{polyh_rivols_ineq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
+#'
+#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#'       for further info.
 #'
 #' @examples
 #' set.seed(1234)
@@ -429,14 +427,11 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #' print(out)
 #'
 #' set.seed(1234)
-#' out$linC + polyh_rivols_gen(20, out$A_reduced, solver="mosek", reduce=FALSE)
-#'
-#' set.seed(1234)
-#' polyh_rivols_gen(20, matrix(1:12,4,3), multinom=TRUE, reduce=TRUE)$samples
+#' out$linC + polyh_rivols_gen(20, out$A_reduced, solver="mosek", reduce=FALSE)$samples
 #'
 #' @export
 #'
-polyh_rivols_gen <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, tol=1e-7) {
+polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
     if (solver=="nnls") {
         if (!requireNamespace("nnls", quietly = TRUE))
             stop("\n Could not find package 'nnls'.")
@@ -461,52 +456,38 @@ polyh_rivols_gen <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, t
         if (dimC==linC)
             return( list( dimC=dimC, linC=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL), samples=NA) )
         QC   <- red$QC
-        A    <- red$A_reduced
+        A_tmp    <- red$A_reduced
+    } else
+        A_tmp <- A
+
+    d_tmp <- dim(A_tmp)[1]
+    samples <- vector("integer",n)
+    if (solver=="nnls") {
+        for (i in 1:n) {
+            y <- rnorm(d_tmp)
+            # compute rank of submatrix corresponding to nonzero components in expression of projection
+            samples[i] <- qr(A_tmp[ ,which(nnls::nnls(A_tmp,y)$x>tol)])$rank
+        }
+    } else {
+        nn <- dim(A_tmp)[2]
+        mos_inp <- conivol:::.create_mosek_input_polyh_prim(A_tmp,rep(0,d_tmp))
+        for (i in 1:n) {
+            y <- rnorm(d_tmp)
+            mos_inp <- conivol:::.update_mosek_input_polyh_prim(mos_inp,y)
+            mos_out <- Rmosek::mosek(mos_inp,opts)
+            samples[i] <- qr(A_tmp[ ,which(mos_out$sol$itr$xx[1:nn]>tol)])$rank
+        }
     }
 
     d <- dim(A)[1]
-    out <- vector("integer",n)
-    if (solver=="nnls") {
-        for (i in 1:n) {
-            y <- rnorm(d)
-            # compute rank of submatrix corresponding to nonzero components in expression of projection
-            out[i] <- qr(A[ ,which(nnls::nnls(A,y)$x>tol)])$rank
-        }
-    } else {
-        nn <- dim(A)[2]
-        mos_inp <- conivol:::.create_mosek_input_polyh_prim(A,rep(0,d))
-        for (i in 1:n) {
-            y <- rnorm(d)
-            mos_inp <- conivol:::.update_mosek_input_polyh_prim(mos_inp,y)
-            mos_out <- Rmosek::mosek(mos_inp,opts)
-            out[i] <- qr(A[ ,which(mos_out$sol$itr$xx[1:nn]>tol)])$rank
-        }
-    }
-
+    multsamp <- rep(0,d+1)
     if (!reduce) {
-        if (!multinom)
-            return(out)
-        else {
-            tab <- table(out)
-            dnames <- as.integer( dimnames(tab)[[1]] )
-            multsamp <- rep(0,d+1)
-            for (k in 0:d)
-                if (length(which( dnames==k ))>0)
-                    multsamp[k+1] <- tab[which( dnames==k )]
-            return(multsamp)
-        }
+        multsamp <- tabulate( 1+samples, d+1 )
+        return( list (samples=samples, multsamp=multsamp ) )
     } else {
-        if (!multinom)
-            return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A, samples=out+linC) )
-        else {
-            tab <- table(out+linC)
-            dnames <- as.integer( dimnames(tab)[[1]] )
-            multsamp <- rep(0,d+linC+1)
-            for (k in 0:d+linC)
-                if (length(which( dnames==k ))>0)
-                    multsamp[k+1] <- tab[which( dnames==k )]
-            return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A, samples=multsamp) )
-        }
+        multsamp <- tabulate( 1+samples+linC, d+1 )
+        return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A_tmp,
+                      samples=samples+linC, multsamp=multsamp) )
     }
 }
 
@@ -524,8 +505,6 @@ polyh_rivols_gen <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, t
 #'
 #' @param n number of samples
 #' @param A matrix
-#' @param multinom logical; if \code{TRUE}, the categorical samples will be converted
-#'                 into one sample from the corresponding multinomial distribution
 #' @param solver either "nnls" or "mosek"
 #' @param reduce logical; if \code{TRUE}, the cone defined by \code{A} will be
 #'               decomposed orthogonally w.r.t. its lineality space
@@ -544,24 +523,23 @@ polyh_rivols_gen <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, t
 #'                    the orthogonal complement of the lineality space of \code{C},
 #'                    set to \code{NA} if \code{C} is a linear space,
 #'   \item \code{A_reduced}: a matrix defining the reduced cone,
-#'   \item \code{samples}: either an \code{n}-element vector of integers in \code{0,...,dimC},
-#'         if \code{multinom==FALSE}, or a \code{(dimC+1)}-element vector of integers
-#'         in \code{0,...,n} that sum up to \code{n}, if \code{multinom==TRUE};
-#'         the \code{n}-element vector represents
-#'         iid samples from the distribution on \code{{0,1,...,d}} with the
-#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={y|A^Ty<=0}};
-#'         the \code{(dimC+1)}-element vector represents the corresponding sample
-#'         of the multinomial distribution.
+#'   \item \code{samples}: an \code{n}-element vector of integers in \code{linC,...,dimC}
+#'         representing iid samples from the distribution on \code{{0,1,...,d}} with the
+#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={y|A^Ty<=0}},
+#'   \item \code{multsamp}: a \code{(d+1)}-element vector of integers
+#'         in \code{0,...,n} that sum up to \code{n} representing the frequency
+#'         table of the above categorical samples.
 #' }
-#'         If \code{reduce==FALSE} then the output is only the above vector of samples.
-#'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
-#'       for further info.
+#'         If \code{reduce==FALSE} then the output is a list containing only
+#'         the vectors \code{samples} and \code{multsamp}.
 #'
 #' @section See also:
 #' \code{\link[conivol]{polyh_rivols_gen}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
+#'
+#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#'       for further info.
 #'
 #' @examples
 #' set.seed(1234)
@@ -569,45 +547,39 @@ polyh_rivols_gen <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, t
 #' print(out)
 #'
 #' set.seed(1234)
-#' out$linC + polyh_rivols_ineq(20, out$A_reduced, solver="mosek", reduce=FALSE)
-#'
-#' set.seed(1234)
-#' polyh_rivols_ineq(20, matrix(1:12,4,3), multinom=TRUE, reduce=TRUE)$samples
+#' out$linC + polyh_rivols_ineq(20, out$A_reduced, solver="mosek", reduce=FALSE)$samples
 #'
 #' @export
 #'
-polyh_rivols_ineq <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, tol=1e-7) {
+polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
     d <- dim(A)[1]
     if (reduce) {
-        out <- polyh_rivols_gen(n, A, multinom=multinom, solver=solver, reduce=TRUE, tol=tol)
+        out <- polyh_rivols_gen(n, A, solver=solver, reduce=TRUE, tol=tol)
         dimCpol <- out$dimC
         linCpol <- out$linC
 
         out$dimC <- d-linCpol
         out$linC <- d-dimCpol
-        if (!multinom)
-            out$samples <- d-out$samples
-        else
-            out$samples <- c(rep(0,out$linC),rev(out$samples))
+        out$samples <- d-out$samples
+        out$multsamp <- rev(out$multsamp)
         return(out)
     } else {
-        if (!multinom)
-            return( d-polyh_rivols_gen(n, A, FALSE, solver=solver, reduce=FALSE, tol=tol) )
-        else
-            return( rev(polyh_rivols_gen(n, A, TRUE, solver=solver, reduce=FALSE, tol=tol)) )
+        out <- polyh_rivols_gen(n, A, solver=solver, reduce=FALSE, tol=tol)
+        out$samples <- d-out$samples
+        out$multsamp <- rev(out$multsamp)
+        return(out)
     }
 }
-
 
 
 #' Bayesian posterior for samples of intrinsic volumes distribution
 #'
 #' \code{polyh_bayes} generates functions for computing quantiles of marginals
 #' of the posterior distribution and for sampling from the posterior distribution,
-#' given samples of the intrinsic volumes distribution.
+#' given direct (multinomial) samples of the intrinsic volumes distribution.
 #'
-#' @param samples vector of integers representing independent samples from the
-#'                intrinsic volumes distribution of a convex cone
+#' @param multsamp vector of integers representing a sample from the
+#'                 multinomial intrinsic volumes distribution of a convex cone
 #' @param dimC the dimension of the cone
 #' @param linC the lineality of the cone
 #' @param prior either "noninformative" (default) or "informative"
@@ -629,13 +601,14 @@ polyh_rivols_ineq <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, 
 #'                    that make up both prior and posterior distributions.
 #' }
 #'
-#' @note See \href{../doc/bayesian.html#sampl_latent}{this vignette}
-#'       for further info.
-#'
 #' @section See also:
-#' \code{\link[conivol]{polyh_rivols_gen}}, \code{\link[conivol]{polyh_rivols_ineq}}
+#' \code{\link[conivol]{polyh_rivols_gen}}, \code{\link[conivol]{polyh_rivols_ineq}},
+#' \code{\link[conivol]{polyh_stan}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
+#'
+#' @note See \href{../doc/bayesian.html#sampl_latent}{this vignette}
+#'       for further info.
 #'
 #' @examples
 #' # set parameters of cones
@@ -651,11 +624,12 @@ polyh_rivols_ineq <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, 
 #'
 #' # collect sample data from intrinsic volumes distribution
 #' n <- 10^4
+#' set.seed(1234)
 #' out <- polyh_rivols_ineq(n,A)
 #' str(out)
 #'
 #' # evaluate posterior distribution
-#' bayes_est <- polyh_bayes( out$samples, out$dimC, out$linC )
+#' bayes_est <- polyh_bayes( out$multsamp, out$dimC, out$linC )
 #' str(bayes_est)
 #'
 #' # compare posterior median with true values
@@ -668,12 +642,24 @@ polyh_rivols_ineq <- function(n, A, multinom=FALSE, solver="nnls", reduce=TRUE, 
 #' colnames(data) <- paste0(rep("V",d+1),as.character(0:d))
 #' boxplot( value~key, tidyr::gather( data, factor_key=TRUE ) )
 #' lines(1+0:d, v, col="red")
+#' lines(1+0:d, v_est_med, col="blue")
+#'
+#' # display boxplot of posterior distribution of logs, overlayed with true values
+#' data <- as.data.frame( log(bayes_est$post_samp(1e4)) )
+#' colnames(data) <- paste0(rep("logV",d+1),as.character(0:d))
+#' boxplot( value~key, tidyr::gather( data, factor_key=TRUE ) )
+#' lines(1+0:d, log(v), col="red")
+#' lines(1+0:d, log(v_est_med), col="blue")
 #'
 #' @export
 #'
-polyh_bayes <- function(samples, dimC, linC, prior="noninformative", v_prior=NA) {
-    # check whether prior is "noninformative" or "informative"
-    # check whether linC==dimC
+polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA) {
+    if ( !(prior %in% c("noninformative", "informative")) )
+        stop("\n Parameter prior must be \"noninformative\" or \"informative\".")
+    if ( linC>dimC )
+        stop("\n Lineality linC must be less than dimension dimC.")
+    if ( linC==dimC )
+        stop("\n Lineality and dimension (linC==dimC) indicate that cone is linear subspace.")
 
     d <- dimC-linC
     I_even <- 2*(0:floor(d/2)) + 1          # final +1 is because of R indices start at 1
@@ -694,7 +680,7 @@ polyh_bayes <- function(samples, dimC, linC, prior="noninformative", v_prior=NA)
         Dir_prior_even <- 1+Dir_prior_even
         Dir_prior_odd  <- 1+Dir_prior_odd
     }
-    update <- tabulate(1+samples-linC, 1+dimC-linC)
+    update <- multsamp[linC:(dimC-linC)+1]
 
     Dir_post_even <- Dir_prior_even + update[I_even]
     Dir_post_odd  <- Dir_prior_odd  + update[I_odd]
@@ -751,8 +737,8 @@ polyh_bayes <- function(samples, dimC, linC, prior="noninformative", v_prior=NA)
 #' (second iterated differences of the logarithms of the intrinsic volumes),
 #' which enforces log-concavity of the intrinsic volumes.
 #'
-#' @param samples vector of integers representing independent samples from the
-#'                intrinsic volumes distribution of a convex cone
+#' @param multsamp vector of integers representing a sample from the
+#'                 multinomial intrinsic volumes distribution of a convex cone
 #' @param dimC the dimension of the cone
 #' @param linC the lineality of the cone
 #' @param prior either "noninformative" (default) or "informative"
@@ -774,113 +760,163 @@ polyh_bayes <- function(samples, dimC, linC, prior="noninformative", v_prior=NA)
 #' the specified name and the output will only contain the elements \code{data}
 #' and \code{variable.names}.
 #'
-#' @note See \href{../doc/bayesian.html#sampl_latent}{this vignette}
-#'       for further info.
-#'
 #' @section See also:
-#' \code{\link[conivol]{polyh_rivols_gen}}, \code{\link[conivol]{polyh_rivols_ineq}}
+#' \code{\link[conivol]{polyh_rivols_gen}}, \code{\link[conivol]{polyh_rivols_ineq}},
+#' \code{\link[conivol]{polyh_bayes}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
+#' @note See \href{../doc/bayesian.html#sampl_latent}{this vignette}
+#'       for further info.
+#'
 #' @examples
-#' samp <- polyh_rivols_gen(20,matrix(1:12,4,3))
-#' polyh_Bayes(samp$samples, samp$dimC, samp$linC)
+#' # set parameters of cones
+#' D <- c(5,7)
+#' cone_types <- c("BC","BCp")
+#' d <- sum(D)
+#'
+#' # collect matrix representation and true intrinsic volumes
+#' v <- weyl_ivols(D, cone_types, product = TRUE)
+#' A <- weyl_matrix(D, cone_types, product = TRUE)
+#' true_data <- list( ivols=v, A=A )
+#' print(true_data)
+#'
+#' # collect sample data from intrinsic volumes distribution
+#' n <- 10^4
+#' set.seed(1234)
+#' out <- polyh_rivols_ineq(n,A)
+#' str(out)
+#'
+#' # define stan model
+#' filename <- "ex_stan_model.stan"
+#' staninp <- polyh_stan(out$multsamp, out$dimC, out$linC, prior="informative", filename=filename)
+#'
+#' # run the stan model
+#' stanfit <- stan( file = filename, data = staninp$data, chains = 4,
+#'                  warmup = 1000, iter = 2000, cores = 2, refresh = 200 )
+#' str(extract(stanfit))
+#'
+#' # compare posterior median with true values
+#' v_est_med <- apply(extract(stanfit)$V, 2, FUN = median)
+#' v_est_med / v
+#' sum( (v_est_med-v)^2 )
+#'
+#' # display boxplot of posterior distribution, overlayed with true values
+#' data <- as.data.frame( extract(stanfit)$V )
+#' colnames(data) <- paste0(rep("V",d+1),as.character(0:d))
+#' boxplot( value~key, tidyr::gather( data, factor_key=TRUE ) )
+#' lines(1+0:d, v, col="red")
+#' lines(1+0:d, v_est_med, col="blue")
+#'
+#' # display boxplot of posterior distribution of logs, overlayed with true values
+#' data <- as.data.frame( extract(stanfit)$logV_nonz )
+#' colnames(data) <- paste0(rep("logV",d+1),as.character(0:d))
+#' boxplot( value~key, tidyr::gather( data, factor_key=TRUE ) )
+#' lines(1+0:d, log(v), col="red")
+#' lines(1+0:d, log(v_est_med), col="blue")
 #'
 #' @export
 #'
-polyh_stan <- function(samples, dimC, linC, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
-    # check whether prior is "noninformative" or "informative"
-    # check whether linC==dimC
+polyh_stan <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+    if ( !(prior %in% c("noninformative", "informative")) )
+        stop("\n Parameter prior must be \"noninformative\" or \"informative\".")
+    if ( linC>dimC )
+        stop("\n Lineality linC must be less than dimension dimC.")
+    if ( linC==dimC )
+        stop("\n Lineality and dimension (linC==dimC) indicate that cone is linear subspace.")
 
-    d_nonz <- dimC-linC
-
-    # put this in the Stan program?
     if (is.na(v_prior)) {
-        v_nonz_prior <- rep(1,d_nonz+1)/(d_nonz+1)
+        v_nonz_prior <- rep(1,dimC-linC+1)/(dimC-linC+1)
     } else {
         v_nonz_prior <- v_prior[linC:dimC]
     }
 
-    # put this in the Stan program?
     if (prior=="informative"){
-        alpha_prior <- v_nonz_prior / 2
-        beta_prior  <- rep(1/2,d_nonz+1)
+        alpha <- v_nonz_prior / 2
+        beta  <- rep(1/2,dimC-linC+1)
     } else {
-        alpha_prior <- rep(1,d_nonz+1)
-        beta_prior  <- 1 / v_nonz_prior
+        alpha <- rep(1,dimC-linC+1)
+        beta  <- 1 / v_nonz_prior
+    }
+
+    T <- matrix( rep(0,(dimC-linC+1)^2), dimC-linC+1, dimC-linC+1 )
+    for (i in 1:(dimC-linC-1)) {
+        T[i,i] = 1
+        T[i,i+1] = -2
+        T[i,i+2] = 1
+    }
+    if ((dimC-linC)%%2==0) {
+        for (i in 0:((dimC-linC)/2-1)) {
+            T[dimC-linC,  2*i+1] = 1
+            T[dimC-linC+1,2*i+2] = 1
+        }
+        T[dimC-linC,  dimC-linC+1] = 1
+        T[dimC-linC+1,1] = 1
+    } else {
+        for (i in 0:((dimC-linC-1)/2)) {
+            T[dimC-linC,  2*i+1] = 1
+            T[dimC-linC+1,2*i+2] = 1
+        }
     }
 
     data_list <- list(
-        dimC         = dimC ,
-        linC         = linC ,
-        samples     = samples ,
-        alpha_prior = alpha_prior ,
-        beta_prior  = beta_prior
+        d           = length(multsamp)-1 ,
+        dimC        = dimC ,
+        linC        = linC ,
+        multsamp    = multsamp ,
+        alpha       = alpha ,
+        beta        = beta ,
+        T           = T
     )
-        model_string <- "
+        model_string <-
+"// Log-concavity enforcing model for estimating conic intrinsic volumes
+// given a multinomial sample from the intrinsic volumes distribution.
+// Model is created with the R-method 'polyh_stan' from the 'conivol' package.
+// See 'https://github.com/damelunx/conivol' for more information.
+
 data {
-    int <lower=1> dimC;                                      // dimension of linear span
-    int <lower=0, upper=dimC-1> linC;                        // lineality
-    int <lower=0> n;                                         // number of samples
-    int <lower=0> samples[n];                                // sample of multinomial distribution (even and odd)
-    vector <lower=0>[dimC-linC+1] alpha ;                    // prior values for hyperparameters alpha
-    vector <lower=0>[dimC-linC+1] beta ;                     // prior values for hyperparameters beta
+    int<lower=1> d ;                                        // ambient dimension
+    int<lower=1, upper=d> dimC ;                            // dimension of linear span of C
+    int<lower=0, upper=dimC-1> linC ;                       // lineality
+    int<lower=0> multsamp[d+1] ;                            // sample of multinomial distribution (even and odd)
+    vector<lower=0>[dimC-linC+1] alpha ;                    // prior values for hyperparameters alpha
+    vector<lower=0>[dimC-linC+1] beta ;                     // prior values for hyperparameters beta
+    matrix[dimC-linC+1,dimC-linC+1] T ;                     // transformation matrix for u ~> t
 }
+
 transformed data {
-    int d ;                                                  // just for convenience
-    d = size(samples)-1 ;
-    int d_nonz ;                                             // just for convenience
-    d_nonz = dimC-linC+1 ;
-    int <lower=0>[d_nonz] samp_nonz ;                        // just for convenience
-    samp_nonz = samples[(linC+1):(dimC+1)] ;
-
-    matrix[d_nonz+1,d_nonz+1] T ;                            // transformation matrix for u ~> t
-    for (i in 1:(d_nonz-1)) {
-        T[i,i] = 1 ;
-        T[i,i+1] = -2 ;
-        T[i,i+2] = 1 ;
-    }
-    if (d_nonz%2==0) {
-        for (i in 0:(d_nonz/2)) {
-            T[d_nonz,2*i+1] = 1 ;
-            T[d_nonz+1,2*i+2] = 1 ;
-        }
-        T[d_nonz+1,1] = 1 ;
-    } else {
-        for (i in 0:((d_nonz-1)/2)) {
-            T[d_nonz,2*i+1] = 1 ;
-            T[d_nonz+1,2*i+2] = 1 ;
-        }
-        T[d_nonz,2*d_nonz+1] = 1 ;
-    }
+    int<lower=0> samp_nonz[dimC-linC+1] ;
+    samp_nonz = multsamp[(linC+1):(dimC+1)] ;
 }
+
 parameters {
-    vector [d_nonz+1] t ;
+    vector<lower=0>[dimC-linC+1] t ;
 }
-transformed parameters {
-    vector [d_nonz+1] u ;
-    u = T \ t ;
 
-    vector <lower=0>[d_nonz+1] v_nonz ;
-    v_nonz = exp(u) ;
+transformed parameters {
+    vector<lower=0>[dimC-linC+1] v_nonz ;
+    v_nonz = exp(- T \\ t) ;
 }
+
 model {
-    for (k in 0:d_nonz) {
-        t[k+1] ~ gamma(alpha[k+1], beta[k+1])
+    for (k in 0:(dimC-linC)) {
+        t[k+1] ~ gamma(alpha[k+1], beta[k+1]) ;
     }
-    samp_nonz ~ multinomial(v_nonz)
+    samp_nonz ~ multinomial(v_nonz/sum(v_nonz)) ;
 }
+
 generated quantities {
-    vector [d+1] V ;
+    vector[d+1] V ;
+    vector[dimC-linC+1] logV_nonz ;
     if (linC>0) V[1:linC] = rep_vector(0,linC) ;
     if (dimC<d) V[(dimC+2):(d+1)] = rep_vector(0,d-dimC) ;
     V[(linC+1):(dimC+1)] = v_nonz / sum(v_nonz) ;
-}
-"
+    logV_nonz = log(v_nonz) - log(sum(v_nonz)) ;
+}"
 
     out                <- list()
     out$data           <- data_list
-    out$variable.names <- "V"
+    out$variable.names <- c("V","logV_nonz","t")
 
     if ( !is.na(filename) && file.exists(filename) && overwrite==FALSE )
         stop("\n File with given filename exists and overwrite==FALSE.")
