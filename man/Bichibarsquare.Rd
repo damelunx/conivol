@@ -62,8 +62,8 @@ Package: \code{\link[conivol]{conivol}}
 dbichibarsq(c(2,3),c(0.1,0.6,0.3))
 dbichibarsq(matrix(c(2,3,4,5),2,2),c(0.1,0.6,0.3))
 
-pbichibarsq(3,c(0.1,0.6,0.3))
-pbichibarsq(c(0.2,3,4.5),c(0.1,0.6,0.3))
+pbichibarsq(c(2,3),c(0.1,0.6,0.3))
+pbichibarsq(matrix(c(2,3,4,5),2,2),c(0.1,0.6,0.3))
 
 rbichibarsq(10,c(0.1,0.6,0.3))
 

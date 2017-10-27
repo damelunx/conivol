@@ -12,7 +12,7 @@
 
 <meta name="author" content="Dennis Amelunxen" />
 
-<meta name="date" content="2017-09-12" />
+<meta name="date" content="2017-10-20" />
 
 <title>Estimating conic intrinsic volumes via EM algorithm</title>
 
@@ -32,7 +32,7 @@
 
 <h1 class="title toc-ignore">Estimating conic intrinsic volumes via EM algorithm</h1>
 <h4 class="author"><em>Dennis Amelunxen</em></h4>
-<h4 class="date"><em>2017-09-12</em></h4>
+<h4 class="date"><em>2017-10-20</em></h4>
 
 
 
@@ -132,7 +132,7 @@ In the situation at hand, we seek to maximize the function
 <span class="math display">\[\begin{align*}
    &amp; \underset{u\geq0}{\text{argmin}}\, \|Au-z\|_2
 \\ \iff &amp; \text{minimize } \tfrac12 \|Au\|^2 - z^T A u \quad\text{subject to}\quad u\geq0
-\\ \iff &amp; \text{minimize } (-A^Tz)^Tu + r \quad\text{subject to}\quad u\geq0, Ax=w, s=1, \|w\|^2\leq 2rs .
+\\ \iff &amp; \text{minimize } (-A^Tz)^Tu + r \quad\text{subject to}\quad u\geq0, Au=w, s=1, \|w\|^2\leq 2rs .
 \end{align*}\]</span>
 <p>This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint (see the <a href="http://rmosek.r-forge.r-project.org/">Rmosek userguide</a>).</p>
 <p>This is the approach taken in the function <code>polyh_rbichibarsq</code>.</p>
@@ -143,6 +143,13 @@ In the situation at hand, we seek to maximize the function
 \\ \iff &amp; \text{minimize } (-z)^Ty+r \quad\text{subject to}\quad u\geq 0, A^Ty+u=c, s=1, \|y\|^2\leq 2rs
 \end{align*}\]</span>
 <p>This last formulation is solved with MOSEK, using the rotated quadratic cone constraint, to enforce the log-concavity constraints in the EM algorithm.</p>
+<p>The problem of finding the projection of a point <span class="math inline">\(z\in\text{R}^d\)</span> onto an ellipsoidal cone given as the (full-dimensional) linear image of the Lorentz cone, <span class="math inline">\(A\mathcal{L}^d\)</span>, <span class="math inline">\(A\in\text{Gl}_d\)</span>, can also be formulated as an (SOCP):</p>
+<span class="math display">\[\begin{align*}
+   &amp; \underset{x\in A\mathcal{L}^d}{\text{argmin}}\, \|x-z\|_2
+\\ \iff &amp; \text{minimize } \tfrac12 \|x\|^2 - z^T x \quad\text{subject to}\quad x=Ay, y\in\mathcal{L}^d
+\\ \iff &amp; \text{minimize } (-z)^Tx + r \quad\text{subject to}\quad x=Ay, y\in\mathcal{L}^d, s=1, \|x\|^2\leq 2rs .
+\end{align*}\]</span>
+<p>This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint.</p>
 <div id="appendix-b-gradient-and-hessian" class="section level3">
 <h3>Appendix B: Gradient and Hessian</h3>
 <p>Gradient descent and Newton’s method both seem to be inappropriate for the task of reconstructing the intrinsic volumes from sample data as described above. However, analyzing the gradient and the Hessian might still be instructive to decide whether the maximum likelihood estimate has been reached.</p>

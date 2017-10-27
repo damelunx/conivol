@@ -1,6 +1,6 @@
-#' Evaluate the sample data for maximum likelihood estimation.
+#' Evaluate the sample data for maximum likelihood estimation
 #'
-#' \code{prepare_data} takes a two-column matrix whose rows form
+#' \code{prepare_em} takes a two-column matrix whose rows form
 #' iid samples from a bivariate chi-bar-squared distribution and
 #' prepares the data used in maximum likelihood estimation.
 #'
@@ -8,35 +8,40 @@
 #' @param m_samp two-column matrix whose rows from iid samples from a bivariate
 #'               chi-bar-squared distribution.
 #'
-#' @return The output of \code{prepare_data} is a list of four elements:
-#'         \describe{
-#'           \item{\code{n}:}{the number of overall sample points
-#'                            (including those in primal or polar cone)}
-#'           \item{\code{prop_prim}:}{proportion of points in primal cone}
-#'           \item{\code{prop_pol}:}{proportion of points}
-#'           \item{\code{dens}:}{the density values of the effective sample points
+#' @return The output of \code{prepare_em} is a list of four elements:
+#'         \itemize{
+#'           \item \code{n}: the number of overall sample points
+#'                            (including those in primal or polar cone)
+#'           \item \code{prop_prim}: proportion of points in primal cone
+#'           \item \code{prop_pol}: proportion of points
+#'           \item \code{dens}: the density values of the effective sample points
 #'                               (neither in primal nor polar cone); that is,
 #'                               \code{dens} is a \code{(d-1)} row matrix
 #'                               such that the \code{k}th row contains the products
 #'                               of the density values of the chi_k^2 and chi_(d-k)^2
 #'                               distributions evaluated in the effective sample points;
 #'                               the row-form of the matrix is more convenient for
-#'                               the computations}
+#'                               the computations
 #'         }
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{find_ivols_em}}
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{estim_em}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' prepare_data( 10, m_samp )
+#' D <- c(5,5)
+#' alpha <- c(pi/3,pi/4)
+#' d <- sum(D)
+#' N <- 10^5
+#' v_exact <- circ_ivols( D, alpha, product=TRUE )
+#' m_samp <- rbichibarsq(N,v_exact)
+#' prepare_em( d, m_samp )
 #'
 #' @export
 #'
-prepare_data <- function(d, m_samp) {
+prepare_em <- function(d, m_samp) {
     I1 <- which( sapply(m_samp[ ,1], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.adj_tol))}) )
     I2 <- which( sapply(m_samp[ ,2], function(t){isTRUE(all.equal(t,0,tolerance=conivol:::.adj_tol))}) )
 
@@ -52,13 +57,13 @@ prepare_data <- function(d, m_samp) {
 }
 
 
-#' Evaluate the log-likelihood of the estimated intrinsic volumes.
+#' Evaluate the log-likelihood of the estimated intrinsic volumes
 #'
-#' \code{comp_loglike} evaluates the (normalized) log-likelihood of a vector
-#' with respect to given data, the output of \code{prepare_data}.
+#' \code{loglike_ivols} evaluates the (normalized) log-likelihood of a vector
+#' with respect to given data, the output of \code{prepare_em}.
 #'
 #' @param v vector of mixing weights (conic intrinsic volumes).
-#' @param data output of \code{prepare_data(d, m_samp)}.
+#' @param data output of \code{prepare_em(d, m_samp)}.
 #' @param mode specifies whether the first and last values should be taken into account:
 #'             \describe{
 #'               \item{\code{init_mode==0}:}{take all into account}
@@ -67,12 +72,12 @@ prepare_data <- function(d, m_samp) {
 #'               \item{\code{init_mode==3}:}{leave out both estimates of the 0th and dth intrinsic volume}
 #'             }
 #'
-#' @return The output of \code{comp_loglike} is the value of the normalized
+#' @return The output of \code{loglike_ivols} is the value of the normalized
 #'         log-likelihood of the mixing weights \code{v} with respect to the
 #'         sample data given in \code{data}
 #'
 #' @section See also:
-#' \code{\link[conivol]{prepare_data}}, \code{\link[conivol]{estimate_statdim_var}}
+#' \code{\link[conivol]{prepare_em}}, \code{\link[conivol]{estim_statdim_var}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -84,26 +89,27 @@ prepare_data <- function(d, m_samp) {
 #' v_exact <- circ_ivols( D, alpha, product=TRUE )
 #'
 #' # collect sample data
-#' m_samp <- circ_rbichibarsq(N,D,alpha)
-#' data <- prepare_data(d, m_samp)
-#' est <- estimate_statdim_var(d, m_samp)
-#' v1 <- init_v( d )
-#' v2 <- init_v( d, 1, delta=est$delta, var=est$var )
-#' v3 <- init_v( d, 2, delta=est$delta )
-#' v4 <- init_v( d, 3, var=est$var )
-#' v5 <- init_v( d, 4, delta=est$delta, var=est$var )
+#' m_samp <- rbichibarsq(N,v_exact)
+#' data <- prepare_em(d, m_samp)
+#' est <- estim_statdim_var(d, m_samp)
+#' v_estim <- list(
+#'     init0 = init_ivols( d ) ,
+#'     init1 = init_ivols( d, 1, delta=est$delta, var=est$var ) ,
+#'     init2 = init_ivols( d, 2, delta=est$delta ) ,
+#'     init3 = init_ivols( d, 3, var=est$var ) ,
+#'     init4 = init_ivols( d, 4, delta=est$delta, var=est$var ) )
 #'
 #' # evaluate log-likelihood function
-#' comp_loglike(v_exact, data)
-#' comp_loglike(v1, data)
-#' comp_loglike(v2, data)
-#' comp_loglike(v3, data)
-#' comp_loglike(v4, data)
-#' comp_loglike(v5, data)
+#' loglike_ivols(v_exact, data)
+#' loglike_ivols(v_estim$init0, data)
+#' loglike_ivols(v_estim$init1, data)
+#' loglike_ivols(v_estim$init2, data)
+#' loglike_ivols(v_estim$init3, data)
+#' loglike_ivols(v_estim$init4, data)
 #'
 #' @export
 #'
-comp_loglike <- function(v, data, mode=0){
+loglike_ivols <- function(v, data, mode=0){
     conivol:::.test_vector(v)
     d <- length(v)-1
     if (dim(data$dens)[1]!=d-1)
@@ -124,24 +130,24 @@ comp_loglike <- function(v, data, mode=0){
 
 
 
-#' Finding an initial estimate of the intrinsic volumes.
+#' Finding an initial estimate of the intrinsic volumes
 #'
-#' \code{init_v} find an initial estimate of the intrinsic volumes via
+#' \code{init_ivols} find an initial estimate of the intrinsic volumes via
 #' moment-fitting.
 #'
 #' @param d the dimension of the bivariate chi-bar squared distribution.
 #' @param init_mode specifies the way through which the initial estimate is found:
-#'             \describe{
-#'               \item{\code{init_mode==0}:}{uniform distribution}
-#'               \item{\code{init_mode==1}:}{discretized normal distribution}
-#'               \item{\code{init_mode==2}:}{circular cone fitting statdim}
-#'               \item{\code{init_mode==3}:}{circular cone fitting variance}
-#'               \item{\code{init_mode==4}:}{circular cone fitting statdim and variance (geometric mean)}
+#'             \itemize{
+#'               \item \code{init_mode==0}: uniform distribution
+#'               \item \code{init_mode==1}: discretized normal distribution
+#'               \item \code{init_mode==2}: circular cone fitting statdim
+#'               \item \code{init_mode==3}: circular cone fitting variance
+#'               \item \code{init_mode==4}: circular cone fitting statdim and variance (geometric mean)
 #'             }
 #' @param delta an estimate of the statistical dimension of the cone.
 #' @param var an estimate of the variane of the intrinsic volumes.
 #'
-#' @return The output of \code{init_v} is a \code{(d+1)}-column vector.
+#' @return The output of \code{init_ivols} is a \code{(d+1)}-column vector.
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
@@ -150,19 +156,22 @@ comp_loglike <- function(v, data, mode=0){
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' est <- estimate_statdim_var(d, m_samp)
-#' init_v( 10 )
-#' init_v( 10, 1, delta=est$delta, var=est$var )
-#' init_v( 10, 2, delta=est$delta )
-#' init_v( 10, 3, delta=est$delta, var=est$var )
-#' init_v( 10, 4, delta=est$delta, var=est$var )
+#' D <- c(5,5)
+#' d <- sum(D)
+#' alpha <- c(pi/3,pi/4)
+#' v_exact <- circ_ivols(D, alpha, product=TRUE)
+#' m_samp <- rbichibarsq(10^6,v)
+#' est <- estim_statdim_var(d, m_samp)
 #'
-# creating the starting point for the EM algorithm
-#
+#' list( v_exact = v_exact , v_init0 = init_ivols( d ) ,
+#'       v_init1 = init_ivols( d, 1, delta=est$delta, var=est$var ) ,
+#'       v_init2 = init_ivols( d, 2, delta=est$delta ) ,
+#'       v_init3 = init_ivols( d, 3, delta=est$delta, var=est$var ) ,
+#'       v_init4 = init_ivols( d, 4, delta=est$delta, var=est$var ) )
+#'
 #' @export
 #'
-init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
+init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
     if (init_mode==1) {
         v <- sapply( 0:d, function(k){pnorm((k+0.5-delta)/sqrt(var)) - pnorm((k-0.5-delta)/sqrt(var))})
         return(v/sum(v))
@@ -296,9 +305,9 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
     return(mos_inp)
 }
 
-#' Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm.
+#' Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm
 #'
-#' \code{find_ivols_em} produces EM-type iterates from a two-column
+#' \code{estim_em} produces EM-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
 #' distribution, which may or may not (depending on the starting point) converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
@@ -310,12 +319,12 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @param v_init the starting point for the EM iterates; if none are provided,
 #'                the starting point is found in a way specified by the input \code{init_mode}.
 #' @param init_mode specifies the way through which the initial estimate is found:
-#'             \describe{
-#'               \item{\code{init_mode==0}:}{uniform distribution}
-#'               \item{\code{init_mode==1}:}{discretized normal distribution}
-#'               \item{\code{init_mode==2}:}{circular cone fitting statdim}
-#'               \item{\code{init_mode==3}:}{circular cone fitting variance}
-#'               \item{\code{init_mode==4}:}{circular cone fitting statdim and variance (geometric mean)}
+#'             \itemize{
+#'               \item \code{init_mode==0}: uniform distribution
+#'               \item \code{init_mode==1}: discretized normal distribution
+#'               \item \code{init_mode==2}: circular cone fitting statdim
+#'               \item \code{init_mode==3}: circular cone fitting variance
+#'               \item \code{init_mode==4}: circular cone fitting statdim and variance (geometric mean)
 #'             }
 #'             The starting point will be returned as the first row in the
 #'             output matrix.
@@ -325,22 +334,22 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' @param no_of_lcc_projections number of projections on the log-concavity cone
 #' @param lcc_amount constant for strict log-concavity
 #' @param extrapolate specifies the way the edge cases are handled:
-#'             \describe{
-#'               \item{\code{extrapolate==0}:}{extrapolate \code{v_d} if no \code{x in C} and
-#'                                      extrapolate \code{v_0} if no \code{x in C°}}
-#'               \item{\code{extrapolate==1}:}{extrapolate \code{v_d}, do not extrapolate \code{v_0}}
-#'               \item{\code{extrapolate==2}:}{extrapolate \code{v_0}, do not extrapolate \code{v_d}}
-#'               \item{\code{extrapolate==3}:}{extrapolate \code{v_0} and \code{v_d}}
-#'               \item{\code{extrapolate<0}:}{neither extrapolate \code{v_0} nor \code{v_d}}
+#'             \itemize{
+#'               \item \code{extrapolate==0}: extrapolate \code{v_d} if no \code{x in C} and
+#'                                      extrapolate \code{v_0} if no \code{x in C°}
+#'               \item \code{extrapolate==1}: extrapolate \code{v_d}, do not extrapolate \code{v_0}
+#'               \item \code{extrapolate==2}: extrapolate \code{v_0}, do not extrapolate \code{v_d}
+#'               \item \code{extrapolate==3}: extrapolate \code{v_0} and \code{v_d}
+#'               \item \code{extrapolate<0}: neither extrapolate \code{v_0} nor \code{v_d}
 #'             }
 #' @param selfdual logical; if \code{TRUE}, the symmetry equations \code{v[k+1]==v[d-k+1]},
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
-#' @param data output of \code{prepare_data(d, m_samp)}; this can be called
+#' @param data output of \code{prepare_em(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_em} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{estim_em} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute EM-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
@@ -348,24 +357,49 @@ init_v <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{prepare_data}},
-#' \code{\link[conivol]{init_v}}, \code{\link[conivol]{comp_loglike}}
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{prepare_em}},
+#' \code{\link[conivol]{init_ivols}}, \code{\link[conivol]{loglike_ivols}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
-#' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' find_ivols_em( 10, m_samp )
-#' find_ivols_em( 10, m_samp, init_mode=1 )
+#' # define cone and find sample data
+#' D <- c(5,5)
+#' alpha <- c(pi/3,pi/4)
+#' d <- sum(D)
+#' N <- 10^5
+#' v_exact <- circ_ivols( D, alpha, product=TRUE )
+#' m_samp <- rbichibarsq(N,v_exact)
+#'
+#' # prepare data and run EM algorithm twice with different inits
+#' data <- prepare_em( d, m_samp )
+#' est1 <- estim_em( d, m_samp, data=data )
+#' est2 <- estim_em( d, m_samp, init_mode=1, data=data )
+#'
+#' # plot the iterates of the first EM run
+#' plot(1+0:d, v_exact)
+#' lines(1+0:d, v_exact, col="red")
+#' lines(1+0:d, est1$iterates[1,])
+#' lines(1+0:d, est1$iterates[5,])
+#' lines(1+0:d, est1$iterates[10,])
+#' lines(1+0:d, est1$iterates[21,])
+#'
+#' # plot the iterates of the second EM run
+#' plot(1+0:d, v_exact)
+#' lines(1+0:d, v_exact, col="red")
+#' lines(1+0:d, est2$iterates[1,])
+#' lines(1+0:d, est2$iterates[5,])
+#' lines(1+0:d, est2$iterates[10,])
+#' lines(1+0:d, est2$iterates[21,])
 #'
 #' @export
 #'
-find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           lambda=0, no_of_lcc_projections=1, lcc_amount=0,
                           extrapolate=0, selfdual=FALSE, data=NULL) {
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop( paste0("\n Could not find package 'Rmosek'.",
-            "\n If MOSEK is not available, try using 'find_ivols_gd' and 'find_ivols_newton' instead of 'find_ivols_em'.",
+            "\n If MOSEK is not available, try using 'estim_gd' and 'estim_newton' instead of 'estim_em'.",
             "\n See the help entries for more information.") )
     if (!requireNamespace("Matrix", quietly = TRUE))
         stop("\n Could not find package 'Matrix'.")
@@ -382,7 +416,7 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
-        data <- conivol::prepare_data(d, m_samp)
+        data <- conivol::prepare_em(d, m_samp)
 
     # decide whether v0 or vd should/have to be extrapolated, add Machine epsilon
     # if extrapolation is necessary but prohibited
@@ -398,11 +432,11 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     if (length(v_init)==d+1)
         v <- v_init
     else {
-        est <- conivol::estimate_statdim_var(d, m_samp)
-        v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
+        est <- conivol::estim_statdim_var(d, m_samp)
+        v <- conivol::init_ivols(d,init_mode,delta=est$delta,var=est$var)
     }
     out_iterates[1, ] <- v
-    out_loglike[1] <- comp_loglike(v,data)
+    out_loglike[1] <- loglike_ivols(v,data)
 
     # prepare Mosek inputs
     mos_inp <- .create_mosek_input_em(rep(0,d+1),extrap_pol,extrap_prim,selfdual)
@@ -488,16 +522,16 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
         }
 
         out_iterates[i+1, ] <- v
-        out_loglike[i+1] <- comp_loglike(v,data)
+        out_loglike[i+1] <- loglike_ivols(v,data)
     }
 
     return(list(iterates=out_iterates, loglike=out_loglike))
 }
 
 
-#' Finding the weights of the bivariate chi-bar-squared distribution using gradient descent.
+#' Finding the weights of the bivariate chi-bar-squared distribution using gradient descent
 #'
-#' \code{find_ivols_gd} produces gradient descent iterates from a two-column
+#' \code{estim_gd} produces gradient descent iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
 #' distribution, which may or may not (depending on the starting point) converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
@@ -536,11 +570,11 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
 #'
-#' @param data output of \code{prepare_data(d, m_samp)}; this can be called
+#' @param data output of \code{prepare_em(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_gd} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{estim_gd} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute gradient descent-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
@@ -548,16 +582,16 @@ find_ivols_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' find_ivols_gd( 10, m_samp )
-#' find_ivols_gd( 10, m_samp, init_mode=1 )
+#' estim_gd( 10, m_samp )
+#' estim_gd( 10, m_samp, init_mode=1 )
 #'
 #' #@export #(gradient descent doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
-        data <- conivol::prepare_data(d, m_samp)
+        data <- conivol::prepare_em(d, m_samp)
 
     out_iterates <- matrix(0,N+1,d+1)
     out_loglike  <- vector("double", N+1)
@@ -566,11 +600,11 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     if (length(v_init)==d+1)
         v <- v_init
     else {
-        est <- conivol::estimate_statdim_var(d, m_samp)
-        v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
+        est <- conivol::estim_statdim_var(d, m_samp)
+        v <- conivol::init_ivols(d,init_mode,delta=est$delta,var=est$var)
     }
     out_iterates[1, ] <- v
-    out_loglike[1] <- comp_loglike(v,data)
+    out_loglike[1] <- loglike_ivols(v,data)
 
     # decide whether v0 or vd shall be extrapolated
     extrap_prim = (data$prop_prim==0 & extrapolate==0) | extrapolate==1 | extrapolate==3
@@ -632,7 +666,7 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
         }
         out_iterates[i+1, ] <- v
-        # out_loglike[i+1] <- comp_loglike(v,data)
+        # out_loglike[i+1] <- loglike_ivols(v,data)
     }
     return(list(iterates=out_iterates, loglike=out_loglike))
 }
@@ -640,9 +674,9 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 
 
 
-#' Finding the weights of the bivariate chi-bar-squared distribution using Newton's method.
+#' Finding the weights of the bivariate chi-bar-squared distribution using Newton's method
 #'
-#' \code{find_ivols_newton} produces Newton-type iterates from a two-column
+#' \code{estim_newton} produces Newton-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
 #' distribution, which may or may not (depending on the starting point) converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
@@ -681,11 +715,11 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'                 with \code{k=0,...,d}, are enforced. These equations hold for
 #'                 the intrinsic volumes of self-dual cones.
 #'
-#' @param data output of \code{prepare_data(d, m_samp)}; this can be called
+#' @param data output of \code{prepare_em(d, m_samp)}; this can be called
 #'              outside and passed as input to avoid re-executing this
 #'              potentially time-consuming step.
 #'
-#' @return The output of \code{find_ivols_newton} is a list of an \code{(N+1)}-by-\code{(d+1)}
+#' @return The output of \code{estim_newton} is a list of an \code{(N+1)}-by-\code{(d+1)}
 #'         matrix whose rows constitute Newton-type iterates, which may or may not
 #'         converge to the maximum likelihood estimate of the mixing weights of
 #'         the bivariate chi-bar-squared distribution, and the corresponding values
@@ -693,16 +727,16 @@ find_ivols_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' @examples
 #' m_samp <- circ_rbichibarsq(10^6,c(5,5),c(pi/3,pi/4))
-#' find_ivols_newton( 10, m_samp )
-#' find_ivols_newton( 10, m_samp, init_mode=1 )
+#' estim_newton( 10, m_samp )
+#' estim_newton( 10, m_samp, init_mode=1 )
 #'
 #' #@export  #(Newton's method doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-find_ivols_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+estim_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                               lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
-        data <- conivol::prepare_data(d, m_samp)
+        data <- conivol::prepare_em(d, m_samp)
 
     out_iterates <- matrix(0,N+1,d+1)
     out_loglike  <- vector("double", N+1)
@@ -711,8 +745,8 @@ find_ivols_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
     if (length(v_init)==d+1)
         v <- v_init
     else {
-        est <- conivol::estimate_statdim_var(d, m_samp)
-        v <- conivol::init_v(d,init_mode,delta=est$delta,var=est$var)
+        est <- conivol::estim_statdim_var(d, m_samp)
+        v <- conivol::init_ivols(d,init_mode,delta=est$delta,var=est$var)
     }
     out_iterates[1, ] <- v
 
@@ -823,7 +857,7 @@ find_ivols_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
             v[I_odd]  <- 0.5 * v[I_odd] /sum(v[I_odd])
         }
         out_iterates[i+1, ] <- v
-        out_loglike[i+1] <- comp_loglike(v,data)
+        out_loglike[i+1] <- loglike_ivols(v,data)
     }
     return(list(iterates=out_iterates, loglike=out_loglike))
 }

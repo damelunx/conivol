@@ -1,7 +1,7 @@
 Package: conivol
 Type: Package
 Title: Conic intrinsic volumes and (bivariate) chi-bar-squared distribution
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: as.person(c(
         "Dennis Amelunxen <damelunx@gmail.com> [aut, cre]",
         "Martin Lotz <lotzma@gmail.com> [aut]"
