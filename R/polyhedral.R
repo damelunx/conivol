@@ -770,6 +770,8 @@ polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA
 #'       for further info.
 #'
 #' @examples
+#' library(rstan)
+#'
 #' # set parameters of cones
 #' D <- c(5,7)
 #' cone_types <- c("BC","BCp")
@@ -787,16 +789,16 @@ polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA
 #' out <- polyh_rivols_ineq(n,A)
 #' str(out)
 #'
-#' # define stan model
+#' # define Stan model
 #' filename <- "ex_stan_model.stan"
 #' staninp <- polyh_stan(out$multsamp, out$dimC, out$linC, prior="informative", filename=filename)
 #'
-#' # run the stan model
+#' # run the Stan model
 #' stanfit <- stan( file = filename, data = staninp$data, chains = 4,
 #'                  warmup = 1000, iter = 2000, cores = 2, refresh = 200 )
 #' str(extract(stanfit))
 #'
-#' # remove stan file
+#' # remove Stan file
 #' file.remove(filename)
 #'
 #' # compare posterior median with true values
