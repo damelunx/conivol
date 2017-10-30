@@ -19,6 +19,20 @@ either from direct samples of the intrinsic volumes distribution
 bivariate chi-bar-squared distribution. The package supports point estimates
 as well as Bayesian estimates via JAGS and Stan.
 }
+\section{(Bivariate) Chi-bar-squared distribution}{
+
+\itemize{
+  \item \code{\link[conivol]{dchibarsq}} / \code{\link[conivol]{pchibarsq}} /
+        \code{\link[conivol]{rchibarsq}}: evaluates the density /
+        evaluates the cumulative distribution function / produces samples
+        of the chi-bar-squared distribution
+  \item \code{\link[conivol]{dbichibarsq}} / \code{\link[conivol]{pbichibarsq}} /
+        \code{\link[conivol]{rbichibarsq}}: evaluates the density /
+        evaluates the cumulative distribution function / produces samples
+        of the bivariate chi-bar-squared distribution
+}
+}
+
 \section{Special classes of cones}{
 
 \itemize{
@@ -39,8 +53,9 @@ as well as Bayesian estimates via JAGS and Stan.
 \section{General polyhedral cones}{
 
 \itemize{
-  \item \code{\link[conivol]{polyh_reduce}}: computes a reduced representation
-                     of a polyhedral cone given by generators
+  \item \code{\link[conivol]{polyh_reduce_gen}} / \code{\link[conivol]{polyh_reduce_ineq}}:
+                     computes a reduced representation
+                     of a polyhedral cone given by generators / inequalities
   \item \code{\link[conivol]{polyh_rivols_gen}} / \code{\link[conivol]{polyh_rivols_ineq}}:
                      produces samples from the intrinsic volumes distribution of
                      a polyhedral cone given by generators / inequalities

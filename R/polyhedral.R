@@ -57,7 +57,7 @@
 
 #' Find a reduced form of a polyhedral cone given by generators
 #'
-#' \code{polyh_reduce} takes as input a \code{n} by \code{m} matrix \code{A}
+#' \code{polyh_reduce_gen} takes as input a \code{n} by \code{m} matrix \code{A}
 #' and returns a reduced form described by orthogonal bases for lineality space
 #' and linear span, as well as a matrix generating the reduced cone.
 #'
@@ -65,7 +65,7 @@
 #' @param solver either "nnls" or "mosek"
 #' @param tol tolerance (single precision machine epsilon by default)
 #'
-#' @return The output of \code{polyh_reduce(A)} is a list containing the following elements:
+#' @return The output of \code{polyh_reduce_gen(A)} is a list containing the following elements:
 #' \itemize{
 #'   \item \code{dimC}: the dimension of the linear span of \code{C},
 #'   \item \code{linC}: the lineality of the cone \code{C},
@@ -78,6 +78,7 @@
 #' }
 #'
 #' @section See also:
+#' \code{\link[conivol]{polyh_reduce_ineq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -89,15 +90,15 @@
 #' A <- A[,sample(ncol(A))]
 #' print(A)
 #'
-#' A_red <- polyh_reduce(A)$A_reduced
+#' A_red <- polyh_reduce_gen(A)$A_reduced
 #' print(A_red)
 #'
-#' A_red <- polyh_reduce(A, solver="mosek")$A_reduced
+#' A_red <- polyh_reduce_gen(A, solver="mosek")$A_reduced
 #' print(A_red)
 #'
 #' @export
 #'
-polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
+polyh_reduce_gen <- function(A, solver="nnls", tol=1e-7) {
     if (solver=="nnls") {
         if (!requireNamespace("nnls", quietly = TRUE))
             stop("\n Could not find package 'nnls'.")
@@ -171,6 +172,62 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
         }
     }
     return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A[,is_relevant] ) )
+}
+
+
+
+#' Find a reduced form of a polyhedral cone given by inequalities
+#'
+#' \code{polyh_reduce_ineq} takes as input a \code{n} by \code{m} matrix \code{A}
+#' and returns a reduced form described by orthogonal bases for lineality space
+#' and linear span, as well as a matrix for the inequalities of the reduced cone.
+#'
+#' @param A matrix
+#' @param solver either "nnls" or "mosek"
+#' @param tol tolerance (single precision machine epsilon by default)
+#'
+#' @return The output of \code{polyh_reduce_ineq(A)} is a list containing the following elements:
+#' \itemize{
+#'   \item \code{dimC}: the dimension of the linear span of \code{C},
+#'   \item \code{linC}: the lineality of the cone \code{C},
+#'   \item \code{QL}: an orthogonal basis of the lineality space of \code{C},
+#'                    set to \code{NA} if lineality space is zero-dimensional,
+#'   \item \code{QC}: an orthogonal basis of the projection of \code{C} onto
+#'                    the orthogonal complement of the lineality space of \code{C},
+#'                    set to \code{NA} if \code{C} is a linear space,
+#'   \item \code{A_reduced}: a matrix defining the reduced cone.
+#' }
+#'
+#' @section See also:
+#' \code{\link[conivol]{polyh_reduce_gen}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
+#'
+#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#'       for further info.
+#'
+#' @examples
+#' A <- cbind(diag(1,3),diag(1,3)+matrix(1,ncol=3,nrow=3),c(-1,0,0))
+#' A <- A[,sample(ncol(A))]
+#' print(A)
+#'
+#' A_red <- polyh_reduce_ineq(A)$A_reduced
+#' print(A_red)
+#'
+#' A_red <- polyh_reduce_ineq(A, solver="mosek")$A_reduced
+#' print(A_red)
+#'
+#' @export
+#'
+polyh_reduce_ineq <- function(A, solver="nnls", tol=1e-7) {
+    d <- dim(A)[1]
+    out <- polyh_reduce_gen(A, solver=solver, tol=tol)
+    dimCpol <- out$dimC
+    linCpol <- out$linC
+
+    out$dimC <- d-linCpol
+    out$linC <- d-dimCpol
+    return(out)
 }
 
 
@@ -254,7 +311,7 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
         stop("\n Input is not a matrix.")
 
     if (reduce) {
-        red <- polyh_reduce(A, solver=solver, tol=tol)
+        red <- polyh_reduce_gen(A, solver=solver, tol=tol)
         dimC <- red$dimC
         if (dimC==0)
             return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
@@ -453,7 +510,7 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
         stop("\n Input is not a matrix.")
 
     if (reduce) {
-        red <- polyh_reduce(A, solver=solver, tol=tol)
+        red <- polyh_reduce_gen(A, solver=solver, tol=tol)
         dimC <- red$dimC
         if (dimC==0)
             return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
