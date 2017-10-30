@@ -12,7 +12,6 @@
 #' bivariate chi-bar-squared distribution. The package supports point estimates
 #' as well as Bayesian estimates via JAGS and Stan.
 #'
-#'
 #' @section (Bivariate) Chi-bar-squared distribution:
 #' \itemize{
 #'   \item \code{\link[conivol]{dchibarsq}} / \code{\link[conivol]{pchibarsq}} /
