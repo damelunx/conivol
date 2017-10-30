@@ -309,8 +309,13 @@ init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'
 #' \code{estim_em} produces EM-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
-#' distribution, which may or may not (depending on the starting point) converge
+#' distribution.
+#'
+#' The sequence of iterates may or may not converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
+#' Log-concavity of the intrinsic volumes is enforced by projecting the logarithms
+#' onto the cone of log-concave sequences; this can be turned off by setting
+#' \code{no_of_lcc_projections=0}.
 #'
 #' @param d the dimension of the bivariate chi-bar squared distribution.
 #' @param m_samp two-column matrix whose rows from iid samples from a bivariate
