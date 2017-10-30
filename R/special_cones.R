@@ -74,12 +74,13 @@ circ_ivols <- function(d, alpha, product = FALSE) {
 #' vector \code{a in R^(d-1)} such that the cone \code{A*L}, where \code{L=\{x in R^d | x_d >= ||x||\}},
 #' is isometric to the cone \code{\{x in R^d | x_d >= sum_(j=1)^(d-1) x_j^2/a_j^2\}}.
 #'
+#' @section See also:
+#' \code{\link[conivol]{ellips_rbichibarsq}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @note See \href{../doc/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
 #'       for further info.
-#'
-#' @section See also:
-#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
 #' A <- matrix(c(2,3,5,7,11,13,17,19,23),3,3)
@@ -229,6 +230,7 @@ ellips_rbichibarsq <- function(n,A, semiax = TRUE) {
 #'
 #' \code{weyl_matrix} computes a matrix representation of the (polars of)
 #' Weyl chambers of finite reflection groups of type A, BC, and D.
+#'
 #' The dimensions and types are given
 #' in the vectors \code{d} and \code{cone_type} (vectors must be of same lengths,
 #' entries of \code{conetype} must be 'A', 'BC', 'D', 'Ap', 'BCp', or 'Dp').
@@ -322,6 +324,7 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
 #'
 #' \code{weyl_ivols} computes the conic intrinsic volumes of (polars of)
 #' Weyl chambers of finite reflection groups of type A, BC, D.
+#'
 #' The dimensions and types are given
 #' in the vectors \code{d} and \code{cone_type} (vectors must be of same lengths,
 #' entries of \code{conetype} must be 'A', 'BC', 'D', 'Ap', 'BCp', or 'Dp').

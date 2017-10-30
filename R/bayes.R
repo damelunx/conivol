@@ -4,6 +4,9 @@
 #' for sampling from the posterior distribution,
 #' given samples of the bivariate chi-bar-squared distribution.
 #'
+#' For the JAGS models enforcing log-concavity is not supported; use the
+#' analogous Stan model instead, provided by \code{\link[conivol]{estim_stan}}.
+#'
 #' @param samples N-by-2 matrix representing independent samples from the
 #'                bivariate chi-bar-squared distribution of a convex cone
 #' @param d the dimension of the ambient space
@@ -335,6 +338,10 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
 #' \code{estim_stan} generates inputs for Stan (data list and model string or external file)
 #' for sampling from the posterior distribution,
 #' given samples of the bivariate chi-bar-squared distribution.
+#'
+#' If \code{enforce_logconc==TRUE} then the prior distribution is taken on the
+#' log-concavity parameters (second iterated differences of the logarithms of the intrinsic volumes),
+#' which enforces log-concavity of the intrinsic volumes.
 #'
 #' @param samples N-by-2 matrix representing independent samples from the
 #'                bivariate chi-bar-squared distribution of a convex cone

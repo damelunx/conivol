@@ -60,7 +60,6 @@
 #' \code{polyh_reduce} takes as input a \code{n} by \code{m} matrix \code{A}
 #' and returns a reduced form described by orthogonal bases for lineality space
 #' and linear span, as well as a matrix generating the reduced cone.
-#' See below for more details.
 #'
 #' @param A matrix
 #' @param solver either "nnls" or "mosek"
@@ -179,12 +178,15 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
 #' Sample from bivariate chi-bar-squared distribution of a polyhedral cone given by generators
 #'
 #' \code{polyh_rbichibarsq_gen} generates an \code{n} by \code{2} matrix
-#' such that the rows form iid samples from the bivariate chi-bar-squared
-#' distribution of the polyhedral cone given by generators, that is, in the
-#' form \code{{Ax|x>=0}}. If \code{reduce==TRUE}, which is the default, then a
+#' such that the rows form iid samples from a bivariate chi-bar-squared
+#' distribution.
+#'
+#' The bivariate chi-bar-squared distribution correponds to
+#' the polyhedral cone given by the generator matrix \code{A}, that is, it is of the
+#' form \code{{Ax|x>=0}}. If \code{reduce==TRUE} (default), then a
 #' reduced form of the cone will be computed and the bivariate chi-bar-squared
 #' distribution will correspond to the reduced form, and the output will contain
-#' further elements (in form of a list), see below.
+#' further elements (in form of a list).
 #'
 #' @param n number of samples
 #' @param A matrix
@@ -219,8 +221,7 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_rbichibarsq_ineq}}, \code{\link[conivol]{rbichibarsq}},
-#' \code{\link[conivol]{circ_rbichibarsq}}
+#' \code{\link[conivol]{polyh_rbichibarsq_ineq}}, \code{\link[conivol]{rbichibarsq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -297,11 +298,14 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'
 #' \code{polyh_rbichibarsq_ineq} generates an \code{n} by \code{2} matrix
 #' such that the rows form iid samples from the bivariate chi-bar-squared
-#' distribution of the polyhedral cone given by inequalities, that is, in the
-#' form \code{{y|A^Ty<=0}}. If \code{reduce==TRUE}, which is the default, then a
+#' distribution.
+#'
+#' The bivariate chi-bar-squared distribution correponds to
+#' the polyhedral cone given by the inequality matrix \code{A}, that is, it is of the
+#' form \code{{y|A^Ty<=0}}. If \code{reduce==TRUE} (default), then a
 #' reduced form of the cone will be computed and the bivariate chi-bar-squared
 #' distribution will correspond to the reduced form, and the output will contain
-#' further elements (in form of a list), see below.
+#' further elements (in form of a list).
 #'
 #' @param n number of samples
 #' @param A matrix
@@ -334,8 +338,7 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'         set to \code{NA} if \code{C} is a linear space.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_rbichibarsq_gen}}, \code{\link[conivol]{rbichibarsq}},
-#' \code{\link[conivol]{circ_rbichibarsq}}
+#' \code{\link[conivol]{polyh_rbichibarsq_gen}}, \code{\link[conivol]{rbichibarsq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -375,11 +378,14 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #' Sample from intrinsic volumes distribution of a polyhedral cone given by generators
 #'
 #' \code{polyh_rivols_gen} generates a vector of iid samples from the intrinsic
-#' volumes distribution, that is, the distribution on \code{{0,1,...,d}} with the
+#' volumes distribution.
+#'
+#' The samples are from the intrinsic volumes distribution, which is the
+#' distribution on \code{{0,1,...,d}} with the
 #' probability for \code{k} given by \code{v_k(C)}, where \code{C} is the
 #' polyhedral cone by the generator matrix \code{A}, that is, \code{C={Ax|x>=0}}.
-#' If \code{reduce==TRUE}, which is the default, then a
-#' reduced form of the cone will be computed and returned, see below;
+#' If \code{reduce==TRUE} (default), then a
+#' reduced form of the cone will be computed and returned;
 #' however, the intrinsic volumes distribution will be that of the original
 #' (non-reduced) cone.
 #'
@@ -495,11 +501,14 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #' Sample from intrinsic volumes distribution of a polyhedral cone given by inequalities
 #'
 #' \code{polyh_rivols_ineq} generates a vector of iid samples from the intrinsic
-#' volumes distribution, that is, the distribution on \code{{0,1,...,d}} with the
+#' volumes distribution.
+#'
+#' The samples are from the intrinsic volumes distribution, which is
+#' the distribution on \code{{0,1,...,d}} with the
 #' probability for \code{k} given by \code{v_k(C)}, where \code{C} is the
 #' polyhedral cone by the inequalities matrix \code{A}, that is, \code{C={y|A^Ty<=0}}.
-#' If \code{reduce==TRUE}, which is the default, then a
-#' reduced form of the cone will be computed and returned, see below;
+#' If \code{reduce==TRUE} (default), then a
+#' reduced form of the cone will be computed and returned;
 #' however, the intrinsic volumes distribution will be that of the original
 #' (non-reduced) cone.
 #'
@@ -733,6 +742,7 @@ polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA
 #' \code{polyh_stan} generates inputs for Stan (data list and model string or external file)
 #' for sampling from the posterior distribution,
 #' given direct (multinomial) samples of the intrinsic volumes distribution.
+#'
 #' The prior distribution is taken on the log-concavity parameters
 #' (second iterated differences of the logarithms of the intrinsic volumes),
 #' which enforces log-concavity of the intrinsic volumes.

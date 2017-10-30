@@ -2,9 +2,15 @@
 #'
 #' The conivol package provides functions for the chi-bar-squared distribution,
 #' the bivariate chi-bar-squared distribution, and the conic intrinsic volumes.
-#' Its main function is an estimator for the weights (conic intrinsic volumes)
-#' of the bivariate chi-bar-squared distribution from sample data,
-#' based on the expectation maximization (EM) method.
+#'
+#' \code{conivol} supports standard functions for the density/cdf/sampling of the (bivariate)
+#' chi-bar-squared distribution, calculations and known formulas for special classes
+#' of intrinsic volumes of cones, sampling functions for ellipsoidal cones and
+#' general polyhedral cones, as well as functions for estimating intrinsic volumes
+#' either from direct samples of the intrinsic volumes distribution
+#' (in the case of polyhedral cones) or from samples of the corresponding
+#' bivariate chi-bar-squared distribution. The package supports point estimates
+#' as well as Bayesian estimates via JAGS and Stan.
 #'
 #'
 #' @section (Bivariate) Chi-bar-squared distribution:
@@ -36,8 +42,9 @@
 #'
 #' @section General polyhedral cones:
 #' \itemize{
-#'   \item \code{\link[conivol]{polyh_reduce}}: computes a reduced representation
-#'                      of a polyhedral cone given by generators
+#'   \item \code{\link[conivol]{polyh_reduce_gen}} / \code{\link[conivol]{polyh_reduce_ineq}}:
+#'                      computes a reduced representation
+#'                      of a polyhedral cone given by generators / inequalities
 #'   \item \code{\link[conivol]{polyh_rivols_gen}} / \code{\link[conivol]{polyh_rivols_ineq}}:
 #'                      produces samples from the intrinsic volumes distribution of
 #'                      a polyhedral cone given by generators / inequalities
@@ -80,18 +87,22 @@
 #'                      given samples of the bivariate chi-bar-squared distribution
 #' }
 #'
-#'
-#' @section Vignettes:
-#' \itemize{
-#'   \item \href{../doc/conic-intrinsic-volumes.html}{conic-intrinsic-volumes}:
-#'         introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions
-#'   \item \href{../doc/estim-conic-intrinsic-volumes-with-EM.html}{estim-conic-intrinsic-volumes-with-EM}:
+#' @section See also:
+#' \describe{
+#'   \item{github}{\href{https://github.com/damelunx/conivol}{github.com/damelunx/conivol}}
+#'   \item{vignette}{\href{../doc/conic-intrinsic-volumes.html}{Conic intrinsic
+#'         volumes and (bivariate) chi-bar-squared distribution}:
+#'         introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions,
+#'         as well as the computations involving polyhedral cones}
+#'   \item{vignette}{\href{../doc/estim-conic-intrinsic-volumes-with-EM.html}{Estimating conic intrinsic volumes via EM algorithm}:
 #'         describes the details of the algorithm for finding the intrinsic volumes of closed
-#'         convex cones from samples of the associated bivariate chi-bar-squared distribution
-#'   \item \href{../doc/bayesian.html}{bayesian}:
-#'         describes the Bayesian approach for evaluating sampling data, either from
-#'         the intrinsic volumes distribution or from the chi-bar-squared distribution,
-#'         and with or without enforcing log-concavity for the intrinsic volumes
+#'         convex cones from samples of the associated bivariate chi-bar-squared distribution}
+#'   \item{vignette}{\href{../doc/bayesian.html}{Bayesian estimates for conic intrinsic volumes}:
+#'         describes the Bayesian approach for reconstructing intrinsic volumes
+#'         from sampling data, which can either be samples from the intrinsic
+#'         volumes distribution (in the case of polyhedral cones), or from the
+#'         bivariate chi-bar-squared distribution, and which can be with or without
+#'         enforcing log-concavity of the intrinsic volumes}
 #' }
 #'
 #' @docType package
