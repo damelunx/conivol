@@ -1,42 +1,51 @@
-conivol: A package for the (bivariate) chi-bar-squared distribution and conic intrinsic volumes
+conivol: An R package for the (bivariate) chi-bar-squared distribution and conic intrinsic volumes
 ================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 This R package provides functions for the chi-bar-squared distribution, the bivariate chi-bar-squared distribution, and the conic intrinsic volumes. It supports standard functions for the density/cdf/sampling of the (bivariate) chi-bar-squared distribution, calculations and known formulas for special classes of intrinsic volumes of cones, sampling functions for ellipsoidal cones and general polyhedral cones, as well as functions for estimating intrinsic volumes either from direct samples of the intrinsic volumes distribution (in the case of polyhedral cones) or from samples of the corresponding bivariate chi-bar-squared distribution. The package supports point estimates as well as Bayesian estimates via JAGS and Stan.
-
-asdfadsf
-
-The conivol package provides functions for the chi-bar-squared distribution, the bivariate chi-bar-squared distribution, and the conic intrinsic volumes. Its main function is an estimator for the weights (conic intrinsic volumes) of the bivariate chi-bar-squared distribution from sample data, based on the expectation maximization (EM) method.
 
 Installation
 ------------
 
 You can install conivol from github with:
 
-``` r
-# install.packages("devtools")
-devtools::install_github("damelunx/conivol")
-```
-
+<!-- {r gh-installation, eval = FALSE} -->
+<!-- # install.packages("devtools") -->
+<!-- devtools::install_github("damelunx/conivol") -->
 Functions
 ---------
 
 The following functions are exported (sorted by context):
 
-### Chi-bar-squared distribution
+### (Bivariate) Chi-bar-squared distribution:
 
--   `dchibarsq`: evaluates the density
--   `pchibarsq`: evaluates the cumulative distribution function
--   `rchibarsq`: produces samples
+-   `dchibarsq`, `pchibarsq`, `rchibarsq`: evaluates the density / evaluates the cumulative distribution function / produces samples of the chi-bar-squared distribution
+-   `dbichibarsq`, `pbichibarsq`, `rbichibarsq`: evaluates the density / evaluates the cumulative distribution function / produces samples of the bivariate chi-bar-squared distribution
 
-<!-- See [this vignette](vignettes/conic-intrinsic-volumes.html) for more information about the chi-bar-squared distribution. -->
-### Bivariate chi-bar-squared distribution
+### Special classes of cones:
 
--   `dbichibarsq`: evaluates the density
--   `pbichibarsq`: evaluates the cumulative distribution function
--   `rbichibarsq`: produces samples
+-   `prod_ivols`: computes the intrinsic volumes of a product cone by convolving the intrinsic volumes of its elements
+-   `circ_ivols`: computes the intrinsic volumes of (a product of) circular cones
+-   `ellips_semiax`, `ellips_rbichibarsq`: computes the semiaxes / produces samples from the bivariate chi-bar-squared distribution of an ellipsoidal cone
+-   `weyl_matrix`, `weyl_ivols`: computes a matrix representation / computes the intrinsic volumes of (a product of) Weyl chambers
 
-<!-- See [this vignette](vignettes/conic-intrinsic-volumes.html) for more information about the bivariate chi-bar-squared distribution. -->
+### General polyhedral cones:
+
+-   `polyh_reduce_gen`, `polyh_reduce_ineq`: compute a reduced representation of a polyhedral cone given by generators / inequalities
+-   `polyh_rivols_gen`, `polyh_rivols_ineq`: produce samples from the intrinsic volumes distribution of a polyhedral cone given by generators / inequalities
+-   `polyh_rbichibarsq_gen`, `polyh_rbichibarsq_ineq`: produce samples from the bivariate chi-bar-squared distribution with weights given by the conic intrinsic volumes of a polyhedral cone given by generators / inequalities
+-   `polyh_bayes`: generates functions for computing quantiles of marginals of the posterior distribution and for sampling from the posterior distribution, given samples of the intrinsic volumes distribution (based on analytic solution)
+-   `polyh_stan`: generates inputs for Stan (data list and model string or external file) for sampling from the posterior distribution, given samples of the intrinsic volumes distribution using a model that naturally implies log-concavity (and cannot be solved analytically)
+
+### Estimating the weights of the bivariate chi-bar-squared distribution:
+
+-   `estim_statdim_var`: estimates the statistical dimension and the variance of the intrinsic volumes from samples of the corresponding bivariate chi-bar-squared distribution
+-   `init_ivols`: find an initial estimate of the weights, potentially based on first and/or second moment
+-   `loglike_ivols`: compute the log-likelihood of a weight vector for specific sample data
+-   `prepare_em`: evaluates the sample data of the bivariate chi-bar-squared data (find the corresponding chi-squared density values)
+-   `estim_em`: produces EM-type iterates that may or may not converge to the maximum likelihood estimate for the weights of the bivariate chi-bar-squared distribution from sample data
+-   `estim_jags`, `estim_stan`: generates inputs for JAGS / Stan (data list and model string or external file) for sampling from the posterior distribution of the intrinsic volumes, given samples of the bivariate chi-bar-squared distribution
+
 ### Computing with conic intrinsic volumes
 
 -   `comp_ivols_product`: computes the intrinsic volumes of a product cone by convolving the intrinsic volumes of its elements
