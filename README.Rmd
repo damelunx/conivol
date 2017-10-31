@@ -8,7 +8,7 @@ output: github_document
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "\n##",
+  comment = "#>",
   fig.path = "README_figures/"
 )
 ```
@@ -26,32 +26,121 @@ as well as Bayesian estimates via JAGS and Stan.
 
 ## Installation
 
-You can install conivol from github with:
+You can install `conivol` from github with:
 
-<!-- {r gh-installation, eval = FALSE} -->
-<!-- # install.packages("devtools") -->
-<!-- devtools::install_github("damelunx/conivol") -->
+```{r gh-installation, eval = FALSE}
+# install.packages("devtools")
+devtools::install_github("damelunx/conivol")
+```
+
+## Vignettes
+
+The following vignettes introduce the theory of intrinsic volumes, explain the
+idea behind the algorithm to reconstruct the intrinsic volumes from samples
+of the bivariate chi-bar-squared distribution, and the Bayesian approach
+to this reconstruction.
+
+* [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](../doc/conic-intrinsic-volumes.html):
+    introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions,
+    as well as the computations involving polyhedral cones
+* [Estimating conic intrinsic volumes via EM algorithm](../doc/estim-conic-intrinsic-volumes-with-EM.html):
+    describes the details of the algorithm for finding the intrinsic volumes of closed
+    convex cones from samples of the associated bivariate chi-bar-squared distribution
+* [Bayesian estimates for conic intrinsic volumes](../doc/bayesian.html):
+    describes the Bayesian approach for reconstructing intrinsic volumes
+    from sampling data, which can either be samples from the intrinsic
+    volumes distribution (in the case of polyhedral cones), or from the
+    bivariate chi-bar-squared distribution, and which can be with or without
+    enforcing log-concavity of the intrinsic volumes
 
 ## Functions
 
-The following functions are exported (sorted by context):
+In the following we list up the functions that are exported in the package
+(sorted by context), and include some examples to illustrate their use.
+See the above vignettes for more details about the underlying theory and algorithms.
 
 ### (Bivariate) Chi-bar-squared distribution:
-* `dchibarsq`, `pchibarsq`, `rchibarsq`: evaluates the density /
-  evaluates the cumulative distribution function / produces samples
-  of the chi-bar-squared distribution
-* `dbichibarsq`, `pbichibarsq`, `rbichibarsq`: evaluates the density /
-  evaluates the cumulative distribution function / produces samples
-  of the bivariate chi-bar-squared distribution
+
+`conivol` provides the standard support of the distributions (chi-bar-squared
+and bivariate chi-bar-squared) in the form of functions for the densities,
+cumulative distribution functions, and sampling methods:
+
+* `dchibarsq`, `dbichibarsq`: evaluate the densities of (bivariate) chi-bar-squared
+    distributions,
+* `pchibarsq`, `pbichibarsq`: evaluate the dumulative distribution functions of
+    (bivariate) chi-bar-squared distributions,
+* `rchibarsq`, `rbichibarsq`: produce samples of the (bivariate) chi-bar-squared
+    distributions.
+
+```{r load-pkgs, include=FALSE}
+library(conivol)
+library(tidyverse)
+```
+
+**Usage:**
+```{r ex-biv-chi-bar-sq}
+# vector of weights
+v <- rep(1,8)/8
+
+# points to evaluate densities/cdfs (in the bavariate case two-column matrix)
+x <- 0:10
+xmat <- matrix(c(0:10,0:10),ncol=2)
+
+# evaluate densities
+dchibarsq(x, v)
+dbichibarsq(xmat, v)
+
+# evaluate cdfs
+pchibarsq(x, v)
+pbichibarsq(xmat, v)
+
+# draw samples
+rchibarsq(10,v)
+rbichibarsq(10,v)
+```
 
 ### Special classes of cones:
+
+Some special classes of cones admit a direct computation of intrinsic volumes
+or a particularly simple sampling procedure for the bivariate chi-bar-squared
+distribution. These situations are covered by the following functions:
+
 * `prod_ivols`: computes the intrinsic volumes of a product cone
-    by convolving the intrinsic volumes of its elements
-* `circ_ivols`: computes the intrinsic volumes of (a product of) circular cones
+    by convolving the intrinsic volumes of its elements,
+* `circ_ivols`: computes the intrinsic volumes of (a product of) circular cones,
 * `ellips_semiax`, `ellips_rbichibarsq`: computes the semiaxes / produces samples
-    from the bivariate chi-bar-squared distribution of an ellipsoidal cone
+    from the bivariate chi-bar-squared distribution of an ellipsoidal cone,
 * `weyl_matrix`, `weyl_ivols`: computes a matrix representation / computes the
-    intrinsic volumes of (a product of) Weyl chambers
+    intrinsic volumes of (a product of) Weyl chambers.
+
+It is worth pointing out that with the class of direct product of Weyl chambers
+we obtain an interesting family of cones for which we have exact formulas;
+the same remark applies to the family of direct products of circular cones.
+We will use these functions to test the reconstruction algorithms.
+Ellipsoidal cones do not admit (simple) direct calculations of its intrinsic
+volumes.
+
+**Usage:**
+```{r ex-spec-cones}
+# the intrinsic volumes of the 4-dimensional circular cone of radius pi/4 a.k.a. Lorentz cone
+circ_ivols(4,pi/4)
+
+# the intrinsic volumes of the direct product of two 4-dimensional Lorentz cones
+prod_ivols( list(circ_ivols(4,pi/4), circ_ivols(4,pi/4)) )
+
+# computing the semiaxes of the ellipsoidal cone given by the linear image of the Lorentz cone
+A <- matrix(sample(1:25),5,5)
+ellips_semiax(A)
+
+# draw samples of the bivariate chi-bar-squared distribution of the ellipsoidal cone
+ellips_rbichibarsq(10, A)
+
+# compute the matrix of the product of some Weyl chambers
+weyl_matrix( rep(3,4), c("BC","BCp","D","Dp"), product=TRUE)
+
+# compute the corresponding intrinsic volumes of the above cone
+weyl_ivols( rep(3,4), c("BC","BCp","D","Dp"), product=TRUE)
+```
 
 ### General polyhedral cones:
 * `polyh_reduce_gen`, `polyh_reduce_ineq`: compute a reduced representation
@@ -69,6 +158,11 @@ The following functions are exported (sorted by context):
     intrinsic volumes distribution using a model that naturally implies log-concavity
     (and cannot be solved analytically)
 
+**Usage:**
+```{r ex-polyh}
+# example
+```
+
 ### Estimating the weights of the bivariate chi-bar-squared distribution:
 * `estim_statdim_var`: estimates the statistical dimension and the variance
     of the intrinsic volumes from samples of the corresponding bivariate
@@ -85,65 +179,8 @@ The following functions are exported (sorted by context):
     string or external file) for sampling from the posterior distribution
     of the intrinsic volumes, given samples of the bivariate chi-bar-squared distribution
 
-### Computing with conic intrinsic volumes
-* `comp_ivols_product`: computes the intrinsic volumes of a product cone by convolving the intrinsic volumes of its elements
-* `estimate_statdim_var`: estimates the statistical dimension and the variance of the intrinsic volumes from samples of the corresponding bivariate chi-bar-squared distribution
-
-### Computations involving products of circular cones
-* `circ_ivol`: computes the intrinsic volumes of (a product of) circular cones
-* `circ_rbichibarsq`: produces samples from the bivariate chi-bar-squared distribution with weights given by the conic intrinsic volumes of a product of circular cones
-
-
-### General polyhedral cones
-* `polyh_reduce`: computes a reduced representation of a polyhedral cone given by generators
-* `polyh_samp_ivol_gen`: produces samples from the intrinsic volumes distribution of a polyhedral cone given by generators
-* `polyh_samp_ivol_ineq`: produces samples from the intrinsic volumes distribution of a polyhedral cone given by inequalities
-* `polyh_rbichibarsq_gen`: produces samples from the bivariate chi-bar-squared distribution with weights given by the conic intrinsic volumes of a polyhedral cone given by generators
-* `polyh_rbichibarsq_ineq`: produces samples from the bivariate chi-bar-squared distribution with weights given by the conic intrinsic volumes of a polyhedral cone given by inequalities
-
-### Estimating the weights of the bivariate chi-bar-squared distribution
-* `prepare_data`: evaluates the sample data of the bivariate chi-bar-squared data (find the corresponding chi-squared density values); this potentially time-consuming step is called during find_ivols_EM and can be computed outside and passed as parameter to avoid multiple calls should find_ivols_EM be called more than once
-* `init_v`: find an initial estimate of the weights, potentially based on first and/or second moment
-* `comp_loglike`: compute the log-likelihood of a weight vector for specific sample data
-* `find_ivols_EM`: produces EM-type iterates that may or may not converge to the maximum likelihood estimate for the weights of the bivariate chi-bar-squared distribution from sample data; as the likelihood function is quite flat around its maximum, the function supports several ways to introduce some (well-founded) bias and thus improve the estimate. See the example below and [this vignette](vignettes/estim-conic-intrinsic-volumes-with-EM.html) for a description of this parameter tuning.
-
-## Example
-
-<!-- ```{r echo=FALSE, message=FALSE} -->
-<!-- library(conivol) -->
-<!-- library(Rmosek) -->
-<!-- library(tidyverse) -->
-<!-- ``` -->
-<!-- We consider the product of two circular cones, one 5-dimensional and another -->
-<!-- 8-dimensional. -->
-<!-- ```{r} -->
-<!-- # specify the dimensions -->
-<!-- D <- c(5,8) -->
-<!-- # specify the angles -->
-<!-- alpha <- c( 0.7*pi/2, 0.8*pi/2 ) -->
-<!-- # get the exact intrinsic volumes -->
-<!-- v <- circ_ivol(D, alpha, product = TRUE) -->
-<!-- # plot the values and its logarithms -->
-<!-- d <- sum(D) -->
-<!-- ggplot(tibble(k=0:d, v=v), aes(x=k,y=v)) + -->
-<!--     geom_line() + -->
-<!--     theme_bw() -->
-<!-- ggplot(tibble(k=0:d, `log(v)`=log(v)), aes(x=k,y=`log(v)`)) + -->
-<!--     geom_line() + -->
-<!--     theme_bw() -->
-<!-- ``` -->
-
-<!-- The goal is to reconstruct these values from samples from the bivariate -->
-<!-- chi-bar-squared distribution with the above intrinsic volumes as weights. -->
-<!-- ```{r} -->
-<!-- # set sample size -->
-<!-- n <- 10^5 -->
-<!-- # obtain sample of the specified size -->
-<!-- set.seed(1234) -->
-<!-- m_samp <- circ_rbichibarsq(n,D,alpha) -->
-<!-- # scatter plot of the sample -->
-<!-- ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) + -->
-<!--     theme_bw() + -->
-<!--     theme(axis.title.x=element_blank(),axis.title.y=element_blank()) -->
-<!-- ``` -->
+**Usage:**
+```{r ex-reconstr}
+# example
+```
 

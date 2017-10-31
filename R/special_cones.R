@@ -381,7 +381,7 @@ weyl_ivols <- function(d, cone_type, product = FALSE) {
         } else if (cone_type[i] %in% c("BC","BCp")) {
             v <- as.vector(polynom::poly.calc( -(2*(1:d[i])-1) ))
         } else if (cone_type[i] %in% c("D","Dp")) {
-            v <- as.vector(polynom::poly.calc( -c( d-1, 2*(1:d[i])-3 ) ))
+            v <- as.vector(polynom::poly.calc( -c( d[i]-1, 2*(1:(d[i]-1))-1 ) ))
         }
         if (cone_type[i] %in% c("Ap","BCp","Dp"))
             v <- rev(v)
