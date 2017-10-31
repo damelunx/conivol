@@ -98,7 +98,7 @@ dbichibarsq <- function(x, v) {
             }
         }
 
-        L <- c(I,J,K)
+        L <- -c(I,J,K)
         if ( length(L)>0 )
             out[L] <- colSums( sapply( x[L,1], function(t) dchisq(t,0:d) )
                                * sapply( x[L,2], function(t) dchisq(t,rev(0:d)) )
