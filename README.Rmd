@@ -28,10 +28,10 @@ as well as Bayesian estimates via JAGS and Stan.
 
 You can install conivol from github with:
 
-```{r gh-installation, eval = FALSE}
-# install.packages("devtools")
-devtools::install_github("damelunx/conivol")
-```
+<!-- {r gh-installation, eval = FALSE} -->
+<!-- # install.packages("devtools") -->
+<!-- devtools::install_github("damelunx/conivol") -->
+
 
 ## Functions
 

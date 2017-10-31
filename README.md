@@ -4,20 +4,14 @@ conivol: A package for the (bivariate) chi-bar-squared distribution and conic in
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 This R package provides functions for the chi-bar-squared distribution, the bivariate chi-bar-squared distribution, and the conic intrinsic volumes. It supports standard functions for the density/cdf/sampling of the (bivariate) chi-bar-squared distribution, calculations and known formulas for special classes of intrinsic volumes of cones, sampling functions for ellipsoidal cones and general polyhedral cones, as well as functions for estimating intrinsic volumes either from direct samples of the intrinsic volumes distribution (in the case of polyhedral cones) or from samples of the corresponding bivariate chi-bar-squared distribution. The package supports point estimates as well as Bayesian estimates via JAGS and Stan.
 
-asdfadsf
-
-The conivol package provides functions for the chi-bar-squared distribution, the bivariate chi-bar-squared distribution, and the conic intrinsic volumes. Its main function is an estimator for the weights (conic intrinsic volumes) of the bivariate chi-bar-squared distribution from sample data, based on the expectation maximization (EM) method.
-
 Installation
 ------------
 
 You can install conivol from github with:
 
-``` r
-# install.packages("devtools")
-devtools::install_github("damelunx/conivol")
-```
-
+<!-- {r gh-installation, eval = FALSE} -->
+<!-- # install.packages("devtools") -->
+<!-- devtools::install_github("damelunx/conivol") -->
 Functions
 ---------
 
