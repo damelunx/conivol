@@ -9,18 +9,78 @@ Installation
 
 You can install conivol from github with:
 
-<!-- {r gh-installation, eval = FALSE} -->
-<!-- # install.packages("devtools") -->
-<!-- devtools::install_github("damelunx/conivol") -->
+``` r
+# install.packages("devtools")
+devtools::install_github("damelunx/conivol")
+```
+
+Vignettes
+---------
+
+The following vignettes introduce the theory of intrinsic volumes, explain the idea behind the algorithm to reconstruct the intrinsic volumes from samples of the bivariate chi-bar-squared distribution, and the Bayesian approach to this reconstruction.
+
+-   [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](../doc/conic-intrinsic-volumes.html): introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions, as well as the computations involving polyhedral cones
+-   [Estimating conic intrinsic volumes via EM algorithm](../doc/estim-conic-intrinsic-volumes-with-EM.html): describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples of the associated bivariate chi-bar-squared distribution
+-   [Bayesian estimates for conic intrinsic volumes](../doc/bayesian.html): describes the Bayesian approach for reconstructing intrinsic volumes from sampling data, which can either be samples from the intrinsic volumes distribution (in the case of polyhedral cones), or from the bivariate chi-bar-squared distribution, and which can be with or without enforcing log-concavity of the intrinsic volumes
+
 Functions
 ---------
 
-The following functions are exported (sorted by context):
+In the following we list up the functions that are exported in the package (sorted by context), and include some examples to illustrate their use. See the above vignettes for more details about the underlying theory and algorithms.
 
 ### (Bivariate) Chi-bar-squared distribution:
 
--   `dchibarsq`, `pchibarsq`, `rchibarsq`: evaluates the density / evaluates the cumulative distribution function / produces samples of the chi-bar-squared distribution
--   `dbichibarsq`, `pbichibarsq`, `rbichibarsq`: evaluates the density / evaluates the cumulative distribution function / produces samples of the bivariate chi-bar-squared distribution
+`conivol` provides the standard support of the distributions (chi-bar-squared and bivariate chi-bar-squared) in the form of functions for the densities, cumulative distribution functions, and sampling methods:
+
+-   `dchibarsq`, `dbichibarsq`: evaluate the densities of (bivariate) chi-bar-squared distributions,
+-   `pchibarsq`, `pbichibarsq`: evaluate the dumulative distribution functions of (bivariate) chi-bar-squared distributions,
+-   `rchibarsq`, `rbichibarsq`: produce samples of the (bivariate) chi-bar-squared distributions.
+
+**Usage:**
+
+``` r
+# vector of weights
+v <- rep(1,8)/8
+
+# points to evaluate densities/cdfs (in the bavariate case two-column matrix)
+x <- 0:10
+xmat <- matrix(c(0:10,0:10),ncol=2)
+
+# evaluate densities:
+dchibarsq(x, v)
+#>  [1]        Inf 0.13419199 0.12061209 0.10708571 0.09155903 0.07548244
+#>  [7] 0.06030318 0.04691767 0.03569914 0.02665556 0.01958501
+dbichibarsq(xmat, v)
+#>  [1]          Inf 0.0175809440 0.0182933272 0.0123633200 0.0070024293
+#>  [6] 0.0036001390 0.0017409915 0.0008070907 0.0003627570 0.0001592392
+#> [11] 0.0000686107
+
+# evaluate cdfs:
+pchibarsq(x, v)
+#>  [1] 0.1250000 0.3027630 0.4297465 0.5437900 0.6432281 0.7267271 0.7944988
+#>  [8] 0.8479373 0.8890605 0.9200628 0.9430303
+pbichibarsq(xmat, v)
+#>  [1] 0.000000000 0.001292866 0.010039908 0.028749442 0.055055648
+#>  [6] 0.085009193 0.115062662 0.142780036 0.166851524 0.186835988
+#> [11] 0.202856633
+
+# draw samples
+rchibarsq(10,v)
+#>  [1] 2.1121801 0.0000000 1.2120577 0.7420672 0.9077184 4.2519674 0.0000000
+#>  [8] 1.9902648 1.1891448 1.3105069
+rbichibarsq(10,v)
+#>            [,1]     [,2]
+#>  [1,] 1.2380520 7.450968
+#>  [2,] 5.2617809 0.000000
+#>  [3,] 1.6761319 7.201253
+#>  [4,] 7.4492338 1.172290
+#>  [5,] 6.0487199 2.855874
+#>  [6,] 7.9452104 0.000000
+#>  [7,] 2.5227745 3.167460
+#>  [8,] 1.4987002 0.359360
+#>  [9,] 0.2345424 2.180875
+#> [10,] 2.8772112 6.265570
+```
 
 ### Special classes of cones:
 
