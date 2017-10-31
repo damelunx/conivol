@@ -54,13 +54,13 @@ as well as Bayesian estimates via JAGS and Stan.
 
 \itemize{
   \item \code{\link[conivol]{polyh_reduce_gen}} / \code{\link[conivol]{polyh_reduce_ineq}}:
-                     computes a reduced representation
+                     compute a reduced representation
                      of a polyhedral cone given by generators / inequalities
   \item \code{\link[conivol]{polyh_rivols_gen}} / \code{\link[conivol]{polyh_rivols_ineq}}:
-                     produces samples from the intrinsic volumes distribution of
+                     produce samples from the intrinsic volumes distribution of
                      a polyhedral cone given by generators / inequalities
   \item \code{\link[conivol]{polyh_rbichibarsq_gen}} / \code{\link[conivol]{polyh_rbichibarsq_ineq}}:
-                     produces samples from the bivariate chi-bar-squared distribution
+                     produce samples from the bivariate chi-bar-squared distribution
                      with weights given by the conic intrinsic volumes of
                      a polyhedral cone given by generators / inequalities
   \item \code{\link[conivol]{polyh_bayes}}: generates functions for computing quantiles of marginals
