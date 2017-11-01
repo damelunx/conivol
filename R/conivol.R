@@ -69,9 +69,9 @@
 #'   \item \code{\link[conivol]{estim_statdim_var}}: estimates the statistical dimension and
 #'                      the variance of the intrinsic volumes from samples of the
 #'                      corresponding bivariate chi-bar-squared distribution
-#'   \item \code{\link[conivol]{init_ivols}}: find an initial estimate of the weights, potentially
+#'   \item \code{\link[conivol]{init_ivols}}: finds an initial estimate of the weights, potentially
 #'                      based on first and/or second moment
-#'   \item \code{\link[conivol]{loglike_ivols}}: compute the log-likelihood of a weight vector
+#'   \item \code{\link[conivol]{loglike_ivols}}: computes the log-likelihood of a weight vector
 #'                      for specific sample data
 #'   \item \code{\link[conivol]{prepare_em}}: evaluates the sample data of the bivariate chi-bar-squared
 #'                      data (find the corresponding chi-squared density values)
@@ -80,7 +80,7 @@
 #'                      of the bivariate chi-bar-squared distribution
 #'                      from sample data
 #'   \item \code{\link[conivol]{estim_jags}} / \code{\link[conivol]{estim_stan}}:
-#'                      generates inputs for JAGS / Stan (data list and model
+#'                      generate inputs for JAGS / Stan (data list and model
 #'                      string or external file) for sampling from the posterior distribution
 #'                      of the intrinsic volumes,
 #'                      given samples of the bivariate chi-bar-squared distribution

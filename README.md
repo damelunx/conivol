@@ -17,11 +17,11 @@ devtools::install_github("damelunx/conivol")
 Vignettes
 ---------
 
-The following vignettes introduce the theory of intrinsic volumes, explain the idea behind the algorithm to reconstruct the intrinsic volumes from samples of the bivariate chi-bar-squared distribution, and the Bayesian approach to this reconstruction.
+The following vignettes introduce the theory of intrinsic volumes, explain the idea behind the algorithm to reconstruct the intrinsic volumes from samples of the bivariate chi-bar-squared distribution, and the Bayesian approach to this reconstruction:
 
--   [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](../doc/conic-intrinsic-volumes.html): introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions, as well as the computations involving polyhedral cones
--   [Estimating conic intrinsic volumes via EM algorithm](../doc/estim-conic-intrinsic-volumes-with-EM.html): describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples of the associated bivariate chi-bar-squared distribution
--   [Bayesian estimates for conic intrinsic volumes](../doc/bayesian.html): describes the Bayesian approach for reconstructing intrinsic volumes from sampling data, which can either be samples from the intrinsic volumes distribution (in the case of polyhedral cones), or from the bivariate chi-bar-squared distribution, and which can be with or without enforcing log-concavity of the intrinsic volumes
+-   [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](../doc/conic-intrinsic-volumes.html): introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions, as well as the computations involving polyhedral cones,
+-   [Estimating conic intrinsic volumes via EM algorithm](../doc/estim-conic-intrinsic-volumes-with-EM.html): describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples of the associated bivariate chi-bar-squared distribution,
+-   [Bayesian estimates for conic intrinsic volumes](../doc/bayesian.html): describes the Bayesian approach for reconstructing intrinsic volumes from sampling data, which can either be samples from the intrinsic volumes distribution (in the case of polyhedral cones), or from the bivariate chi-bar-squared distribution, and which can be with or without enforcing log-concavity of the intrinsic volumes.
 
 Functions
 ---------
@@ -66,20 +66,20 @@ pbichibarsq(xmat, v)
 
 # draw samples
 rchibarsq(10,v)
-#>  [1]  1.9015876  0.6895950  2.2166663 10.8245532  0.2753266  1.5769915
-#>  [7]  6.2602288  6.2024380  8.5579200  3.2741277
+#>  [1]  0.80460563  4.65427572  0.05719339 15.05207977  5.97042576
+#>  [6]  0.74863863  3.82451112  1.79022563  3.51235577  2.26288724
 rbichibarsq(10,v)
-#>            [,1]        [,2]
-#>  [1,] 0.6514522 4.024352539
-#>  [2,] 2.7172336 0.752904881
-#>  [3,] 7.0403431 0.478190404
-#>  [4,] 3.0763988 6.895491971
-#>  [5,] 2.0723853 0.001250751
-#>  [6,] 4.0038557 2.302783636
-#>  [7,] 5.8857101 0.093424407
-#>  [8,] 1.3708780 5.814950853
-#>  [9,] 9.1495709 7.722372237
-#> [10,] 3.4028064 0.000000000
+#>            [,1]      [,2]
+#>  [1,]  0.000000  5.590798
+#>  [2,]  2.017354  3.942561
+#>  [3,]  2.922421  3.313866
+#>  [4,]  5.238616  0.000000
+#>  [5,]  0.000000  2.799497
+#>  [6,]  1.808738  9.073667
+#>  [7,]  1.521149  2.133476
+#>  [8,] 10.609806  4.007467
+#>  [9,]  0.000000 14.954660
+#> [10,]  1.200098  3.656913
 ```
 
 ### Special classes of cones:
@@ -108,25 +108,25 @@ prod_ivols( list(circ_ivols(4,pi/4), circ_ivols(4,pi/4)) )
 # computing the semiaxes of the ellipsoidal cone given by the linear image of the Lorentz cone
 A <- matrix(sample(1:25),5,5)
 ellips_semiax(A)
-#> [1] 2.51150104 0.77121314 0.21004809 0.06060375
+#> [1] 3.3729030 1.3909515 0.9096648 0.4252038
 
 # draw samples of the bivariate chi-bar-squared distribution of the ellipsoidal cone
 ellips_rbichibarsq(10, A)
 #> $semiax
-#> [1] 2.51150104 0.77121314 0.21004809 0.06060375
+#> [1] 3.3729030 1.3909515 0.9096648 0.4252038
 #> 
 #> $samples
-#>             [,1]        [,2]
-#>  [1,] 0.20066625  0.67210116
-#>  [2,] 0.82148701  3.30777506
-#>  [3,] 4.12312570  0.67943426
-#>  [4,] 1.51428858  5.02638106
-#>  [5,] 0.07648803  0.25874011
-#>  [6,] 0.67100984  0.06197501
-#>  [7,] 5.61598732 -2.44652633
-#>  [8,] 0.94410240  2.29179224
-#>  [9,] 8.19833778  5.77645619
-#> [10,] 4.57982493 -1.67183722
+#>               [,1]       [,2]
+#>  [1,] 1.082777e-01  2.8594158
+#>  [2,] 9.057058e-01  1.4330456
+#>  [3,] 4.378305e-01  0.2584739
+#>  [4,] 3.497686e+00  4.0218713
+#>  [5,] 8.863945e-01  1.2753309
+#>  [6,] 6.481333e+00 -2.4307809
+#>  [7,] 2.447830e+00  2.5647325
+#>  [8,] 7.488261e+00  1.9254086
+#>  [9,] 3.114847e-01  0.8093269
+#> [10,] 3.076326e-18 12.0337212
 
 # compute the matrix of the product of some Weyl chambers
 weyl_matrix( rep(3,4), c("BC","BCp","D","Dp"), product=TRUE)
@@ -153,29 +153,242 @@ weyl_ivols( rep(3,4), c("BC","BCp","D","Dp"), product=TRUE)
 
 ### General polyhedral cones:
 
--   `polyh_reduce_gen`, `polyh_reduce_ineq`: compute a reduced representation of a polyhedral cone given by generators / inequalities
--   `polyh_rivols_gen`, `polyh_rivols_ineq`: produce samples from the intrinsic volumes distribution of a polyhedral cone given by generators / inequalities
--   `polyh_rbichibarsq_gen`, `polyh_rbichibarsq_ineq`: produce samples from the bivariate chi-bar-squared distribution with weights given by the conic intrinsic volumes of a polyhedral cone given by generators / inequalities
--   `polyh_bayes`: generates functions for computing quantiles of marginals of the posterior distribution and for sampling from the posterior distribution, given samples of the intrinsic volumes distribution (based on analytic solution)
--   `polyh_stan`: generates inputs for Stan (data list and model string or external file) for sampling from the posterior distribution, given samples of the intrinsic volumes distribution using a model that naturally implies log-concavity (and cannot be solved analytically)
+For polyhedral cones we can sample directly from the intrinsic volumes distribution by determining the dimension of the face containing the projection of a random Gaussian vector. Since the result of such a sampling is just a draw from the multinomial distribution, the Bayesian posterior for a Dirichlet prior can be computed analytically. If a more complicated model is used that enforces log-concavity of the intrinsic volumes, then this cannot be solved analytically, but its posterior distribution can still be sampled from via Monte-Carlo methods. The following functions support these computations:
+
+-   `polyh_reduce_gen`, `polyh_reduce_ineq`: compute a reduced representation of a polyhedral cone given by generators / inequalities,
+-   `polyh_rivols_gen`, `polyh_rivols_ineq`: produce samples from the intrinsic volumes distribution of a polyhedral cone given by generators / inequalities,
+-   `polyh_rbichibarsq_gen`, `polyh_rbichibarsq_ineq`: produce samples from the bivariate chi-bar-squared distribution with weights given by the conic intrinsic volumes of a polyhedral cone given by generators / inequalities,
+-   `polyh_bayes`: generates functions for computing quantiles of marginals of the posterior distribution and for sampling from the posterior distribution, given samples of the intrinsic volumes distribution (based on analytic solution),
+-   `polyh_stan`: generates inputs for Stan (data list and model string or external file) for sampling from the posterior distribution, given samples of the intrinsic volumes distribution using a model that naturally implies log-concavity (and cannot be solved analytically).
 
 **Usage:**
 
 ``` r
-# example
+# finding the reduced form of some odd polyhedral cone
+A <- matrix(1:35, 5, 7)
+polyh_reduce_gen(A)
+#> $dimC
+#> [1] 2
+#> 
+#> $linC
+#> [1] 0
+#> 
+#> $QL
+#> [1] NA
+#> 
+#> $QC
+#>            [,1]       [,2]
+#> [1,] -0.4084634 -0.6581472
+#> [2,] -0.4274357 -0.3424890
+#> [3,] -0.4464080 -0.0268309
+#> [4,] -0.4653803  0.2888272
+#> [5,] -0.4843526  0.6044853
+#> 
+#> $A_reduced
+#>           [,1]       [,2]
+#> [1,] -6.885843 -73.847043
+#> [2,]  2.754118  -1.270518
+polyh_reduce_ineq(A)
+#> $dimC
+#> [1] 5
+#> 
+#> $linC
+#> [1] 3
+#> 
+#> $QL
+#> [1] NA
+#> 
+#> $QC
+#>            [,1]       [,2]
+#> [1,] -0.4084634 -0.6581472
+#> [2,] -0.4274357 -0.3424890
+#> [3,] -0.4464080 -0.0268309
+#> [4,] -0.4653803  0.2888272
+#> [5,] -0.4843526  0.6044853
+#> 
+#> $A_reduced
+#>           [,1]       [,2]
+#> [1,] -6.885843 -73.847043
+#> [2,]  2.754118  -1.270518
+
+# sampling from the intrinsic volumes distributions
+# (setting reduce to FALSE since otherwise polyh_reduce_*** would be called)
+polyh_rivols_gen(10, A, reduce=FALSE)
+#> $samples
+#>  [1] 1 1 0 0 0 1 0 0 0 0
+#> 
+#> $multsamp
+#> [1] 7 3 0 0 0 0
+polyh_rivols_ineq(10, A, reduce=FALSE)
+#> $samples
+#>  [1] 5 4 4 5 4 5 5 5 4 5
+#> 
+#> $multsamp
+#> [1] 0 0 0 0 4 6
+
+# computing the Bayesian posterior with Dirichlet prior (analytically solvable)
+# we sample from a product of Weyl chambers to have the true values at hand
+
+W      <- weyl_matrix( rep(4,3), c("BC","D","Dp"), product=TRUE)
+v_true <- weyl_ivols(  rep(4,3), c("BC","D","Dp"), product=TRUE)
+out <- polyh_rivols_ineq(1e3, W)
+
+# evaluate posterior distribution
+bayes_est <- polyh_bayes( out$multsamp, out$dimC, out$linC )
+
+# compare posterior median with true values
+v_est_med <- bayes_est$post_marg_quant(0:12,0.5)
+v_est_med / v
+#> Warning in v_est_med/v: longer object length is not a multiple of shorter
+#> object length
+#>  [1] 3.794281e-05 4.840392e-02 2.840646e-01 9.523162e-01 1.703997e+00
+#>  [6] 2.096752e+00 1.703997e+00 8.610932e-01 2.994985e-01 3.183253e-02
+#> [11] 3.794281e-05 8.330777e-05 3.794281e-05
+sum( (v_est_med-v)^2 )
+#> Warning in v_est_med - v: longer object length is not a multiple of shorter
+#> object length
+#> [1] 0.1415845
+
+# display boxplot of posterior distribution, overlayed with true values
+data <- as.data.frame( bayes_est$post_samp(1e4) )
+colnames(data) <- paste0(rep("V",13),as.character(0:12))
+boxplot( value~key, tidyr::gather( data, factor_key=TRUE ) )
+lines(1+0:12, v_true, col="red")
+lines(1+0:12, v_est_med, col="blue")
+```
+
+![](README_figures/ex-polyh-1.png)
+
+``` r
+# the Bayesian approach using a model that induces log-concavity works with
+# the HMC sampler Stan; see the vignette on the Bayesian estimates for an example
 ```
 
 ### Estimating the weights of the bivariate chi-bar-squared distribution:
 
--   `estim_statdim_var`: estimates the statistical dimension and the variance of the intrinsic volumes from samples of the corresponding bivariate chi-bar-squared distribution
--   `init_ivols`: find an initial estimate of the weights, potentially based on first and/or second moment
--   `loglike_ivols`: compute the log-likelihood of a weight vector for specific sample data
--   `prepare_em`: evaluates the sample data of the bivariate chi-bar-squared data (find the corresponding chi-squared density values)
+When the cone is nonpolyhedral or when sampling from the intrinsic volumes distribution is infeasible (due to high dimensions or numerical issues), one may still try to recover the intrinsic volumes from samples of the bivariate chi-bar-squared distribution. The following functions support estimating the first two moments of the intrinsic volumes distribution and finding coarse estimates from these moments, and finding the maximum likelihood estimate via expectation-maximization. `conivol` also supports using the samplers JAGS and Stan to analyze the posterior distribution of the intrinsic volumes; see the vignette on Bayes estimates for illustrations of the usage of these functions.
+
+-   `estim_statdim_var`: estimates the statistical dimension and the variance of the intrinsic volumes from samples of the corresponding bivariate chi-bar-squared distribution,
+-   `init_ivols`: finds an initial estimate of the weights, potentially based on first and/or second moment,
+-   `loglike_ivols`: computes the log-likelihood of a weight vector for specific sample data
+-   `prepare_em`: evaluates the sample data of the bivariate chi-bar-squared data (find the corresponding chi-squared density values),
 -   `estim_em`: produces EM-type iterates that may or may not converge to the maximum likelihood estimate for the weights of the bivariate chi-bar-squared distribution from sample data
--   `estim_jags`, `estim_stan`: generates inputs for JAGS / Stan (data list and model string or external file) for sampling from the posterior distribution of the intrinsic volumes, given samples of the bivariate chi-bar-squared distribution
+-   `estim_jags`, `estim_stan`: generate inputs for JAGS / Stan (data list and model string or external file) for sampling from the posterior distribution of the intrinsic volumes, given samples of the bivariate chi-bar-squared distribution
 
 **Usage:**
 
 ``` r
-# example
+# sample from the bivariate chi-bar-squared distribution of a product of circular cones
+v_true <- circ_ivols( c(5,8), c(0.7*pi/2, 0.8*pi/2), product=TRUE)
+m_samp <- rbichibarsq(1e5, v_true)
+d <- 13
+
+# scatter plot of the sample
+ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
+    theme_bw() +
+    theme(axis.title.x=element_blank(),axis.title.y=element_blank())
 ```
+
+![](README_figures/ex-reconstr-1.png)
+
+``` r
+# estimate the moments of the intrinsic volumes, compare with true values
+est <- estim_statdim_var(d, m_samp)
+print(est)
+#> $delta
+#> [1] 9.989176
+#> 
+#> $var
+#> [1] 2.791546
+list( statdim_true=sum((0:d)*v_true),
+      var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
+#> $statdim_true
+#> [1] 9.997038
+#> 
+#> $var_true
+#> [1] 2.651605
+
+# prepare data for computing log-likelihoods and for EM estimate
+data <- prepare_em(d, m_samp)
+
+# find initial estimates of intrinsic volumes based on moments
+v_init <- tibble( v_est_0 = init_ivols(13,0),
+                  v_est_1 = init_ivols(13,1,est$delta,est$var),
+                  v_est_4 = init_ivols(13,4,est$delta,est$var) )
+
+# compute log-likelihoods of initial estimates
+lapply( v_init, loglike_ivols, data, 0)
+#> $v_est_0
+#> [1] -5.481136
+#> 
+#> $v_est_1
+#> [1] -4.976702
+#> 
+#> $v_est_4
+#> [1] -4.980951
+
+# plot the different estimates and their logarithms
+tib_plot <- v_init %>% add_column(v_true=v_true,.before=1) %>%
+    add_column(k=0:d,.before=1) %>% gather(mode,value,2:5)
+ggplot(tib_plot, aes(x=k, y=value, color=mode)) +
+    geom_line() + theme_bw()
+```
+
+![](README_figures/ex-reconstr-2.png)
+
+``` r
+ggplot(tib_plot, aes(x=k, y=log(value), color=mode)) +
+    geom_line() + theme_bw()
+```
+
+![](README_figures/ex-reconstr-3.png)
+
+``` r
+# computing some iterates of the EM algorithm
+em0 <- estim_em( d, m_samp, N=200, init_mode=0, data=data)
+em1 <- estim_em( d, m_samp, N=200, init_mode=1, data=data)
+em4 <- estim_em( d, m_samp, N=200, init_mode=4, data=data)
+
+# plotting some iterates of initial mode == 0, 1, 4
+tib_true <- tibble( k=0:d, v_true=v_true )
+tib_plot0 <- as_tibble( t(em0$iterates[1+20*(0:10), ]) ) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:12)
+ggplot(tib_plot0,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+![](README_figures/ex-reconstr-4.png)
+
+``` r
+# [...]
+```
+
+![](README_figures/plot-em-iterates-1.png)![](README_figures/plot-em-iterates-2.png)![](README_figures/plot-em-iterates-3.png)![](README_figures/plot-em-iterates-4.png)![](README_figures/plot-em-iterates-5.png)
+
+We can see that the estimate after 200 iterations is quite accurate for the larger values, but still comparably poor for the smaller values. If we increase the sample size to 10^6, we can see that the algorithm converges well.
+
+``` r
+# obtain large sample
+m_samp_large <- rbichibarsq(1e6, v_true)
+em <- estim_em( d, m_samp_large, N=200 )
+
+tib_plot <- as_tibble( t(em$iterates[1+20*(0:10), ]) ) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:12)
+ggplot(tib_plot,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+![](README_figures/em-large-sample-1.png)
+
+``` r
+ggplot(tib_plot,aes(x=k,y=log(value),color=step)) +
+    geom_line() + theme_bw() +
+    geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+![](README_figures/em-large-sample-2.png)
