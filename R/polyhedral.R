@@ -83,7 +83,7 @@
 #' @section See also:
 #' Package: \code{\link[conivol]{conivol}}
 #'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#' @note See \href{../doc/conic-intrinsic-volumes.html}{this vignette}
 #'       for further info.
 #'
 #' @examples
@@ -259,7 +259,7 @@ polyh_reduce_ineq <- function(A, solver="nnls", tol=1e-7) {
 #'         weights given by the intrinsic volumes of the cone,
 #'         either \code{{Ax|x>=0}} or \code{{y|A^Ty<=0}}
 #'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#' @note See \href{../doc/conic-intrinsic-volumes.html}{this vignette}
 #'       for further info.
 #'
 #' @section See also:
@@ -432,7 +432,7 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #' @section See also:
 #' Package: \code{\link[conivol]{conivol}}
 #'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#' @note See \href{../doc/conic-intrinsic-volumes.html}{this vignette}
 #'       for further info.
 #'
 #' @examples
