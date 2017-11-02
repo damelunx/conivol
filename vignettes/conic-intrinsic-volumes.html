@@ -12,7 +12,7 @@
 
 <meta name="author" content="Dennis Amelunxen" />
 
-<meta name="date" content="2017-10-20" />
+<meta name="date" content="2017-11-02" />
 
 <title>Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</title>
 
@@ -32,31 +32,40 @@
 
 <h1 class="title toc-ignore">Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</h1>
 <h4 class="author"><em>Dennis Amelunxen</em></h4>
-<h4 class="date"><em>2017-10-20</em></h4>
+<h4 class="date"><em>2017-11-02</em></h4>
 
 
 
-<p>This note introduces the conic intrinsic volumes and the associated (bivariate) chi-bar-squared distributions. The focus is on algorithmic considerations; see <span class="citation">(Amelunxen and Lotz 2017)</span> and the references therein for more background on the conic intrinsic volumes, further pointers to the literature will be given within the text.<br />
-See <a href="estim-conic-intrinsic-volumes-with-EM.html">this vignette</a> for a description of the algorithm for estimating the conic intrinsic volumes, and see <a href="goodness-of-fit.html">this vignette</a> for another look at the statistical implications and a discussion of the goodness of fit.</p>
+<p>This note introduces the conic intrinsic volumes and the associated (bivariate) chi-bar-squared distributions. The focus is on algorithmic considerations; see the survey paper <span class="citation">(Amelunxen and Lotz <a href="#ref-AL17">2017</a>)</span> and the references therein for more background on the conic intrinsic volumes. We will give further pointers to the literature within the text below.</p>
+<p><strong>Other vignettes:</strong></p>
+<ul>
+<li><a href="../doc/estim-conic-intrinsic-volumes-with-EM.html">Estimating conic intrinsic volumes via EM algorithm</a>: describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples of the associated bivariate chi-bar-squared distribution,</li>
+<li><a href="../doc/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>: describes the Bayesian approach for reconstructing intrinsic volumes from sampling data, which can either be samples from the intrinsic volumes distribution (in the case of polyhedral cones), or from the bivariate chi-bar-squared distribution, and which can be with or without enforcing log-concavity of the intrinsic volumes.</li>
+</ul>
 <div id="closed-convex-cones" class="section level2">
 <h2>Closed convex cones</h2>
 <p>As the name suggests, a closed convex cone <span class="math inline">\(C\subseteq\text{R}^d\)</span> satisfies the following three properties:</p>
 <ol style="list-style-type: decimal">
 <li><span class="math inline">\(C\)</span> is <strong>closed</strong>:<br />
-the limit of any convergent sequence is an element of <span class="math inline">\(C\)</span>, <span class="math display">\[ \forall x_1,x_2,\ldots\in C \text{ such that } \lim_{i\to\infty} x_i \text{ exists}: \lim_{i\to\infty} x_i\in C \]</span></li>
+the limit of any convergent sequence is an element of <span class="math inline">\(C\)</span>, <span class="math display">\[ \forall x_1,x_2,\ldots\in C \text{ such that } \lim_{i\to\infty} x_i
+\text{ exists}: \lim_{i\to\infty} x_i\in C \]</span></li>
 <li><span class="math inline">\(C\)</span> is <strong>convex</strong>:<br />
 any convex combination of elements in <span class="math inline">\(C\)</span> lies in <span class="math inline">\(C\)</span>,<br />
 <span class="math display">\[ \forall x,y\in C,\; 0\leq \lambda\leq 1 : \lambda x+(1-\lambda) y\in C \]</span></li>
 <li><span class="math inline">\(C\)</span> is a <strong>cone</strong>:<br />
 any positive scaling of an element in <span class="math inline">\(C\)</span> lies in <span class="math inline">\(C\)</span>, <span class="math display">\[ \forall x\in C\;,\lambda&gt;0 : \lambda x\in C \]</span></li>
 </ol>
-<p>Properties 1. and 3. imply that every nonzero closed cone contains the origin, <span class="math inline">\(0\in C\)</span>. Furthermore, if <span class="math inline">\(0\in C\)</span>, then properties 2. and 3. taken together are equivalent to the property <span class="math display">\[ \forall x,y\in C,\; \lambda,\mu\geq0 : \lambda x+\mu y\in C \]</span> In other words, a (nonempty) closed convex cone is a closed set, which is closed under taking nonnegative linear combinations. Below we will always assume that closed convex cones are nonempty, hence, they contain at least the origin.</p>
-<p>Note that if <span class="math inline">\(C\subseteq\text{R}^d\)</span> and <span class="math inline">\(D\subseteq\text{R}^e\)</span> are closed convex cones, then their direct product is a closed convex cone, <span class="math inline">\(C\times D\subseteq\text{R}^{d+e}\)</span>.</p>
+<p>Properties 1. and 3. imply that every nonzero closed cone contains the origin, <span class="math inline">\(0\in C\)</span>. Furthermore, if <span class="math inline">\(0\in C\)</span>, then properties 2. and 3. taken together are equivalent to the property <span class="math display">\[ \forall x,y\in C,\; \lambda,\mu\geq0 : \lambda x+\mu y\in C \]</span> In other words, a (nonempty) closed convex cone is a closed set, which is <strong>closed under nonnegative linear combinations</strong>. Compare this to linear subspaces which can be characterized through their closedness under (possibly negative) linear combinations.</p>
+<p><strong>Note:</strong></p>
+<ul>
+<li>Below we will always assume that closed convex cones are nonempty, hence, they contain at least the origin.</li>
+<li>If <span class="math inline">\(C\subseteq\text{R}^d\)</span> and <span class="math inline">\(D\subseteq\text{R}^e\)</span> are closed convex cones, then their direct product is a closed convex cone, <span class="math inline">\(C\times D\subseteq\text{R}^{d+e}\)</span>.</li>
+</ul>
 <div id="polar-cones" class="section level3">
 <h3>Polar cones</h3>
 <p>Every closed convex cone <span class="math inline">\(C\subseteq\text{R}^d\)</span> defines a natural counterpart, its polar cone <span class="math display">\[ C^\circ := \{y\in\text{R}^d\mid \forall x\in C: x^Ty\leq 0\} . \]</span> The polar cone is also a closed convex cone, and the polar of the polar cone is the original cone, which in this context is also called the primal cone, <span class="math inline">\((C^\circ)^\circ = C\)</span>. It thus makes sense to think about the primal cone and its polar cone as a primal-polar pair of cones. A cone is called self-dual, if <span class="math inline">\(C^\circ=-C\)</span>.</p>
 <p>Note that <span class="math inline">\((\text{R}^d)^\circ=\{0\}\)</span>. Also, polarity behaves well with direct products, <span class="math inline">\((C\times D)^\circ = C^\circ\times D^\circ\)</span>.<br />
-The polar cone depends on the ambient space, i.e., if we embed <span class="math inline">\(C\subseteq\text{R}^d\)</span> in <span class="math inline">\(\text{R}^e\)</span>, <span class="math inline">\(e\geq d\)</span>, by formally identifying <span class="math inline">\(C\)</span> with <span class="math inline">\(C\times\{0\}\subseteq\text{R}^e\)</span>, then the polar of the embedded cone is given by <span class="math inline">\((C\times\{0\})^\circ = C^\circ\times\text{R}^{e-d}\)</span>.</p>
+The polar cone depends on the ambient space, i.e., if we embed <span class="math inline">\(C\subseteq\text{R}^d\)</span> in <span class="math inline">\(\text{R}^e\)</span>, <span class="math inline">\(e\geq d\)</span>, by formally identifying <span class="math inline">\(C\)</span> with <span class="math inline">\(C\times\{0\}\subseteq\text{R}^e\)</span>, then the polar of the embedded cone is given by <span class="math inline">\((C\times\{0\})^\circ = C^\circ\times\text{R}^{e-d}\)</span> (as opposed to the polar of <span class="math inline">\(C\)</span> in <span class="math inline">\(\text{R}^d\)</span> embedded in <span class="math inline">\(\text{R}^e\)</span>).</p>
 <p>If the cone <span class="math inline">\(C\)</span> is transformed by an invertible linear transformation then its polar cone is transformed by the transpose of the inverse of the transformation: <span class="math display">\[ (AC)^\circ = B^T C^\circ ,\qquad \text{if $A$ invertible and } B=A^{-1} . \]</span></p>
 </div>
 <div id="dim_lin" class="section level3">
@@ -69,14 +78,14 @@ The polar cone depends on the ambient space, i.e., if we embed <span class="math
 <div id="examples-linear-subspaces" class="section level3">
 <h3>Examples: linear subspaces</h3>
 <p>A trivial yet important class of examples of closed convex cones are the linear subspaces. It is easily seen that the polar cone of a linear subspace is just its orthogonal complement. Clearly, a cone is a linear space iff <span class="math inline">\(\text{dim}(C)=\text{lin}(C)\)</span>.</p>
-<p>The intrinsic volumes and (bivariate) chi-bar-squared distributions (see <a href="#bivchibarsq">below</a>) are in this case equivalent to the dimension of the subspace (see <a href="#bivchibars_cone">below</a> for more precise statements).</p>
+<p>The intrinsic volumes and (bivariate) chi-bar-squared distributions (see <a href="#bivchibarsq">below</a>) are in this case equivalent to the dimension of the subspace and the chi-squared distribution (see <a href="#bivchibars_cone">below</a> for more precise statements).</p>
 <p>Furthermore, for cones which are not linear subspaces the intrinsic volumes satisfy an additional linear relation, which is why the algorithms in <code>conivol</code> assume that the underlying closed convex cone is <strong>not</strong> a linear subspace.</p>
 </div>
 <div id="polyh_cones" class="section level3">
 <h3>Examples: polyhedral cones</h3>
 <p>Polyhedral cones are a straightforward generalization of linear subspaces and can be described in two ways, which are related via polarity:</p>
 <ol style="list-style-type: decimal">
-<li>as conic convex combinations of a finite number of vectors, <span class="math display">\[ C = \{Az \mid z\in\text{R}^n, z\geq 0\} ,\quad A\in\text{R}^{d\times n} , \]</span> where the inequality <span class="math inline">\(z\geq0\)</span> is meant componentwise,</li>
+<li>as nonnegative linear combinations of a finite number of vectors, <span class="math display">\[ C = \{Az \mid z\in\text{R}^n, z\geq 0\} ,\quad A\in\text{R}^{d\times n} , \]</span> where the inequality <span class="math inline">\(z\geq0\)</span> is meant componentwise,</li>
 <li>as the intersection of finitely many closed linear half-spaces, <span class="math display">\[ C^\circ = \{y\in\text{R}^d \mid A^Ty\leq 0\} . \]</span></li>
 </ol>
 <p>Although the set of polyhedral cones does not exhaust the set of closed convex cones, it can be shown (and it is intuitively clear) that every closed convex cone can be arbitrarily well approximated by polyhedral cones.</p>
@@ -84,7 +93,9 @@ The polar cone depends on the ambient space, i.e., if we embed <span class="math
 </div>
 <div id="simpl_weyl" class="section level3">
 <h3>Examples: simplicial cones and Weyl chambers of finite reflection groups</h3>
-<p>A special class of polyhedral cones is given by so-called simplicial cones. These are full-dimensional cones with a minimal number of edges and facets. Formally, we can describe these cones as positive orthants transformed by an invertible linear transformation: <span class="math display">\[ \big\{\text{simplicial cones in }\text{R}^d\big\} = \big\{A\text{R}_+^d\mid A\in\text{R}^{d\times d} \text{ invertible} \big\} . \]</span> In other words, a simplicial cone is generated by the columns of an invertible matrix. Note that since the positive orthant is self-dual, <span class="math inline">\((\text{R}_+^d)^\circ=-\text{R}_+^d\)</span>, we easily obtain the polar cone of a simplicial cone through the inverse matrix, <span class="math display">\[ \big( A\text{R}_+^d \big)^\circ = -B^T\text{R}_+^d ,\qquad \text{if $A$ invertible and } B=A^{-1} . \]</span></p>
+<p>A special class of polyhedral cones is given by so-called simplicial cones. These are full-dimensional cones with a minimal number of edges and facets. Formally, we can describe these cones as positive orthants transformed by an invertible linear transformation: <span class="math display">\[ \big\{\text{simplicial cones in }\text{R}^d\big\}
+    = \big\{A\text{R}_+^d\mid A\in\text{R}^{d\times d} \text{ invertible} \big\} . \]</span> In other words, a simplicial cone is generated by the columns of an invertible matrix. Note that since the positive orthant is self-dual, <span class="math inline">\((\text{R}_+^d)^\circ=-\text{R}_+^d\)</span>, we easily obtain the polar cone of a simplicial cone through the inverse matrix, <span class="math display">\[ \big( A\text{R}_+^d \big)^\circ = -B^T\text{R}_+^d ,\qquad
+    \text{if $A$ invertible and } B=A^{-1} . \]</span></p>
 A special class of simplicial cones are the Weyl chambers of finite reflection groups of which the most important ones are of class ‘A’, ‘BC’, and ‘D’. These chambers are isometric to the following three cones,
 <span class="math display">\[\begin{align*}
    C_A &amp; = \big\{ x\in\text{R}^{d+1} \mid x_1 \leq x_2 \leq \dots \leq x_{d+1} \big\} ,
@@ -144,58 +155,68 @@ Taking the negative inverse of the transpose, we see that the polar cones <span 
 </div>
 <div id="examples-circular-cones" class="section level3">
 <h3>Examples: circular cones</h3>
-Circular cones consist of all points that lie below a certain angle towards a given semi-axis. Choosing this semi-axis to be the <span class="math inline">\(d\)</span>th coordinate axis, we define the <span class="math inline">\(d\)</span>-dimensional circular cone of angle <span class="math inline">\(0&lt;\alpha&lt;\frac{\pi}{2}\)</span> via
+Circular cones consist of all points that lie below a certain angle towards a given (half-)line. Choosing this line to be the <span class="math inline">\(d\)</span>th coordinate axis, we define the <span class="math inline">\(d\)</span>-dimensional circular cone of angle <span class="math inline">\(0&lt;\alpha&lt;\frac{\pi}{2}\)</span> via
 <span class="math display">\[\begin{align*}
    \text{Circ}_d(\alpha) &amp; := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\}
-\\ &amp; = \Big\{x\in\text{R}^d\mid x_d\geq 0 ,\; x_d^2\geq \sum_{k=1}^{d-1} \frac{x_k^2}{\tan(\alpha)^2} \Big\} ,
+\\ &amp; = \Big\{x\in\text{R}^d\mid x_d\geq 0 ,\; x_d^2\geq \sum_{k=1}^{d-1}
+    \frac{x_k^2}{\tan(\alpha)^2} \Big\} ,
 \end{align*}\]</span>
 <p>where <span class="math inline">\(\|\cdot\|\)</span> denotes the Euclidean norm.</p>
 <p>The circular cones form a class of cones, which is interesting for both theoretical and practical purposes. For theoretical purposes because circular cones are known to satisfy certain extreme inequalities (see <a href="#inequs">below</a>), and are suspected to satisfy even more; and for practical purposes because they, and products of them, provide a reasonably large, yet accessible, class of cones which is easy to analyze with respect to the intrinsic volumes.</p>
-<ul>
-<li>the cone <span class="math inline">\(\text{Circ}_d(\pi/4)\)</span> is also called Lorentz cone or ice-cream cone; we will denote it by <span class="math inline">\(\mathcal{L}^d=\text{Circ}_d(\pi/4)\)</span></li>
-</ul>
+<p>A circular cone is self-dual iff the angle is <span class="math inline">\(\pi/4\)</span>. These special cones are called Lorentz cone or ice-cream cone. We denote these by <span class="math inline">\(\mathcal{L}^d=\text{Circ}_d(\pi/4)\)</span>.</p>
 </div>
 <div id="ellips_cone" class="section level3">
 <h3>Examples: ellipsoidal cones</h3>
-<ul>
-<li>Ellipsoidal cones are linear images of circular cones (or equivalently, of the Lorentz cone). More precisely, to simplify the discussion we will only consider full-rank linear maps.</li>
-<li>Every <span class="math inline">\(d\)</span>-dimensional ellipsoidal cone is isometric to a cone of the form
+Ellipsoidal cones generalize the class of circular cones; they can be defined as full-dimensional linear images of Lorentz cones, <span class="math display">\[ \big\{\text{ellipsoidal cones in }\text{R}^d\big\}
+    = \big\{A\mathcal{L}^d\mid A\in\text{R}^{d\times d} \text{ invertible} \big\} . \]</span> Every <span class="math inline">\(d\)</span>-dimensional ellipsoidal cone is isometric to a cone of the form
 <span class="math display">\[\begin{align*}
    \mathcal{E}_\alpha &amp; = \text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal{L}^d
 \\ &amp; = \Big\{ x\in\text{R}^d\mid x_d\geq0,\;  x_d^2\geq\sum_{k=1}^{d-1}\frac{x_k^2}{\alpha_k^2}\Big\}
 \end{align*}\]</span>
-with <span class="math inline">\(\alpha_1\geq\dots\geq\alpha_{d-1}&gt;0\)</span>, the semi-axes of the cone.</li>
-<li>note that the circular cone <span class="math inline">\(\text{Circ}_d(\alpha)\)</span> has all semiaxes equal to <span class="math inline">\(\tan(\alpha)\)</span>.</li>
-<li>proof for the above statement: Let <span class="math inline">\(C=A\mathcal L^d\)</span> for some invertible linear transformation <span class="math inline">\(A\)</span>. Consider the eigenvalue decomposition of the symmetric matrix <span class="math inline">\(A^{-T}JA^{-1}\)</span> with <span class="math inline">\(J=\text{diag}(-1,\ldots,-1,1)\)</span>: according to <a href="https://en.wikipedia.org/wiki/Singular-value_decomposition">Sylvester’s law of inertia</a> this matrix has <span class="math inline">\(d-1\)</span> negative and one positive eigenvalues. Let these be given by <span class="math inline">\(-\lambda_1,\ldots,-\lambda_{d-1}\)</span> and <span class="math inline">\(\lambda_d\)</span>, respectively, so that <span class="math display">\[ A^{-T}JA^{-1} = Q\text{diag}(-\lambda_1,\ldots,-\lambda_{d-1},\lambda_d)Q^T . \]</span> Setting <span class="math inline">\(\alpha_k=(\lambda_d/\lambda_k)^{1/2}\)</span> for <span class="math inline">\(k=1,\ldots,d-1\)</span>, and <span class="math inline">\(\mu=1/\lambda_d\)</span>, we obtain
+<p>with <span class="math inline">\(\alpha_1\geq\dots\geq\alpha_{d-1}&gt;0\)</span>, the semiaxes of the cone. See the <a href="#proof_ellips">appendix</a> for a proof of that fact. The proof also shows how to compute the semiaxes: if <span class="math inline">\(-\lambda_1\leq\dots\leq-\lambda_{d-1}&lt;0\)</span> and <span class="math inline">\(\mu&gt;0\)</span> denote the eigenvalues of <span class="math inline">\(AJA^T\)</span>, where <span class="math inline">\(J=\text{diag}(-1,\ldots,-1,1)\)</span>, then the semiaxes of <span class="math inline">\(A\)</span> are given by <span class="math inline">\(\alpha_k=\sqrt{\lambda_k/\mu}\)</span>, <span class="math inline">\(k=1,\ldots,d-1\)</span>. This calculation is implemented in <code>ellips_semiax</code>.</p>
+Note that the circular cone <span class="math inline">\(\text{Circ}_d(\alpha)\)</span> has all semiaxes equal to <span class="math inline">\(\tan(\alpha)\)</span>. The semiaxes of the polar of <span class="math inline">\(\mathcal{E}_\alpha\)</span> are given by <span class="math inline">\(\frac{1}{\alpha_{d-1}}\geq\dots\geq\frac{1}{\alpha_1}&gt;0\)</span>, as
 <span class="math display">\[\begin{align*}
-   \mu J &amp; = A^TQ\text{diag}(-\lambda_1/\lambda_d,\ldots,-\lambda_{d-1}/\lambda_d,1)Q^TA
-\\ &amp; = A^TQ\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1) J \text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA
+   \mathcal{E}_\alpha^\circ &amp; = (\text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal{L}^d)^\circ
+  = -\text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)^{-T}\mathcal{L}^d
+\\ &amp; = -\text{diag}(1/\alpha_1,\ldots,1/\alpha_{d-1},1)\mathcal{L}^d
+   = -\mathcal{E}_{1/\alpha} .
 \end{align*}\]</span>
-According to <span class="citation">(Loewy and Schneider 1975)</span> this implies that either <span class="math inline">\(\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA\mathcal L^d=\mathcal L^d\)</span> or <span class="math inline">\(\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA\mathcal L^d=-\mathcal L^d\)</span>, that is, either <span class="math inline">\(A\mathcal L^d=Q\text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal L^d=Q\mathcal{E}_\alpha\)</span> or <span class="math inline">\(A\mathcal L^d=-Q\text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal L^d=-Q\mathcal{E}_\alpha\)</span>. In both cases we see that <span class="math inline">\(A\mathcal L^d\)</span> is isometric to <span class="math inline">\(\mathcal{E}_\alpha\)</span>.</li>
-<li>the above proof shows how to find the semi-axes of an ellipsoidal cone given as the linear image of the Lorentz cone, which is the method implemented in <code>ellips_rbichibarsq</code>.</li>
-<li>more precisely, note that the polar of an ellipsoidal cone is given as follows: <span class="math display">\[ (A\mathcal{L}^d)^\circ = -A^{-T}\mathcal{L}^d \]</span> In particular, the semiaxes of the polar cone of <span class="math inline">\(\mathcal{E}_\alpha\)</span> are given by <span class="math inline">\(\frac{1}{\alpha_{d-1}}\geq\dots\geq\frac{1}{\alpha_1}&gt;0\)</span>. So, instead of computing the semiaxes of <span class="math inline">\(A\mathcal{L}^d\)</span> by computing the eigenvalues of <span class="math inline">\(A^{-T}JA^{-1}\)</span>, we compute the eigenvalues of <span class="math inline">\(AJA^T\)</span>, say, <span class="math inline">\(-\mu_1,\ldots,-\mu_{d-1}\)</span> and <span class="math inline">\(\mu_d\)</span>. The semiaxes of <span class="math inline">\(A\mathcal{L}^d\)</span> are then given by <span class="math display">\[ \alpha_k=\sqrt{\tfrac{\mu_k}{\mu_d}} ,\quad k=1,\ldots,d-1 . \]</span></li>
-</ul>
 </div>
 </div>
 <div id="intro_intrvol" class="section level2">
 <h2>Conic intrinsic volumes</h2>
-<p>The conic intrinsic volumes of a closed convex cone <span class="math inline">\(C\subseteq\text{R}^d\)</span> form a <span class="math inline">\((d+1)\)</span>-element vector, <span class="math display">\[ v(C) = (v_0(C),\ldots,v_d(C)) \geq 0 ,\quad \sum_{k=0}^d v_k(C) = 1 . \]</span> If <span class="math inline">\(C\)</span> is a polyhedral cone, then the intrinsic volumes can be characterized in the following way: letting <span class="math inline">\(g\sim N(0,I_d)\)</span> a Gaussian vector and <span class="math inline">\(\Pi_C\)</span> denoting the projection map onto <span class="math inline">\(C\)</span>, <span class="math display">\[ \Pi_C\colon\text{R}^d\to C ,\qquad \Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\} , \]</span> the <span class="math inline">\(k\)</span>th intrinsic volume is the probability that <span class="math inline">\(\Pi_C(g)\)</span> lies in the relative interior of a <span class="math inline">\(k\)</span>-dimensional face of <span class="math inline">\(C\)</span>, <span class="math display">\[ v_k(C) = \text{Prob}\big\{\Pi_C(g)\in \text{relint}(F), F \text{ face of }C, \dim(F)=k\big\} . \]</span> Note that this characterization holds exclusively for polyhedral cones.</p>
-<p>If <span class="math inline">\(C=L\)</span> is a linear subspace, then <span class="math display">\[ v_k(L) = \begin{cases} 1 &amp; \text{if } k=\dim(L) \\ 0 &amp; \text{else} . \end{cases} \]</span> It can be shown that if <span class="math inline">\(C\)</span> is <em>not</em> a linear subspace, then <span class="math display">\[ v_0(C)+v_2(C)+v_4(C)+\cdots = v_1(C)+v_3(C)+v_5(C)+\cdots = \tfrac{1}{2} . \]</span> This linear relation is the reason why in the computations in <code>conivol</code> the underlying closed convex cone is always assumed to be not a linear subspace.</p>
+<p>The conic intrinsic volumes of a closed convex cone <span class="math inline">\(C\subseteq\text{R}^d\)</span> form a <span class="math inline">\((d+1)\)</span>-element vector, <span class="math display">\[ v(C) = (v_0(C),\ldots,v_d(C)) \geq 0 ,\quad \sum_{k=0}^d v_k(C) = 1 . \]</span> Since this vector lies in the probability simplex, it defines a corresponding categorical distribution on <span class="math inline">\(\{0,\ldots,d\}\)</span>, which we will refer to as the intrinsic volumes distribution.</p>
+<p>If <span class="math inline">\(C\)</span> is a polyhedral cone, then the intrinsic volumes can be characterized in the following way: letting <span class="math inline">\(g\sim N(0,I_d)\)</span> a Gaussian vector (coordinates are iid standard normal) and denoting the projection map onto <span class="math inline">\(C\)</span> by <span class="math inline">\(\Pi_C\colon\text{R}^d\to C\)</span>, <span class="math inline">\(\Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\}\)</span>, the <span class="math inline">\(k\)</span>th intrinsic volume is given as the probability that <span class="math inline">\(\Pi_C(g)\)</span> lies in the relative interior of a <span class="math inline">\(k\)</span>-dimensional face of <span class="math inline">\(C\)</span>, <span class="math display">\[ v_k(C) = \text{Prob}\big\{\Pi_C(g)\in \text{relint}(F), F \text{ face of }C, \dim(F)=k\big\} . \]</span> This characterization holds exclusively for polyhedral cones.</p>
+<p>Note that the above characterization also provides a simple way to sample from the intrinsic volumes distribution: sample a Gaussian vector, project it onto the cone <span class="math inline">\(C\)</span>, determine the dimension of the face containing the projection in its relative interior. This procedure is implemented in <code>polyh_rivols_gen</code> and <code>polyh_rivols_ineq</code>.</p>
+<p>If <span class="math inline">\(C=L\)</span> is a linear subspace, then <span class="math display">\[ v_k(L) = \begin{cases} 1 &amp; \text{if } k=\dim(L) \\ 0 &amp; \text{else} . \end{cases} \]</span> It can be shown that if <span class="math inline">\(C\)</span> is <em>not</em> a linear subspace, then <span class="math display">\[ v_0(C)+v_2(C)+v_4(C)+\cdots = v_1(C)+v_3(C)+v_5(C)+\cdots = \tfrac{1}{2} . \]</span> This linear relation is the reason why in the computations in the <code>conivol</code> functions the underlying closed convex cone is generally assumed to be not a linear subspace.</p>
 <p>The intrinsic volumes of the polar cone are the same as those of the primal cone, but the index gets reversed, <span class="math display">\[ v_k(C^\circ) = v_{d-k}(C) . \]</span> The intrinsic volumes of a product of cones arise as the convolution of the intrinsic volumes of its components, <span class="math display">\[ v_k(C\times D) = \sum_{i+j=k} v_i(C) v_j(D) . \]</span> This convolution is conveniently implemented in <code>comp_ivols_product</code>.</p>
-<p>From the natural orthogonal decomposition <span class="math inline">\(C = L + \bar C\)</span>, where <span class="math inline">\(L=C\cap (-C)\)</span> and <span class="math inline">\(\bar C=\Pi_{L^\bot}(C)\)</span>, one can show that <span class="math inline">\(v_k(C)=0\)</span> if <span class="math inline">\(k&lt;\text{lin}(C)\)</span> or <span class="math inline">\(k&gt;\text{dim}(C)\)</span> and<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> <span class="math display">\[ v_k(C)=v_{k-\text{lin}(C)}(\bar C)&gt;0 \quad\text{for}\quad \text{lin}(C)\leq k\leq\text{dim}(C) . \]</span></p>
+<p>From the natural orthogonal decomposition <span class="math inline">\(C = L + \bar C\)</span>, where <span class="math inline">\(L=C\cap (-C)\)</span> and <span class="math inline">\(\bar C=\Pi_{L^\bot}(C)\)</span>, one can show that <span class="math inline">\(v_k(C)=0\)</span> if <span class="math inline">\(k&lt;\text{lin}(C)\)</span> or <span class="math inline">\(k&gt;\text{dim}(C)\)</span> and<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> <span class="math display">\[ v_k(C)=v_{k-\text{lin}(C)}(\bar C)&gt;0 \quad\text{for}\quad
+    \text{lin}(C)\leq k\leq\text{dim}(C) . \]</span></p>
 <div id="statistical-dimension-and-variance" class="section level3">
 <h3>Statistical dimension and variance</h3>
-<p>The first moment of the discrete random variable defined by the conic intrinsic volumes of a cone is called its statistical dimension, <span class="math display">\[ \delta(C) = \sum_{k=0}^d k v_k(C) . \]</span> Note that the statistical dimension coincides with the (linear) dimension if <span class="math inline">\(C\)</span> is a linear subspace. It also generalizes some other properties, such as <span class="math inline">\(\delta(C^\circ)=d-\delta(C)\)</span> and <span class="math inline">\(\delta(C\times D)=\delta(C)+\delta(D)\)</span>.</p>
+<p>The first moment of intrinsic volumes distribution of a cone is called its statistical dimension, <span class="math display">\[ \delta(C) = \sum_{k=0}^d k v_k(C) . \]</span> Note that the statistical dimension coincides with the (linear) dimension if <span class="math inline">\(C\)</span> is a linear subspace. It also generalizes some other properties, such as <span class="math inline">\(\delta(C^\circ)=d-\delta(C)\)</span> and <span class="math inline">\(\delta(C\times D)=\delta(C)+\delta(D)\)</span>.</p>
 <p>For later use we also define the variance of the cone via <span class="math display">\[ \text{var}(C) = \sum_{k=0}^d (k-\delta(C))^2 v_k(C) . \]</span></p>
 </div>
 <div id="examples-weyl-chambers-of-finite-reflection-groups" class="section level3">
 <h3>Examples: Weyl chambers of finite reflection groups</h3>
-<p>asdf</p>
+The intrinsic volumes of the Weyl chambers are easily given through their generating function:
+<span class="math display">\[\begin{align*}
+   \sum_{k=0}^d v_k(C_A)\, x^k &amp; = \frac{1}{d!} \prod_{k=1}^d (x+k-1) ,
+\\ \sum_{k=0}^d v_k(C_{BC})\, x^k &amp; = \frac{1}{d!\,2^d}\prod_{k=1}^d (x+2k-1) ,
+\\ \sum_{k=0}^d v_k(C_D)\, x^k &amp; = \frac{1}{d!\,2^{d-1}}(x+d-1)\prod_{k=1}^{d-1} (x+2k-1) .
+\end{align*}\]</span>
+<p>Note that the intrinsic volumes of <span class="math inline">\(C_A\)</span> are the normalized <a href="https://en.wikipedia.org/wiki/Stirling_numbers_of_the_first_kind">Stirling numbers of the first kind</a>. These formulas are implemented in <code>weyl_ivols</code>.</p>
 </div>
 <div id="examples-circular-cones-1" class="section level3">
 <h3>Examples: circular cones</h3>
-<p>Closed formulas for the intrinsic volumes of circular cones are known, see for example <span class="citation">(Amelunxen and Bürgisser 2015, Sec. 3.3)</span>, and implemented in <code>circ_ivol</code>.</p>
-<p>asdf</p>
+<p>The intrinsic volumes of circular cones are given by the following formulas: <span class="math display">\[ v_k(\text{Circ}_d(\alpha)) = \begin{cases}
+       \displaystyle\frac{\Gamma(\frac{d}{2})}{\Gamma(\frac{k+1}{2})\Gamma(\frac{d-k+1}{2})}
+            \frac{p^{(k-1)/2} (1-p)^{(d-k-1)/2}}{2} &amp; \text{if } 0&lt;k&lt;d
+    \\[1mm] \displaystyle\frac{\Gamma(\frac{d}{2})^2}{\Gamma(\frac{d-1}{2})\Gamma(\frac{d+1}{2})}
+            I_p(\tfrac{d}{2},\tfrac{1}{2}) &amp; \text{if } k=d
+    \\[1mm] \displaystyle\frac{\Gamma(\frac{d}{2})^2}{\Gamma(\frac{d-1}{2})\Gamma(\frac{d+1}{2})}
+            I_{1-p}(\tfrac{d}{2},\tfrac{1}{2}) &amp; \text{if } k=0
+    \end{cases} \]</span> where <span class="math inline">\(p=\sin^2(\alpha)\)</span> and where <span class="math inline">\(I_p(a,b)\)</span> denotes the <a href="https://en.wikipedia.org/wiki/Beta_function#Incomplete_beta_function">regularized incomplete beta function</a>, that is, the cdf of the corresponding Beta distribution. These formulas are implemented in <code>circ_ivols</code>.</p>
 </div>
 </div>
 <div id="bivchibarsq" class="section level2">
@@ -218,8 +239,8 @@ According to <span class="citation">(Loewy and Schneider 1975)</span> this impli
 </ol>
 <div id="bivchibars_cone" class="section level3">
 <h3>Relation to closed convex cones</h3>
-<p>The (bivariate) chi-bar-squared distribution corresponding to a closed convex cone <span class="math inline">\(C\)</span> is of course the one arising from taking the conic intrinsic volumes as weights; in terms of the cdf, <span class="math display">\[ F_C(t) = \sum_{k=0}^d v_k(C) F_k(t) ,\qquad \Phi_C(s,t) = \sum_{k=0}^d v_k(C) F_k(s) F_{d-k}(t) . \]</span> A natural sampling for these distributions involves the projection map <span class="math inline">\(\Pi_C\)</span>. Denoting by <span class="math inline">\(g\sim N(0,I_d)\)</span> a Gaussian vector, one can show that the chi-bar-squared and the bivariate chi-bar-squared distributions are given by the distributions of the random variables <span class="math display">\[ \|\Pi_C(g)\|^2 \quad\text{and}\quad \big(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2\big) . \]</span> The fact that these random variables have the (bivariate) chi-bar-squared distribution with weights given by the conic intrinsic volumes is one form of the Conic Steiner Theorem, see <span class="citation">(McCoy and Tropp 2014)</span>.</p>
-The moments of the continuous random variables <span class="math inline">\(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2\)</span> are closely related with those of the discrete random variable defined by the intrinsic volumes. In fact, for the first and second moment we obtain the following:
+<p>The (bivariate) chi-bar-squared distribution corresponding to a closed convex cone <span class="math inline">\(C\)</span> is of course the one arising from taking the conic intrinsic volumes as weights; in terms of the cdf, <span class="math display">\[ F_C(t) = \sum_{k=0}^d v_k(C) F_k(t) ,\qquad \Phi_C(s,t) = \sum_{k=0}^d v_k(C) F_k(s) F_{d-k}(t) . \]</span> A natural sampling for these distributions involves the projection map <span class="math inline">\(\Pi_C\)</span>. Denoting by <span class="math inline">\(g\sim N(0,I_d)\)</span> a Gaussian vector, one can show that the chi-bar-squared and the bivariate chi-bar-squared distributions are given by the distributions of the random variables <span class="math display">\[ \|\Pi_C(g)\|^2 \quad\text{and}\quad \big(\|\Pi_C(g)\|^2,\|\Pi_{C^\circ}(g)\|^2\big) . \]</span> The fact that these random variables have the (bivariate) chi-bar-squared distribution with weights given by the conic intrinsic volumes is one form of the Conic Steiner Theorem, see <span class="citation">(McCoy and Tropp <a href="#ref-McCT14">2014</a>)</span>.</p>
+The moments of the continuous random variables <span class="math inline">\(\|\Pi_C(g)\|^2, \|\Pi_{C^\circ}(g)\|^2\)</span> are closely related with those of the discrete random variable defined by the intrinsic volumes. In fact, for the first and second moment we obtain the following:
 <span class="math display">\[\begin{align*}
   \delta(C) &amp; = \text{E}\big[\|\Pi_C(g)\|^2\big]
 \\ &amp; = d-\text{E}\big[\|\Pi_{C^\circ}(g)\|^2\big] ,
@@ -231,7 +252,7 @@ The moments of the continuous random variables <span class="math inline">\(\|\Pi
 <div id="inequs" class="section level2">
 <h2>Inequalities, known and conjectured</h2>
 <ul>
-<li>isoperimetric inequalities and extensions <span class="citation">(Makowski and Scheuer 2016)</span></li>
+<li>isoperimetric inequalities and extensions <span class="citation">(Makowski and Scheuer <a href="#ref-MS16">2016</a>)</span></li>
 <li>conjecture: variance/entropy is maximum for Lorentz cone</li>
 <li>conjecture: log-concavity inequalities (mention Alexandrov-Fenchel)<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></li>
 </ul>
@@ -241,14 +262,25 @@ The moments of the continuous random variables <span class="math inline">\(\|\Pi
 <p>[TBD]</p>
 <p>(say a few words on the statistical applications of the chi-bar-squared distribution with links to the literature)</p>
 </div>
+<div id="proof_ellips" class="section level2">
+<h2>Appendix A: Proof of ellipsoidal cone representation</h2>
+Let <span class="math inline">\(C=A\mathcal L^d\)</span> for some invertible linear transformation <span class="math inline">\(A\)</span>. Consider the eigenvalue decomposition of the symmetric matrix <span class="math inline">\(AJA^T\)</span> with <span class="math inline">\(J=\text{diag}(-1,\ldots,-1,1)\)</span>: according to <a href="https://en.wikipedia.org/wiki/Singular-value_decomposition">Sylvester’s law of inertia</a> this matrix has <span class="math inline">\(d-1\)</span> negative and one positive eigenvalues. Let these be given by <span class="math inline">\(-\lambda_1&lt;\dots&lt;-\lambda_{d-1}&lt;0\)</span> and <span class="math inline">\(\mu&gt;0\)</span>, so that <span class="math display">\[ AJA^T = Q\text{diag}(-\lambda_1,\ldots,-\lambda_{d-1},\mu)Q^T , \]</span> for <span class="math inline">\(Q\in\text{R}^d\)</span> orthogonal; taking inverses, we have <span class="math display">\[ A^{-T}JA^{-1} = Q\text{diag}(-1/\lambda_1,\ldots,-1/\lambda_{d-1},1/\mu)Q^T . \]</span> Setting <span class="math inline">\(\alpha_k=\sqrt{\lambda_k/\mu}\)</span> for <span class="math inline">\(k=1,\ldots,d-1\)</span>, we obtain
+<span class="math display">\[\begin{align*}
+   \mu J &amp; = A^TQ\text{diag}(-\mu/\lambda_1,\ldots,-\mu/\lambda_{d-1},1)Q^TA
+\\ &amp; = A^TQ\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1) J \text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA
+\end{align*}\]</span>
+<p>According to <span class="citation">(Loewy and Schneider <a href="#ref-LS75">1975</a>)</span> this implies that either <span class="math inline">\(\text{diag}(\alpha_1^{-1}, \ldots,\alpha_{d-1}^{-1},1)Q^TA\mathcal L^d=\mathcal L^d\)</span> or <span class="math inline">\(\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA\mathcal L^d =-\mathcal L^d\)</span>. Denoting <span class="math inline">\(\mathcal{E}_\alpha=\text{diag}(\alpha_1,\ldots,\alpha_{d-1},1)\mathcal L^d\)</span>, we see that either <span class="math inline">\(A\mathcal L^d=Q\mathcal{E}_\alpha\)</span> or <span class="math inline">\(A\mathcal L^d=-Q\mathcal{E}_\alpha\)</span>. In both cases we see that <span class="math inline">\(A\mathcal L^d\)</span> is isometric to <span class="math inline">\(\mathcal{E}_\alpha\)</span>.</p>
+</div>
 <div id="sampling_polyh" class="section level2">
-<h2>Appendix: Sampling for polyhedral cones</h2>
+<h2>Appendix B: Sampling for polyhedral cones</h2>
 <p>As remarked above, the vector of intrinsic volumes of a cone <span class="math inline">\(C\)</span> with natural orthogonal decomposition <span class="math inline">\(C=L+\bar C\)</span> coincides with the vector of intrinsic volumes of <span class="math inline">\(\bar C\)</span>, shifted by the lineality of <span class="math inline">\(C\)</span>. Hence, instead of sampling the bivariate chi-bar squared distribution of the cone <span class="math inline">\(C\)</span>, with the intention of finding the intrinsic volumes of <span class="math inline">\(C\)</span>, one should sample the distribution of <span class="math inline">\(\bar C\)</span>, within the linear span of <span class="math inline">\(\bar C\)</span>.</p>
 <p>Formally, we would like to sample the bivariate chi-bar squared distribution of a cone <span class="math inline">\(\tilde C\subseteq \text{R}^e\)</span>, with <span class="math inline">\(e=\text{dim}(C)-\text{lin}(C)\)</span>, which is isometric to the cone <span class="math inline">\(\bar C\)</span>, so that <span class="math inline">\(v_k(\tilde C)=v_k(\bar C)\)</span>. Note that <span class="math inline">\(v_k(\tilde C)&gt;0\)</span> for all <span class="math inline">\(k=0,\ldots,e\)</span>.</p>
 <p>In the following two subsections we describe how this is achieved and implemented in <code>polyh_rbichibarsq_gen</code> and <code>polyh_rbichibarsq_ineq</code>, depending on whether the cone is given by generators or inequalities.</p>
 <div id="polyhedral-cones-given-by-generators" class="section level3">
 <h3>Polyhedral cones given by generators</h3>
-<p>We assume that the polyhedral cone is given in the form <span class="math display">\[ C = \{Az \mid z\in\text{R}^n, z\geq 0\} ,\quad A\in\text{R}^{d\times n} ; \]</span> the cone <span class="math inline">\(\tilde C\)</span> will accordingly be given in the form <span class="math display">\[ \tilde C = \{\tilde A\tilde z \mid \tilde z\in\text{R}^m, \tilde z\geq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , \]</span> with <span class="math inline">\(e=\text{dim}(C)-\text{lin}(C)\)</span> and <span class="math inline">\(m=\text{(number of edges of $\bar C$)}\leq n\)</span>. Moreover, we will specify the orthogonal decomposition of <span class="math inline">\(C\)</span> via the matrices <span class="math inline">\(Q_L\in\text{R}^{d\times\text{lin}(C)}\)</span> and <span class="math inline">\(Q_C\in\text{R}^{d\times e}\)</span>, with <span class="math inline">\(Q_L^TQ_L=I_{\text{lin}(C)}\)</span> and <span class="math inline">\(Q_C^TQ_C=I_e\)</span>, such that <span class="math display">\[ L=Q_L\cdot\text{R}^{\text{lin}(C)} ,\quad \bar C=Q_C\cdot\tilde C . \]</span></p>
+<p>We assume that the polyhedral cone is given in the form <span class="math display">\[ C = \{Az \mid z\in\text{R}^n, z\geq 0\} ,\quad A\in\text{R}^{d\times n} ; \]</span> the cone <span class="math inline">\(\tilde C\)</span> will accordingly be given in the form <span class="math display">\[ \tilde C = \{\tilde A\tilde z \mid \tilde z\in\text{R}^m,
+    \tilde z\geq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , \]</span> with <span class="math inline">\(e=\text{dim}(C)-\text{lin}(C)\)</span> and <span class="math inline">\(m=\text{(number of edges
+of $\bar C$)}\leq n\)</span>. Moreover, we will specify the orthogonal decomposition of <span class="math inline">\(C\)</span> via the matrices <span class="math inline">\(Q_L\in\text{R}^{d\times\text{lin}(C)}\)</span> and <span class="math inline">\(Q_C\in\text{R}^{d\times e}\)</span>, with <span class="math inline">\(Q_L^TQ_L=I_{\text{lin}(C)}\)</span> and <span class="math inline">\(Q_C^TQ_C=I_e\)</span>, such that <span class="math display">\[ L=Q_L\cdot\text{R}^{\text{lin}(C)} ,\quad \bar C=Q_C\cdot\tilde C . \]</span></p>
 <p>The following simple algorithm achieves this:</p>
 <ul>
 <li>Let <span class="math inline">\(v_j\)</span> denote the <span class="math inline">\(j\)</span>th column of <span class="math inline">\(A\)</span>, let <span class="math inline">\(A_j\in\text{R}^{d\times (n-1)}\)</span> denote the matrix <span class="math inline">\(A\)</span> with the <span class="math inline">\(j\)</span>th column removed, and let <span class="math inline">\(C_j=\{A_j u\mid u\in\text{R}^{n-1}, u\geq 0\}\)</span>.<br />
@@ -260,11 +292,13 @@ The lineality space <span class="math inline">\(L\)</span> is given by the linea
 <li>Compute the singular value decomposition of <span class="math inline">\(B\)</span> and define <span class="math inline">\(Q_C\)</span> as the matrix consisting of the left-singular vectors corresponding to the nonzero singular values; <span class="math inline">\(e=\text{dim}(C)-\text{lin}(C)\)</span> is given by the number of columns of <span class="math inline">\(Q_C\)</span>. Defining <span class="math inline">\(\tilde A=Q_C^T B\)</span>, the cone <span class="math inline">\(\tilde C\)</span> is given as the conical hull of the columns of <span class="math inline">\(\tilde A\)</span>, but not necessarily in a minimal way.</li>
 <li>Test each column of <span class="math inline">\(\tilde A\)</span> whether it lies in the column generated by the remaining columns, similar to the above tests, drop that column if it does.</li>
 </ul>
-<p>This simple algorithm is described in <span class="citation">(Wets and Witzgall 1967)</span>; there are more efficient algorithms, see <span class="citation">(Dulá and López 2006)</span> and the references therein, but in small and medium sized dimensions the simple algorithm should be sufficient. This algorithm is implemented in <code>polyh_rbichibarsq_gen</code>, it produces a list <span class="math display">\[ [ \text{dim}(C),\text{lin}(C),Q_L,Q_C,\tilde A,M ] \]</span> where <span class="math inline">\(M\in\text{R}^{N\times 2}\)</span> such that the rows are independent samples from the bivariate chi-bar-squared distribution of <span class="math inline">\(\tilde C\)</span>.</p>
+<p>This simple algorithm is described in <span class="citation">(Wets and Witzgall <a href="#ref-WW67">1967</a>)</span>; there are more efficient algorithms, see <span class="citation">(Dulá and López <a href="#ref-DL06">2006</a>)</span> and the references therein, but in small and medium sized dimensions the simple algorithm should be sufficient. This algorithm is implemented in <code>polyh_rbichibarsq_gen</code>, it produces a list <span class="math display">\[ [ \text{dim}(C),\text{lin}(C),Q_L,Q_C,\tilde A,M ] \]</span> where <span class="math inline">\(M\in\text{R}^{N\times 2}\)</span> such that the rows are independent samples from the bivariate chi-bar-squared distribution of <span class="math inline">\(\tilde C\)</span>.</p>
 </div>
 <div id="polyhedral-cones-given-by-inequalities" class="section level3">
 <h3>Polyhedral cones given by inequalities</h3>
-We assume that the polyhedral cone is given in the form <span class="math display">\[ C = \{y\in\text{R}^d \mid A^Ty\leq 0\} ,\quad A\in\text{R}^{d\times n} ; \]</span> the cone <span class="math inline">\(\tilde C\)</span> will accordingly be given in the form <span class="math display">\[ \tilde C = \{\tilde y\in\text{R}^e \mid \tilde A^T\tilde y\leq 0\} ,\quad \tilde A\in\text{R}^{e\times m} , \]</span> with <span class="math inline">\(e=\text{dim}(C)-\text{lin}(C)\)</span> and <span class="math inline">\(m=\text{(number of facets of $\bar C$)}\leq n\)</span>. Moreover, we will specify the orthogonal decomposition of <span class="math inline">\(C\)</span> via the matrices <span class="math inline">\(Q_L\in\text{R}^{d\times(d-\text{dim}(C))}\)</span> and <span class="math inline">\(Q_C\in\text{R}^{d\times e}\)</span>, with <span class="math inline">\(Q_L^TQ_L=I_{d-\text{dim}(C)}\)</span> and <span class="math inline">\(Q_C^TQ_C=I_e\)</span>, such that
+We assume that the polyhedral cone is given in the form <span class="math display">\[ C = \{y\in\text{R}^d \mid A^Ty\leq 0\} ,\quad A\in\text{R}^{d\times n} ; \]</span> the cone <span class="math inline">\(\tilde C\)</span> will accordingly be given in the form <span class="math display">\[ \tilde C = \{\tilde y\in\text{R}^e \mid \tilde A^T\tilde y\leq 0\} ,
+  \quad \tilde A\in\text{R}^{e\times m} , \]</span> with <span class="math inline">\(e=\text{dim}(C)-\text{lin}(C)\)</span> and <span class="math inline">\(m=\text{(number of facets
+of $\bar C$)}\leq n\)</span>. Moreover, we will specify the orthogonal decomposition of <span class="math inline">\(C\)</span> via the matrices <span class="math inline">\(Q_L\in\text{R}^{d\times(d-\text{dim}(C))}\)</span> and <span class="math inline">\(Q_C\in\text{R}^{d\times e}\)</span>, with <span class="math inline">\(Q_L^TQ_L=I_{d-\text{dim}(C)}\)</span> and <span class="math inline">\(Q_C^TQ_C=I_e\)</span>, such that
 <span class="math display">\[\begin{align*}
    L &amp; =\{y\in\text{R}^d\mid Q_L^Ty=0, Q_C^Ty=0\} ,\quad \bar C=Q_C\cdot\tilde C ,
 \\ C &amp; =\{y\in\text{R}^d \mid Q_L^Ty=0, \tilde A^TQ_C^Ty\leq 0\}  .
@@ -279,9 +313,6 @@ We assume that the polyhedral cone is given in the form <span class="math displa
 <div id="references" class="section level2 unnumbered">
 <h2>References</h2>
 <div id="refs" class="references">
-<div id="ref-AB15">
-<p>Amelunxen, Dennis, and Peter Bürgisser. 2015. “Probabilistic Analysis of the Grassmann Condition Number.” <em>Found. Comput. Math.</em> 15 (1): 3–51. doi:<a href="https://doi.org/10.1007/s10208-013-9178-4">10.1007/s10208-013-9178-4</a>.</p>
-</div>
 <div id="ref-AL17">
 <p>Amelunxen, Dennis, and Martin Lotz. 2017. “Intrinsic Volumes of Polyhedral Cones: A Combinatorial Perspective.” <em>Discrete Comput. Geom.</em> 58 (2): 371–409. doi:<a href="https://doi.org/10.1007/s00454-017-9904-9">10.1007/s00454-017-9904-9</a>.</p>
 </div>

@@ -41,11 +41,15 @@ circ_ivols <- function(d, alpha, product = FALSE) {
             v <- c(rep(0,d[i]-2), 0.5, 0.5)
         else {
             v <- rep(0,d[i]+1)
-            v[1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
-                             log( integrate(function(x){sin(x)^(d[i]-2)},0,pi/2-alpha[i])$value ) )
+            v[1] <- exp( 2*lgamma(d[i]/2)-lgamma((d[i]-1)/2)-lgamma((d[i]+1)/2) ) *
+                    pbeta(cos(alpha[i])^2, d[i]/2, 1/2)
+            # v[1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
+            #                  log( integrate(function(x){sin(x)^(d[i]-2)},0,pi/2-alpha[i])$value ) )
 
-            v[d[i]+1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
-                                  log( integrate(function(x){sin(x)^(d[i]-2)},0,alpha[i])$value ) )
+            v[d[i]+1] <- exp( 2*lgamma(d[i]/2)-lgamma((d[i]-1)/2)-lgamma((d[i]+1)/2) ) *
+                    pbeta(sin(alpha[i])^2, d[i]/2, 1/2)
+            # v[d[i]+1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
+            #                       log( integrate(function(x){sin(x)^(d[i]-2)},0,alpha[i])$value ) )
 
             k <- 1:(d[i]-1)
             v[2:d[i]] <- exp( lgamma(d[i]/2)-lgamma((k+1)/2)-lgamma((d[i]-k+1)/2)+
