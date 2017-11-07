@@ -455,6 +455,8 @@ first and second moment we obtain the following:
 \\ & = \text{var}\big(\|\Pi_{C^\circ}(g)\|^2\big)-2(d-\delta(C)) .
 \end{align*}
 These formulas underlie the estimation that is implemented in `estim_statdim_var`.
+See the [EM algorithm vignette](../doc/estim-conic-intrinsic-volumes-with-EM.html#start_EM)
+for more details.
 
 ## Inequalities, known and conjectured {#inequs}
 
