@@ -130,6 +130,17 @@ polyh_reduce_gen <- function(A, solver="nnls", tol=1e-7) {
         stop("\n Input is not a matrix.")
 
     d <- dim(A)[1]
+    if (d==1) {
+        if ( any(A>0) & any(A<0) )
+            return( list( dimC=1, linC=1, QL=1, QC=NA, A_reduced=0) )
+        else if (all(A>0))
+            return( list( dimC=1, linC=0, QL=NA, QC=1, A_reduced=1) )
+        else if (all(A<0))
+            return( list( dimC=1, linC=0, QL=NA, QC=-1, A_reduced=1) )
+        else
+            return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0) )
+    }
+
     dimC <- qr(A)$rank
     if (dimC==0)
         return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0) )
@@ -150,12 +161,12 @@ polyh_reduce_gen <- function(A, solver="nnls", tol=1e-7) {
     A_L <- A[,is_in_L]
     linC <- qr(A_L)$rank
     if (linC==0)
-        QL = NA
+        QL <- NA
     else {
         if (linC==1)
-            QL = matrix( A_L[,1]/sqrt(sum(A_L[,1]^2)) )
+            QL <- matrix( A_L[,1]/sqrt(sum(A_L[,1]^2)) )
         else
-            QL = svd(A_L)$u[ , 1:linC]
+            QL <- svd(A_L)$u[ , 1:linC]
 
         if (dimC==linC)
             return( list( dimC=dimC, linC=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL)) )
@@ -174,6 +185,10 @@ polyh_reduce_gen <- function(A, solver="nnls", tol=1e-7) {
 
     # remove redundancies
     d <- dim(A)[1]
+    if (d==1) {
+        if (all(A>0)) return( list( dimC=dimC, linC=linC, QL=QL, QC=QC,  A_reduced=1) )
+        else          return( list( dimC=dimC, linC=linC, QL=QL, QC=-QC, A_reduced=1) )
+    }
     nn <- dim(A)[2]
     is_relevant <- vector("logical", nn)
     if (solver=="nnls") {
