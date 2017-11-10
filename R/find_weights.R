@@ -66,10 +66,10 @@ prepare_em <- function(d, m_samp) {
 #' @param data output of \code{prepare_em(d, m_samp)}.
 #' @param mode specifies whether the first and last values should be taken into account:
 #'             \describe{
-#'               \item{\code{init_mode==0}:}{take all into account}
-#'               \item{\code{init_mode==1}:}{leave out the estimate of the dth intrinsic volume}
-#'               \item{\code{init_mode==2}:}{leave out the estimate of the 0th intrinsic volume}
-#'               \item{\code{init_mode==3}:}{leave out both estimates of the 0th and dth intrinsic volume}
+#'               \item{\code{mode==0}:}{take all into account}
+#'               \item{\code{mode==1}:}{leave out the estimate of the dth intrinsic volume}
+#'               \item{\code{mode==2}:}{leave out the estimate of the 0th intrinsic volume}
+#'               \item{\code{mode==3}:}{leave out both estimates of the 0th and dth intrinsic volume}
 #'             }
 #'
 #' @return The output of \code{loglike_ivols} is the value of the normalized
