@@ -14,6 +14,13 @@ bibliography: references.bib
 link-citations: true
 ---
 
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
 This note introduces the conic intrinsic volumes and the associated (bivariate)
 chi-bar-squared distributions. The focus is on algorithmic considerations; see
 the survey paper [@AL17] and the references therein for more
@@ -23,15 +30,20 @@ We will give further pointers to the literature within the text below.
 
 **Other vignettes:**
 
-* [Estimating conic intrinsic volumes via EM algorithm](../doc/estim-conic-intrinsic-volumes-with-EM.html):
+* [Estimating conic intrinsic volumes via EM algorithm](estim-conic-intrinsic-volumes-with-EM.html):
     describes the details of the algorithm for finding the intrinsic volumes of closed
     convex cones from samples of the associated bivariate chi-bar-squared distribution,
-* [Bayesian estimates for conic intrinsic volumes](../doc/bayesian.html):
+* [Bayesian estimates for conic intrinsic volumes](bayesian.html):
     describes the Bayesian approach for reconstructing intrinsic volumes
     from sampling data, which can either be samples from the intrinsic
     volumes distribution (in the case of polyhedral cones), or from the
     bivariate chi-bar-squared distribution, and which can be with or without
     enforcing log-concavity of the intrinsic volumes.
+
+```{r load-pkgs, include=FALSE}
+library(conivol)
+library(tidyverse)
+```
 
 ## Closed convex cones
 
@@ -150,8 +162,53 @@ defined by the hyperplane. Every polyhedral cone has a finite number of
 faces, and decomposes into the disjoint union of the relative interiors
 of its faces,
   \[ C = \dot{\bigcup_{F\text{ face of } C}} \text{relint}(F) .  \]
-See the [appendix](#sampling_polyh) for computations involving the natural
-orthogonal decomposition of polyhedral cones.
+
+We can compute the dimension, lineality, the orthogonal decomposition $C=L+\bar C$,
+as well as a reduced representation of $\bar C$ as follows 
+(see [@WW67] for more details):
+
+* The linear hull of $C$ can be found through the singular value decomposition (SVD)
+of $A$; the left-singular vectors will form an orthogonal basis of this space.
+* The lineality space of $C$ can be found by each column of $A$ whether its negative
+lies in $C$; the set of these vectors spans the lineality space of $C$, and an
+orthogonal basis can again be found via SVD.
+* The reduced cone is then found by projecting the remaining vectors on the
+orthogonal complement of the lineality space.
+
+The function `polyh_reduce_gen` does exactly this. Concretely, for $C$ defined
+as above through the matrix $A$, it finds matrices
+  \[ Q_L\in\text{R}^{d\times\text{lin}(C)} ,
+    Q_C\in\text{R}^{d\times e} ,
+    \tilde A\in \text{R}^{e\times m} , \]
+where $e=\text{dim}(C)-\text{lin}(C)$, and with $Q_L^TQ_L=I_{\text{lin}(C)}$
+and $Q_C^TQ_C=I_e$, such that
+  \[ L=Q_L\cdot\text{R}^{\text{lin}(C)} ,\quad
+    \bar C=Q_C \{\tilde A\tilde z \mid \tilde z\in\text{R}^m,
+    \tilde z\geq 0\} . \]
+In other words, the matrix $\tilde A$ is a reduced form of the matrix $A$ generating
+(essentially) the same cone as $A$.
+
+
+If the cone is given by inequalities (as is $C^\circ$; we use a different notation
+here to avoid confusing notation), like $D=\{y\in\text{R}^d \mid A^Ty\leq 0\}$,
+then the orthogonal decomposition $D=M+\bar D$, with $M$ denoting the lineality
+space of $D$, is given as follows:
+  \[ M=\{y\in\text{R}^d\mid Q_L^Ty=0, Q_C^Ty=0\} ,\quad
+    \bar D=Q_C \{\tilde y\in\text{R}^e \mid \tilde A^T\tilde y\leq 0\}  . \]
+Where $Q_L, Q_C, \tilde A$ are the same matrices as above (returned by
+`polyh_reduce_gen`); the function `polyh_reduce_ineq` returns these same
+matrices but with adjusted values for dimension and lineality of the cone
+(another reason for having two functions doing essentially the same thing is
+so that the corresponding help pages do not have to cover both cases).
+
+**Example computations:**
+
+```{r polyh-red}
+A <- matrix(c(-(1:4),1:24),4,7); A
+polyh_reduce_gen(A)
+polyh_reduce_ineq(A)
+```
+
 
 ### Examples: simplicial cones and Weyl chambers of finite reflection groups {#simpl_weyl}
 
@@ -212,35 +269,56 @@ The truly simplicial cone $\bar C_A$ corresponds to the matrix
 where $Q\in \text{R}^{(d+1)\times d}$ is such that its columns form
 an orthonormal basis of $L^\bot$.
 
-Taking the negative inverse of the transpose, we see that the polar
-cones $\bar C_A^\circ, {C}^\circ_{BC}, {C}^\circ_D$ (the polar cone
-of $\bar C_A^\circ$ taken in the ambient space $L^\bot$) correspond
-to the following matrices:
+The polar cones ${C}^\circ_A, \bar C_A^\circ, {C}^\circ_{BC}, {C}^\circ_D$
+(the polar cone of $\bar C_A^\circ$ taken in the ambient space $L^\bot$)
+correspond to the following matrices:
 \begin{align*}
-   \bar A_A^\circ & = Q^T \begin{pmatrix}
-       0
-    \\ 1 & 0
-    \\ 1 & 1 & 0
-    \\ \vdots & \dots & \ddots & \ddots
-    \\ 1 & \dots & \dots & 1 & 0
+   {A}^\circ_A & = \begin{pmatrix}
+       -1 & 1 & -d & -d+1 & \dots & -1
+    \\ -1 & 1 & 1 & -d+1 & & \vdots
+    \\ -1 & 1 & 1 & 2 & \ddots & -1
+    \\ \vdots & \vdots & \vdots & \vdots & \ddots & -1
+    \\ -1 & 1 & 1 & 2 & \dots & d
     \end{pmatrix} ,
- & {A}^\circ_{BC} & = \begin{pmatrix}
+ &  \bar A_A^\circ & = Q^T \begin{pmatrix}
+       -d & -d+1 & \dots & -1
+    \\ 1 & -d+1 & & \vdots
+    \\ 1 & 2 & \ddots & -1
+    \\ \vdots & \vdots & \ddots & -1
+    \\ 1 & 2 & \dots & d
+    \end{pmatrix} ,
+\\ {A}^\circ_{BC} & = \begin{pmatrix}
        1
     \\ 1 & 1
     \\ \vdots & \dots & \ddots
     \\ 1 & \dots & \dots & 1
     \end{pmatrix} ,
-\\ {A}^\circ_D & = \begin{pmatrix}
-       1/2 & -1/2
-    \\ 1/2 & 1/2
-    \\ 1/2 & 1/2 & 1
-    \\ 1/2 & 1/2 & 1 & 1
+ & {A}^\circ_D & = \begin{pmatrix}
+       1 & -1
+    \\ 1 & 1
+    \\ 1 & 1 & 1
+    \\ 1 & 1 & 1 & 1
     \\ \vdots & \vdots & \vdots & \dots & \ddots
-    \\ 1/2 & 1/2 & 1 & \dots & \dots & 1
+    \\ 1 & 1 & 1 & \dots & \dots & 1
     \end{pmatrix} .
 \end{align*}
 
 These matrices can be obtained through the function `weyl_matrix`.
+
+**Example computations:**
+
+```{r weyl-comps1}
+A <- weyl_matrix(5,"A")
+A_red <- weyl_matrix(5,"A_red")
+list( A=A, A_red=A_red )
+```
+The representing matrices for $C_A$ and $\bar C_A$ sure look different,
+but checking the angles between the columns reveals that they represent the same
+cone:
+```{r weyl-comps2}
+t(A) %*% A
+round( t(A_red) %*% A_red ,digits=14)
+```
 
 ### Examples: circular cones
 
@@ -296,6 +374,20 @@ $\frac{1}{\alpha_{d-1}}\geq\dots\geq\frac{1}{\alpha_1}>0$, as
    = -\mathcal{E}_{1/\alpha} .
 \end{align*}
 
+**Example computations:**
+
+```{r ellips-semiax1}
+d <- 5
+ellips_semiax( diag(d:1) )
+```
+The semiaxes of an ellipsoidal cone in standard form are surely found; let's
+also test if they are found for a randomly rotated cone:
+```{r ellips-semiax2}
+Q <- svd( matrix(rnorm(d^2),d,d) )$u  # find random rotation
+round( t(Q) %*% Q, 14 )               # test orthogonality
+ellips_semiax( Q %*% diag(d:1) )      # compute semiaxes of rotated cone
+```
+
 ## Conic intrinsic volumes {#intro_intrvol}
 
 The conic intrinsic volumes of a closed convex cone $C\subseteq\text{R}^d$
@@ -333,7 +425,7 @@ primal cone, but the index gets reversed,
 The intrinsic volumes of a product of cones arise as the convolution of
 the intrinsic volumes of its components,
   \[ v_k(C\times D) = \sum_{i+j=k} v_i(C) v_j(D) . \]
-This convolution is conveniently implemented in `comp_ivols_product`.
+This convolution is conveniently implemented in `prod_ivols`.
 
 From the natural orthogonal decomposition $C = L + \bar C$, where
 $L=C\cap (-C)$ and $\bar C=\Pi_{L^\bot}(C)$, one can show that $v_k(C)=0$
@@ -357,12 +449,84 @@ such as $\delta(C^\circ)=d-\delta(C)$ and  $\delta(C\times D)=\delta(C)+\delta(D
 For later use we also define the variance of the cone via
   \[ \text{var}(C) = \sum_{k=0}^d (k-\delta(C))^2 v_k(C) . \]
 
+**Example computations:**
+
+We start with an illustration of the convolution process
+for intrinsic volumes of product cones. Note that the intrinsic volumes
+of a one-dimensional half-line
+are given by $(\frac12,\frac12)$. The product of $n$ half-lines yields the
+positive orthant whose intrinsic volumes are given by the (normalized)
+binomial coefficients:
+
+```{r prod-ivols}
+v_halfline <- c(1/2,1/2); v_halfline
+2^4 * prod_ivols( list(v_halfline, v_halfline, v_halfline, v_halfline) )
+```
+
+For another example, consider the data on signatures of mutational processes
+in human cancer as presented in [@Aetal13]. The data consists of proportions
+of 96 mutation types in 30 different types of cancer:
+
+```{r read-canc-data, warning=FALSE, message=FALSE, cache=TRUE}
+address <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
+A_canc <- readr::read_tsv(address)[ , 1:33]
+A <- as.matrix(A_canc[ , 4:33])
+```
+
+A quick look at the data...
+
+```{r sum-canc-data}
+dim(A)
+A[1:5,1:5]
+all(A>=0)
+colSums(A)
+```
+
+In order to better understand the landscape of mutational signatures one might
+be interested in the conic intrinsic volumes of the cone generated by this matrix.
+
+```{r samp-canc-data, cache=TRUE}
+n <- 1e5
+S <- polyh_rivols_gen(n,A)         # sampling from intrinsic volumes distribution
+
+str(S)
+linC <- S$linC
+dimC <- S$dimC
+msamp <- S$multsamp
+```
+
+We can look at the point estimate for the intrinsic volumes given by this sample:
+```{r plot-canc-samp, fig.width = 7}
+tib_plot <- as_tibble(msamp[1+linC:dimC]/n) %>%
+    add_column( k=linC:dimC, .before=1)
+ggplot(tib_plot, aes(x=k, y=value))      + geom_line() + theme_bw()
+ggplot(tib_plot, aes(x=k, y=log(value))) + geom_line() + theme_bw()
+```
+
+We can also look at the corresponding Bayes posterior:
+```{r canc-bayes, fig.width = 7}
+bayes_est <- polyh_bayes( msamp, dimC, linC )
+tib_plot <- bayes_est$post_samp(1e4) %>%
+    as_tibble() %>%
+    `colnames<-`(paste0(rep("V",dimC-linC+1),as.character(linC:dimC))) %>%
+    gather(factor_key=TRUE)
+ggplot(tib_plot, aes(x=key, y=value)) +
+    geom_boxplot() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+Of course, the error bars are not too interesting in this case, as the sample
+size is quite large. See the vignette on
+[Bayesian estimates for conic intrinsic volumes](bayesian.html)
+for more elaborate ways to estimate the intrinsic volumes, in particular from
+samples of the bivariate chi-bar-squared distribution, using Bayesian methods.
+
 ### Examples: Weyl chambers of finite reflection groups
 
 The intrinsic volumes of the Weyl chambers are easily given through their
 generating function:
 \begin{align*}
-   \sum_{k=0}^d v_k(C_A)\, x^k & = \frac{1}{d!} \prod_{k=1}^d (x+k-1) ,
+   \sum_{k=0}^{d+1} v_k(C_A)\, x^k & = \frac{1}{(d+1)!} \prod_{k=1}^{d+1} (x+k-1) ,
 \\ \sum_{k=0}^d v_k(C_{BC})\, x^k & = \frac{1}{d!\,2^d}\prod_{k=1}^d (x+2k-1) ,
 \\ \sum_{k=0}^d v_k(C_D)\, x^k & = \frac{1}{d!\,2^{d-1}}(x+d-1)\prod_{k=1}^{d-1} (x+2k-1) .
 \end{align*}
@@ -370,16 +534,30 @@ Note that the intrinsic volumes of $C_A$ are the normalized
 [Stirling numbers of the first kind](https://en.wikipedia.org/wiki/Stirling_numbers_of_the_first_kind).
 These formulas are implemented in `weyl_ivols`.
 
+**Example computations:**
+
+```{r weyl-ivols1}
+factorial(6) * weyl_ivols(5,"A")
+factorial(6) * weyl_ivols(5,"A_red")   # intrinsic volumes of reduced cone are just shifted
+2^5*factorial(5) * weyl_ivols(5,"BC")
+2^4*factorial(5) * weyl_ivols(5,"D")
+```
+The intrinsic volumes of product cones are obtained via convolution:
+```{r weyl-ivols2}
+factorial(6)*2^5*factorial(5) * weyl_ivols( c(5,5) , c("A","BC"), product=TRUE )
+
+v_list <- weyl_ivols( c(5,5) , c("A","BC") )
+factorial(6)*2^5*factorial(5) * prod_ivols(v_list)
+```
+
 ### Examples: circular cones
 
 The intrinsic volumes of circular cones are given by the following formulas:
   \[ v_k(\text{Circ}_d(\alpha)) = \begin{cases}
        \displaystyle\frac{\Gamma(\frac{d}{2})}{\Gamma(\frac{k+1}{2})\Gamma(\frac{d-k+1}{2})}
             \frac{p^{(k-1)/2} (1-p)^{(d-k-1)/2}}{2} & \text{if } 0<k<d
-    \\[1mm] \displaystyle\frac{\Gamma(\frac{d}{2})^2}{\Gamma(\frac{d-1}{2})\Gamma(\frac{d+1}{2})}
-            I_p(\tfrac{d}{2},\tfrac{1}{2}) & \text{if } k=d
-    \\[1mm] \displaystyle\frac{\Gamma(\frac{d}{2})^2}{\Gamma(\frac{d-1}{2})\Gamma(\frac{d+1}{2})}
-            I_{1-p}(\tfrac{d}{2},\tfrac{1}{2}) & \text{if } k=0
+    \\[1mm] \displaystyle\frac{I_p(\tfrac{d-1}{2},\tfrac{1}{2})}{2} & \text{if } k=d
+    \\[1mm] \displaystyle\frac{I_{1-p}(\tfrac{d-1}{2},\tfrac{1}{2})}{2} & \text{if } k=0
     \end{cases} \]
 where $p=\sin^2(\alpha)$ and where $I_p(a,b)$ denotes the
 [regularized incomplete beta function](https://en.wikipedia.org/wiki/Beta_function#Incomplete_beta_function),
@@ -389,6 +567,18 @@ These formulas are implemented in `circ_ivols`.
 Note that if $d$ is even, then the intrinsic volumes with odd indices form the
 (half-)weights of a binomial distribution:
   \[ 2v_{2k+1}(\text{Circ}_d(\alpha)) = \binom{d/2-1}{k} p^k (1-p)^{d/2-1-k} . \]
+
+**Example computations:**
+
+```{r circ-ivols}
+v <- circ_ivols(10,pi/5)
+v
+sum(v)
+sum( v[ 2*(1:5) ] )       # odd index intrinsic volumes add up to 1/2
+
+2 * v[ 2*(1:5) ]          # comparing with binomial distribution
+dbinom(0:4,4,sin(pi/5)^2)
+```
 
 ## (Bivariate) chi-bar-squared distribution {#bivchibarsq}
 
@@ -458,6 +648,27 @@ These formulas underlie the estimation that is implemented in `estim_statdim_var
 See the [EM algorithm vignette](../doc/estim-conic-intrinsic-volumes-with-EM.html#start_EM)
 for more details.
 
+**Example computations:**
+
+```{r biv-chi-bar-sq, fig.width = 5, fig.height=5}
+# sample from the bivariate chi-bar-squared distribution of a product of circular cones
+D <- c(7,17)
+alpha <- c(0.7*pi/2, 0.6*pi/2)
+v_true <- circ_ivols( D, alpha, product=TRUE)
+m_samp <- rbichibarsq(1e5, v_true)
+d <- sum(D)
+
+# scatter plot of the sample
+ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
+    theme_bw() +
+    theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+
+# estimate moments, compare with true values
+est <- estim_statdim_var(d, m_samp); est
+list( statdim_true=sum((0:d)*v_true),
+      var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
+```
+
 ## Inequalities, known and conjectured {#inequs}
 
 Finally, we collect inequalities, known and conjectured, that help our understanding
@@ -492,7 +703,7 @@ formulation: if $C\subseteq\text{R}^d$ is a closed convex cone and if the angle
 $\alpha$ is such that $v_{d-1}(C)=v_{d-1}(\text{Circ}_d(\alpha))$ then
   \[ v_d(C)\leq v_d(\text{Circ}_d(\alpha)) . \]
 Note that $v_d(C)=t_d(C)=h_d(C)/2$.
-Makwoski and Scheuer [-@MS16] added to this inequality the following:
+Makowski and Scheuer [-@MS16] added to this inequality the following:
 \begin{align*}
    v_{d-2}(C) & \geq v_{d-2}(\text{Circ}_d(\alpha)) ,
  & h_{d-2k+1}(C) & \geq h_{d-2k+1}(\text{Circ}_d(\alpha)) .
@@ -505,9 +716,14 @@ Concretely, we conjecture the following: if $C\subseteq\text{R}^d$ is a closed
 convex cone and if the angle $\beta$ is such that
 $\delta(C)=\delta(\text{Circ}_d(\beta))=:\delta$ then
 $\text{var}(C)\stackrel{?}{\leq} \text{var}(\text{Circ}_d(\beta))$.
+
 Note that by the above relation between the intrinsic volumes distribution and
-the chi-bar-squared distribution, we can equivalently state the conjecture as
-  \[ \text{E}\big[ \|\Pi_C(g)\|^4 \big] \stackrel{?}{\leq}
+the chi-bar-squared distribution, we can equivalently state the conjecture in the
+following way:
+  \[ \text{E}\big[ \|\Pi_C(g)\|^2 \big] =
+    \text{E}\big[ \|\Pi_{\text{Circ}_d(\beta)}(g)\|^2 \big]
+    \quad \stackrel{?}{\Rightarrow} \quad
+  \text{E}\big[ \|\Pi_C(g)\|^4 \big] \leq
     \text{E}\big[ \|\Pi_{\text{Circ}_d(\beta)}(g)\|^4 \big] . \]
 
 ### Log-concavity
