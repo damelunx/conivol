@@ -66,20 +66,20 @@ pbichibarsq(xmat, v)
 
 # draw samples
 rchibarsq(10,v)
-#>  [1]  0.80460563  4.65427572  0.05719339 15.05207977  5.97042576
-#>  [6]  0.74863863  3.82451112  1.79022563  3.51235577  2.26288724
+#>  [1] 2.843264 0.000000 1.258521 6.055054 3.573442 4.959071 3.218110
+#>  [8] 2.262676 1.301512 5.546882
 rbichibarsq(10,v)
-#>            [,1]      [,2]
-#>  [1,]  0.000000  5.590798
-#>  [2,]  2.017354  3.942561
-#>  [3,]  2.922421  3.313866
-#>  [4,]  5.238616  0.000000
-#>  [5,]  0.000000  2.799497
-#>  [6,]  1.808738  9.073667
-#>  [7,]  1.521149  2.133476
-#>  [8,] 10.609806  4.007467
-#>  [9,]  0.000000 14.954660
-#> [10,]  1.200098  3.656913
+#>            [,1]       [,2]
+#>  [1,] 10.886831 0.45064990
+#>  [2,]  0.958643 7.41394692
+#>  [3,] 11.757422 1.14965181
+#>  [4,]  4.899369 0.00000000
+#>  [5,]  5.240950 5.06014820
+#>  [6,]  2.648986 3.00186654
+#>  [7,]  2.072915 2.29664732
+#>  [8,]  5.952617 0.03521958
+#>  [9,]  9.566093 6.58476597
+#> [10,] 10.048982 0.73872589
 ```
 
 ### Special classes of cones:
@@ -108,41 +108,41 @@ prod_ivols( list(circ_ivols(4,pi/4), circ_ivols(4,pi/4)) )
 # computing the semiaxes of the ellipsoidal cone given by the linear image of the Lorentz cone
 A <- matrix(sample(1:25),5,5)
 ellips_semiax(A)
-#> [1] 3.3729030 1.3909515 0.9096648 0.4252038
+#> [1] 5.4936348 2.5152273 1.0217046 0.4603506
 
 # draw samples of the bivariate chi-bar-squared distribution of the ellipsoidal cone
 ellips_rbichibarsq(10, A)
 #> $semiax
-#> [1] 3.3729030 1.3909515 0.9096648 0.4252038
+#> [1] 5.4936348 2.5152273 1.0217046 0.4603506
 #> 
 #> $samples
-#>               [,1]       [,2]
-#>  [1,] 1.082777e-01  2.8594158
-#>  [2,] 9.057058e-01  1.4330456
-#>  [3,] 4.378305e-01  0.2584739
-#>  [4,] 3.497686e+00  4.0218713
-#>  [5,] 8.863945e-01  1.2753309
-#>  [6,] 6.481333e+00 -2.4307809
-#>  [7,] 2.447830e+00  2.5647325
-#>  [8,] 7.488261e+00  1.9254086
-#>  [9,] 3.114847e-01  0.8093269
-#> [10,] 3.076326e-18 12.0337212
+#>             [,1]        [,2]
+#>  [1,] 0.01549001  1.17304365
+#>  [2,] 3.93548956 -0.08366188
+#>  [3,] 1.98368315 -0.02944172
+#>  [4,] 0.01028817  9.87155212
+#>  [5,] 1.42997317  3.53078287
+#>  [6,] 0.36374561  3.42987657
+#>  [7,] 3.09110941 -0.47055243
+#>  [8,] 0.24024672  2.98764430
+#>  [9,] 0.66846960  3.64891017
+#> [10,] 2.04647270  0.52334397
 
 # compute the matrix of the product of some Weyl chambers
 weyl_matrix( rep(3,4), c("BC","BCp","D","Dp"), product=TRUE)
 #>       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12]
-#>  [1,]   -1    1    0    0    0    0    0    0    0   0.0   0.0     0
-#>  [2,]    0   -1    1    0    0    0    0    0    0   0.0   0.0     0
-#>  [3,]    0    0   -1    0    0    0    0    0    0   0.0   0.0     0
-#>  [4,]    0    0    0    1    0    0    0    0    0   0.0   0.0     0
-#>  [5,]    0    0    0    1    1    0    0    0    0   0.0   0.0     0
-#>  [6,]    0    0    0    1    1    1    0    0    0   0.0   0.0     0
-#>  [7,]    0    0    0    0    0    0   -1    1    0   0.0   0.0     0
-#>  [8,]    0    0    0    0    0    0   -1   -1    1   0.0   0.0     0
-#>  [9,]    0    0    0    0    0    0    0    0   -1   0.0   0.0     0
-#> [10,]    0    0    0    0    0    0    0    0    0   0.5  -0.5     0
-#> [11,]    0    0    0    0    0    0    0    0    0   0.5   0.5     0
-#> [12,]    0    0    0    0    0    0    0    0    0   0.5   0.5     1
+#>  [1,]   -1    1    0    0    0    0    0    0    0     0     0     0
+#>  [2,]    0   -1    1    0    0    0    0    0    0     0     0     0
+#>  [3,]    0    0   -1    0    0    0    0    0    0     0     0     0
+#>  [4,]    0    0    0    1    0    0    0    0    0     0     0     0
+#>  [5,]    0    0    0    1    1    0    0    0    0     0     0     0
+#>  [6,]    0    0    0    1    1    1    0    0    0     0     0     0
+#>  [7,]    0    0    0    0    0    0   -1    1    0     0     0     0
+#>  [8,]    0    0    0    0    0    0   -1   -1    1     0     0     0
+#>  [9,]    0    0    0    0    0    0    0    0   -1     0     0     0
+#> [10,]    0    0    0    0    0    0    0    0    0     1    -1     0
+#> [11,]    0    0    0    0    0    0    0    0    0     1     1     0
+#> [12,]    0    0    0    0    0    0    0    0    0     1     1     1
 
 # compute the corresponding intrinsic volumes of the above cone
 weyl_ivols( rep(3,4), c("BC","BCp","D","Dp"), product=TRUE)
@@ -215,16 +215,16 @@ polyh_reduce_ineq(A)
 # (setting reduce to FALSE since otherwise polyh_reduce_*** would be called)
 polyh_rivols_gen(10, A, reduce=FALSE)
 #> $samples
-#>  [1] 1 1 0 0 0 1 0 0 0 0
+#>  [1] 1 0 1 1 0 0 0 0 1 0
 #> 
 #> $multsamp
-#> [1] 7 3 0 0 0 0
+#> [1] 6 4 0 0 0 0
 polyh_rivols_ineq(10, A, reduce=FALSE)
 #> $samples
-#>  [1] 5 4 4 5 4 5 5 5 4 5
+#>  [1] 4 5 4 5 5 5 4 5 3 4
 #> 
 #> $multsamp
-#> [1] 0 0 0 0 4 6
+#> [1] 0 0 0 1 4 5
 
 # computing the Bayesian posterior with Dirichlet prior (analytically solvable)
 # we sample from a product of Weyl chambers to have the true values at hand
@@ -241,18 +241,18 @@ v_est_med <- bayes_est$post_marg_quant(0:12,0.5)
 v_est_med / v
 #> Warning in v_est_med/v: longer object length is not a multiple of shorter
 #> object length
-#>  [1] 3.794281e-05 4.840392e-02 2.840646e-01 9.523162e-01 1.703997e+00
-#>  [6] 2.096752e+00 1.703997e+00 8.610932e-01 2.994985e-01 3.183253e-02
-#> [11] 3.794281e-05 8.330777e-05 3.794281e-05
+#>  [1] 1.466996e-02 5.421978e-02 3.208327e-01 7.918056e-01 1.682817e+00
+#>  [6] 2.116325e+00 1.610285e+00 9.504306e-01 3.611278e-01 7.800655e-02
+#> [11] 3.962430e-05 7.967436e-05 3.962430e-05
 sum( (v_est_med-v)^2 )
 #> Warning in v_est_med - v: longer object length is not a multiple of shorter
 #> object length
-#> [1] 0.1415845
+#> [1] 0.1361754
 
 # display boxplot of posterior distribution, overlayed with true values
 data <- as.data.frame( bayes_est$post_samp(1e4) )
 colnames(data) <- paste0(rep("V",13),as.character(0:12))
-boxplot( value~key, tidyr::gather( data, factor_key=TRUE ) )
+boxplot( value~key, gather( data, factor_key=TRUE ) )
 lines(1+0:12, v_true, col="red")
 lines(1+0:12, v_est_med, col="blue")
 ```
@@ -293,13 +293,12 @@ ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
 
 ``` r
 # estimate the moments of the intrinsic volumes, compare with true values
-est <- estim_statdim_var(d, m_samp)
-print(est)
+est <- estim_statdim_var(d, m_samp); est
 #> $delta
-#> [1] 9.989176
+#> [1] 9.992823
 #> 
 #> $var
-#> [1] 2.791546
+#> [1] 2.501511
 list( statdim_true=sum((0:d)*v_true),
       var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
 #> $statdim_true
@@ -319,13 +318,13 @@ v_init <- tibble( v_est_0 = init_ivols(13,0),
 # compute log-likelihoods of initial estimates
 lapply( v_init, loglike_ivols, data, 0)
 #> $v_est_0
-#> [1] -5.481136
+#> [1] -5.474894
 #> 
 #> $v_est_1
-#> [1] -4.976702
+#> [1] -4.968283
 #> 
 #> $v_est_4
-#> [1] -4.980951
+#> [1] -4.975375
 
 # plot the different estimates and their logarithms
 tib_plot <- v_init %>% add_column(v_true=v_true,.before=1) %>%
@@ -371,6 +370,7 @@ We can see that the estimate after 200 iterations is quite accurate for the larg
 
 ``` r
 # obtain large sample
+set.seed(1234)
 m_samp_large <- rbichibarsq(1e6, v_true)
 em <- estim_em( d, m_samp_large, N=200 )
 

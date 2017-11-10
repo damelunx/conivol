@@ -198,7 +198,7 @@ sum( (v_est_med-v)^2 )
 # display boxplot of posterior distribution, overlayed with true values
 data <- as.data.frame( bayes_est$post_samp(1e4) )
 colnames(data) <- paste0(rep("V",13),as.character(0:12))
-boxplot( value~key, tidyr::gather( data, factor_key=TRUE ) )
+boxplot( value~key, gather( data, factor_key=TRUE ) )
 lines(1+0:12, v_true, col="red")
 lines(1+0:12, v_est_med, col="blue")
 # the Bayesian approach using a model that induces log-concavity works with
@@ -244,8 +244,7 @@ ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
     theme_bw() +
     theme(axis.title.x=element_blank(),axis.title.y=element_blank())
 # estimate the moments of the intrinsic volumes, compare with true values
-est <- estim_statdim_var(d, m_samp)
-print(est)
+est <- estim_statdim_var(d, m_samp); est
 list( statdim_true=sum((0:d)*v_true),
       var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
 
@@ -316,6 +315,7 @@ sample size to 10^6, we can see that the algorithm converges well.
 
 ```{r em-large-sample}
 # obtain large sample
+set.seed(1234)
 m_samp_large <- rbichibarsq(1e6, v_true)
 em <- estim_em( d, m_samp_large, N=200 )
 
