@@ -1,7 +1,7 @@
 ---
 title: "Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution"
 author: "Dennis Amelunxen"
-date: "`r Sys.Date()`"
+date: "2017-11-17"
 # output: html_vignette
 output: github_document
 header-includes:
@@ -14,13 +14,7 @@ bibliography: references.bib
 link-citations: true
 ---
 
-```{r, echo = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.path = "conic-intrinsic-volumes_figures/"
-)
-```
+
 
 This note introduces the conic intrinsic volumes and the associated (bivariate)
 chi-bar-squared distributions. The focus is on algorithmic considerations; see
@@ -41,10 +35,7 @@ We will give further pointers to the literature within the text below.
     bivariate chi-bar-squared distribution, and which can be with or without
     enforcing log-concavity of the intrinsic volumes.
 
-```{r load-pkgs, include=FALSE}
-library(conivol)
-library(tidyverse)
-```
+
 
 ## Closed convex cones
 
@@ -204,10 +195,60 @@ so that the corresponding help pages do not have to cover both cases).
 
 **Example computations:**
 
-```{r polyh-red}
+
+```r
 A <- matrix(c(-(1:4),1:24),4,7); A
+#>      [,1] [,2] [,3] [,4] [,5] [,6] [,7]
+#> [1,]   -1    1    5    9   13   17   21
+#> [2,]   -2    2    6   10   14   18   22
+#> [3,]   -3    3    7   11   15   19   23
+#> [4,]   -4    4    8   12   16   20   24
 polyh_reduce_gen(A)
+#> $dimC
+#> [1] 2
+#> 
+#> $linC
+#> [1] 1
+#> 
+#> $QL
+#>            [,1]
+#> [1,] -0.1825742
+#> [2,] -0.3651484
+#> [3,] -0.5477226
+#> [4,] -0.7302967
+#> 
+#> $QC
+#>               [,1]
+#> [1,]  8.164966e-01
+#> [2,]  4.082483e-01
+#> [3,]  3.115041e-16
+#> [4,] -4.082483e-01
+#> 
+#> $A_reduced
+#> [1] 1
 polyh_reduce_ineq(A)
+#> $dimC
+#> [1] 3
+#> 
+#> $linC
+#> [1] 2
+#> 
+#> $QL
+#>            [,1]
+#> [1,] -0.1825742
+#> [2,] -0.3651484
+#> [3,] -0.5477226
+#> [4,] -0.7302967
+#> 
+#> $QC
+#>               [,1]
+#> [1,]  8.164966e-01
+#> [2,]  4.082483e-01
+#> [3,]  3.115041e-16
+#> [4,] -4.082483e-01
+#> 
+#> $A_reduced
+#> [1] 1
 ```
 
 
@@ -308,17 +349,47 @@ These matrices can be obtained through the function `weyl_matrix`.
 
 **Example computations:**
 
-```{r weyl-comps1}
+
+```r
 A <- weyl_matrix(5,"A")
 A_red <- weyl_matrix(5,"A_red")
 list( A=A, A_red=A_red )
+#> $A
+#>      [,1] [,2] [,3] [,4] [,5]
+#> [1,]    1    0    0    0    0
+#> [2,]   -1    1    0    0    0
+#> [3,]    0   -1    1    0    0
+#> [4,]    0    0   -1    1    0
+#> [5,]    0    0    0   -1    1
+#> [6,]    0    0    0    0   -1
+#> 
+#> $A_red
+#>            [,1]          [,2]          [,3]          [,4]       [,5]
+#> [1,] -0.5576775  9.659258e-01 -1.115355e+00  9.659258e-01 -0.5576775
+#> [2,] -0.8660254  8.660254e-01  1.665335e-16 -8.660254e-01  0.8660254
+#> [3,]  0.8164966 -8.326673e-16 -8.164966e-01  1.110223e-15  0.8164966
+#> [4,] -0.5000000 -5.000000e-01  3.330669e-16  5.000000e-01  0.5000000
+#> [5,]  0.1494292  2.588190e-01  2.988585e-01  2.588190e-01  0.1494292
 ```
 The representing matrices for $C_A$ and $\bar C_A$ sure look different,
 but checking the angles between the columns reveals that they represent the same
 cone:
-```{r weyl-comps2}
+
+```r
 t(A) %*% A
+#>      [,1] [,2] [,3] [,4] [,5]
+#> [1,]    2   -1    0    0    0
+#> [2,]   -1    2   -1    0    0
+#> [3,]    0   -1    2   -1    0
+#> [4,]    0    0   -1    2   -1
+#> [5,]    0    0    0   -1    2
 round( t(A_red) %*% A_red ,digits=14)
+#>      [,1] [,2] [,3] [,4] [,5]
+#> [1,]    2   -1    0    0    0
+#> [2,]   -1    2   -1    0    0
+#> [3,]    0   -1    2   -1    0
+#> [4,]    0    0   -1    2   -1
+#> [5,]    0    0    0   -1    2
 ```
 
 ### Examples: circular cones
@@ -377,16 +448,26 @@ $\frac{1}{\alpha_{d-1}}\geq\dots\geq\frac{1}{\alpha_1}>0$, as
 
 **Example computations:**
 
-```{r ellips-semiax1}
+
+```r
 d <- 5
 ellips_semiax( diag(d:1) )
+#> [1] 5 4 3 2
 ```
 The semiaxes of an ellipsoidal cone in standard form are surely found; let's
 also test if they are found for a randomly rotated cone:
-```{r ellips-semiax2}
+
+```r
 Q <- svd( matrix(rnorm(d^2),d,d) )$u  # find random rotation
 round( t(Q) %*% Q, 14 )               # test orthogonality
+#>      [,1] [,2] [,3] [,4] [,5]
+#> [1,]    1    0    0    0    0
+#> [2,]    0    1    0    0    0
+#> [3,]    0    0    1    0    0
+#> [4,]    0    0    0    1    0
+#> [5,]    0    0    0    0    1
 ellips_semiax( Q %*% diag(d:1) )      # compute semiaxes of rotated cone
+#> [1] 5 4 3 2
 ```
 
 ## Conic intrinsic volumes {#intro_intrvol}
@@ -459,16 +540,20 @@ are given by $(\frac12,\frac12)$. The product of $n$ half-lines yields the
 positive orthant whose intrinsic volumes are given by the (normalized)
 binomial coefficients:
 
-```{r prod-ivols}
+
+```r
 v_halfline <- c(1/2,1/2); v_halfline
+#> [1] 0.5 0.5
 2^4 * prod_ivols( list(v_halfline, v_halfline, v_halfline, v_halfline) )
+#> [1] 1 4 6 4 1
 ```
 
 For another example, consider the data on signatures of mutational processes
 in human cancer as presented in [@Aetal13]. The data consists of proportions
 of 96 mutation types in 30 different types of cancer:
 
-```{r read-canc-data, warning=FALSE, message=FALSE, cache=TRUE}
+
+```r
 address <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
 A_canc <- readr::read_tsv(address)[ , 1:33]
 A <- as.matrix(A_canc[ , 4:33])
@@ -476,36 +561,78 @@ A <- as.matrix(A_canc[ , 4:33])
 
 A quick look at the data...
 
-```{r sum-canc-data}
+
+```r
 dim(A)
+#> [1] 96 30
 A[1:5,1:5]
+#>      Signature 1  Signature 2 Signature 3 Signature 4 Signature 5
+#> [1,] 0.011098326 6.827082e-04  0.02217231      0.0365 0.014941548
+#> [2,] 0.009149341 6.191072e-04  0.01787168      0.0309 0.008960918
+#> [3,] 0.001490070 9.927896e-05  0.00213834      0.0183 0.002207846
+#> [4,] 0.006233885 3.238914e-04  0.01626515      0.0243 0.009206905
+#> [5,] 0.001801068 2.634810e-04  0.02400262      0.0097 0.011671022
 all(A>=0)
+#> [1] TRUE
 colSums(A)
+#>  Signature 1  Signature 2  Signature 3  Signature 4  Signature 5 
+#>            1            1            1            1            1 
+#>  Signature 6  Signature 7  Signature 8  Signature 9 Signature 10 
+#>            1            1            1            1            1 
+#> Signature 11 Signature 12 Signature 13 Signature 14 Signature 15 
+#>            1            1            1            1            1 
+#> Signature 16 Signature 17 Signature 18 Signature 19 Signature 20 
+#>            1            1            1            1            1 
+#> Signature 21 Signature 22 Signature 23 Signature 24 Signature 25 
+#>            1            1            1            1            1 
+#> Signature 26 Signature 27 Signature 28 Signature 29 Signature 30 
+#>            1            1            1            1            1
 ```
 
 In order to better understand the landscape of mutational signatures one might
 be interested in the conic intrinsic volumes of the cone generated by this matrix.
 
-```{r samp-canc-data, cache=TRUE}
+
+```r
 n <- 1e5
 S <- polyh_rivols_gen(n,A)         # sampling from intrinsic volumes distribution
 
 str(S)
+#> List of 7
+#>  $ dimC     : int 30
+#>  $ linC     : int 0
+#>  $ QL       : logi NA
+#>  $ QC       : num [1:96, 1:30] -0.0542 -0.0399 -0.0121 -0.0439 -0.0188 ...
+#>  $ A_reduced: num [1:30, 1:30] -0.1396 0.085 -0.0189 0.0348 -0.0435 ...
+#>   ..- attr(*, "dimnames")=List of 2
+#>   .. ..$ : NULL
+#>   .. ..$ : chr [1:30] "Signature 1" "Signature 2" "Signature 3" "Signature 4" ...
+#>  $ samples  : int [1:100000] 6 6 7 6 2 3 3 5 8 7 ...
+#>  $ multsamp : int [1:97] 345 2189 7217 14058 20234 20732 16515 10145 5375 2156 ...
 linC <- S$linC
 dimC <- S$dimC
 msamp <- S$multsamp
 ```
 
 We can look at the point estimate for the intrinsic volumes given by this sample:
-```{r plot-canc-samp, fig.width = 7}
+
+```r
 tib_plot <- as_tibble(msamp[1+linC:dimC]/n) %>%
     add_column( k=linC:dimC, .before=1)
 ggplot(tib_plot, aes(x=k, y=value))      + geom_line() + theme_bw()
+```
+
+![plot of chunk plot-canc-samp](conic-intrinsic-volumes_figures/plot-canc-samp-1.png)
+
+```r
 ggplot(tib_plot, aes(x=k, y=log(value))) + geom_line() + theme_bw()
 ```
 
+![plot of chunk plot-canc-samp](conic-intrinsic-volumes_figures/plot-canc-samp-2.png)
+
 We can also look at the corresponding Bayes posterior:
-```{r canc-bayes, fig.width = 7}
+
+```r
 bayes_est <- polyh_bayes( msamp, dimC, linC )
 tib_plot <- bayes_est$post_samp(1e4) %>%
     as_tibble() %>%
@@ -515,6 +642,8 @@ ggplot(tib_plot, aes(x=key, y=value)) +
     geom_boxplot() + theme_bw() +
     theme(axis.title.x=element_blank(), axis.title.y=element_blank())
 ```
+
+![plot of chunk canc-bayes](conic-intrinsic-volumes_figures/canc-bayes-1.png)
 
 Of course, the error bars are not too interesting in this case, as the sample
 size is quite large. See the vignette on
@@ -537,18 +666,26 @@ These formulas are implemented in `weyl_ivols`.
 
 **Example computations:**
 
-```{r weyl-ivols1}
+
+```r
 factorial(6) * weyl_ivols(5,"A")
+#> [1]   0 120 274 225  85  15   1
 factorial(6) * weyl_ivols(5,"A_red")   # intrinsic volumes of reduced cone are just shifted
+#> [1] 120 274 225  85  15   1
 2^5*factorial(5) * weyl_ivols(5,"BC")
+#> [1]  945 1689  950  230   25    1
 2^4*factorial(5) * weyl_ivols(5,"D")
+#> [1] 420 809 520 150  20   1
 ```
 The intrinsic volumes of product cones are obtained via convolution:
-```{r weyl-ivols2}
+
+```r
 factorial(6)*2^5*factorial(5) * weyl_ivols( c(5,5) , c("A","BC"), product=TRUE )
+#>  [1]      0 113400 461610 789411 748250 437510 165750  41388   6750    690     40      1
 
 v_list <- weyl_ivols( c(5,5) , c("A","BC") )
 factorial(6)*2^5*factorial(5) * prod_ivols(v_list)
+#>  [1]      0 113400 461610 789411 748250 437510 165750  41388   6750    690     40      1
 ```
 
 ### Examples: circular cones
@@ -571,14 +708,21 @@ Note that if $d$ is even, then the intrinsic volumes with odd indices form the
 
 **Example computations:**
 
-```{r circ-ivols}
+
+```r
 v <- circ_ivols(10,pi/5)
 v
+#>  [1] 0.028604594 0.091755300 0.155208053 0.193737296 0.191167084 0.153400429 0.100910230 0.053983047 0.022828664 0.007123927
+#> [11] 0.001281375
 sum(v)
+#> [1] 1
 sum( v[ 2*(1:5) ] )       # odd index intrinsic volumes add up to 1/2
+#> [1] 0.5
 
 2 * v[ 2*(1:5) ]          # comparing with binomial distribution
+#> [1] 0.18351060 0.38747459 0.30680086 0.10796609 0.01424785
 dbinom(0:4,4,sin(pi/5)^2)
+#> [1] 0.18351060 0.38747459 0.30680086 0.10796609 0.01424785
 ```
 
 ## (Bivariate) chi-bar-squared distribution {#bivchibarsq}
@@ -651,7 +795,8 @@ for more details.
 
 **Example computations:**
 
-```{r biv-chi-bar-sq, fig.width = 5, fig.height=5}
+
+```r
 # sample from the bivariate chi-bar-squared distribution of a product of circular cones
 D <- c(7,17)
 alpha <- c(0.7*pi/2, 0.6*pi/2)
@@ -663,11 +808,26 @@ d <- sum(D)
 ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
     theme_bw() +
     theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+```
+
+![plot of chunk biv-chi-bar-sq](conic-intrinsic-volumes_figures/biv-chi-bar-sq-1.png)
+
+```r
 
 # estimate moments, compare with true values
 est <- estim_statdim_var(d, m_samp); est
+#> $delta
+#> [1] 15.83232
+#> 
+#> $var
+#> [1] 8.795785
 list( statdim_true=sum((0:d)*v_true),
       var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
+#> $statdim_true
+#> [1] 15.83725
+#> 
+#> $var_true
+#> [1] 8.656292
 ```
 
 ## Inequalities, known and conjectured {#inequs}
