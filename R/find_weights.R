@@ -176,16 +176,16 @@ init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
         v <- sapply( 0:d, function(k){pnorm((k+0.5-delta)/sqrt(var)) - pnorm((k-0.5-delta)/sqrt(var))})
         return(v/sum(v))
     } else if (init_mode==2) {
-        alpha <- asin(sqrt(delta/d))
+        alpha <- asin(min(1,sqrt(delta/d)))
         return(conivol::circ_ivols(d,alpha))
     } else if (init_mode==3) {
-        alpha <- asin(sqrt(2*var/(d-2)))/2
+        alpha <- asin(min(1,sqrt(2*var/(d-2))))/2
         if ((alpha<pi/4 && delta>d/2) || (alpha>pi/4 && delta<d/2))
         alpha <- pi/2-alpha;
         return(conivol::circ_ivols(d,alpha))
     } else if (init_mode==4) {
-        alpha1 <- asin(sqrt(delta/d))
-        alpha2 <- asin(sqrt(2*var/(d-2)))/2
+        alpha1 <- asin(min(1,sqrt(delta/d)))
+        alpha2 <- asin(min(1,sqrt(2*var/(d-2))))/2
         if ((alpha2<pi/4 && delta>d/2) || (alpha2>pi/4 && delta<d/2))
             alpha2 <- pi/2-alpha2;
         v1 <- conivol::circ_ivols(d,alpha1)
