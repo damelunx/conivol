@@ -17,15 +17,14 @@ This note describes an approach to reconstruct the intrinsic
 volumes of a closed convex cone from samples of the associated bivariate
 chi-bar-squared distribution. The approach is based on the
 [expectation-maximization algorithm](https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm)
-and implemented in `estim_em`. We also include formulas for the gradient and
-Hessian of the likelihood function.
+and implemented in `estim_em`.
 
 **Other vignettes:**
 
-* [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](../doc/conic-intrinsic-volumes.html):
+* [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](conic-intrinsic-volumes.html):
     introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions,
     as well as the computations involving polyhedral cones,
-* [Bayesian estimates for conic intrinsic volumes](../doc/bayesian.html):
+* [Bayesian estimates for conic intrinsic volumes](bayesian.html):
     describes the Bayesian approach for reconstructing intrinsic volumes
     from sampling data, which can either be samples from the intrinsic
     volumes distribution (in the case of polyhedral cones), or from the
@@ -212,10 +211,7 @@ For numerical reasons we work with the rescaled log-likelihood functions
     \big( \log v_k + \log f_{ik} \big) .
 \end{align*}
 The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y})$
-is implemented in `loglike_ivols`. This function also returns the gradient
-and Hessian of the rescaled log-likelihood function (in the affine-linear subspace
-respecting the parity equations of the intrinsic volumes). See the
-[appendix below](#grad-hess-loglike) for formulas for the gradient and Hessian.
+is implemented in `loglike_ivols`.
 
 ### Log-concavity
 
@@ -314,87 +310,6 @@ $v_0^{(t+1)}+v_2^{(t+1)}+\dots=v_1^{(t+1)}+v_3^{(t+1)}+\dots=\frac12$.
 (TBD) (Martin's example)
 [@Aetal13]
 
-### Appendix A: Gradient and Hessian {#grad-hess-loglike}
-
-Gradient descent and Newton's method both seem to be inappropriate for the task
-of reconstructing the intrinsic volumes from 
-bivariate chi-bar-squared
-sample data as described above.
-However, analyzing the gradient and the Hessian might still be instructive to
-decide whether the maximum likelihood estimate has been reached.
-
-We compute the gradient and Hessian in the affine-linear subspace
-  \[ V:=\big\{v\in\text{R}^{d+1}\mid v_0 + v_2 + \dots = v_1 + v_3 + \dots = \tfrac12\big\} . \]
-For this we change coordinates in the following way:
-let $k_0,k_1\in\{1,\ldots,d-1\}$,
-$k_0$ even, $k_1$ odd,
-arbitrary but fixed,
-and parametrize the neighborhood of the vector $v$ through
-  \[ v(a) := v + \sum_{k\text{ even}} a_k (e_k-e_{k_0}) + \sum_{k\text{ odd}} a_k (e_k-e_{k_1}) , \]
-so that the coordinates are given by
-  \[ v_k(a) = \begin{cases}
-    v_{k_0} - \sum_{k\text{ even}, k\neq k_0} a_k & \text{for } k=k_0
- \\ v_{k_1} - \sum_{k\text{ odd}, k\neq k_1} a_k & \text{for } k=k_1
- \\ v_k + a_k & \text{else} .
- \end{cases} \]
-Changing coordinates in $F_\lambda$ by defining
-\begin{align*}
-   \tilde F_\lambda(a) := F_\lambda(v(a)) & = p \log v_d(a) + q \log v_0(a)
-    + \frac{1}{N}\sum_{i=1}^{\bar N} \log\Big(\sum_{k=1}^{d-1} v_k(a) f_{ik}\Big)
-\\ & + \sum_{k=1}^{d-1} \lambda_k (2\log v_k(a) - \log v_{k-1}(a) - \log v_{k+1}(a)) ,
-\end{align*}
-we obtain the following gradient in zero:
-
-\begin{align*}
-  \nabla \tilde F_\lambda(0) & = \text{diag}(v)^{-1} \begin{pmatrix} q
-    \\ 0 \\ p \end{pmatrix} + \frac{1}{N} \sum_{i=1}^{\bar N}
-    \frac{f_i - f_{ik_0}\mathbf1_{\text{even}} - f_{ik_1}\mathbf1_{\text{odd}}}{ \sum_{k=1}^{d-1} v_kf_{ik} }
-\\[2mm] & + \text{diag}(v)^{-1} \begin{pmatrix} -\lambda_1 \\ 2\lambda-\lambda_{-1}-\lambda_{+1}
-    \\ -\lambda_{d-1} \end{pmatrix} - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}{v_{k_0}}
-    \mathbf1_{\text{even}} - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}}
-    \mathbf1_{\text{odd}} ,
-\end{align*}
-where
-
-* $f_i = (0,f_{i1},\ldots,f_{i,d-1},0)^T$,
-* $\mathbf1_{\text{even}} = (1, 0, 1, 0, 1, \ldots)^T$, $\mathbf1_{\text{odd}}
-    = (0, 1, 0, 1, 0, 1, \ldots)^T$,
-* $\lambda=(\lambda_1,\ldots,\lambda_{d-1})^T$, $\lambda_{-1}=(1,\lambda_1,
-    \ldots,\lambda_{d-2})^T$, $\lambda_{+1}=(\lambda_2,\ldots,\lambda_{d-1},1)^T$
-
-Note that $\tilde F_\lambda$ is constant in $a_{k_0}$ and $a_{k_1}$, and the
-gradient is correspondingly zero in these points; the gradient of $F_\lambda$
-projected to the affine subspace $V$ is thus (up to rescaling) given by
-
-  \[ \bar\nabla F_\lambda(v)_k = \begin{cases}
-    \nabla\tilde F_\lambda(0)_k & \text{if } k\not\in\{k_0.k_1\}
-    \\ -\sum_{j\text{ even}} \nabla\tilde F_\lambda(0)_j & \text{if } k=k_0
-    \\ -\sum_{j\text{ odd}} \nabla\tilde F_\lambda(0)_j & \text{if } k=k_1 .
-    \end{cases} \]
-The Hessian of $\tilde F_\lambda$ in zero is given by
-
-\begin{align*}
-  H\tilde F_\lambda(0) & = - \text{diag}(v)^{-2}\text{diag} \begin{pmatrix} q \\
-    0 \\ p \end{pmatrix}
-  -\frac{1}{N} \sum_{i=1}^{\bar N}
-    \frac{ \big( f_i - f_{ik_0}\mathbf1_{\text{even}} - f_{ik_1}\mathbf1_{\text{odd}} \big)
-    \big( f_i - f_{ik_0}\mathbf1_{\text{even}} - f_{ik_1}\mathbf1_{\text{odd}} \big)^T}
-    { \big(\sum_{k=1}^{d-1} v_kf_{ik}\big)^2 }
-\\ & - \text{diag}(v)^{-2}\text{diag} \begin{pmatrix} -\lambda_1 \\
-    2\lambda_j-\lambda_{j-1}-\lambda_{j+1} \\ -\lambda_{d-1} \end{pmatrix}
-    - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}
-    {v_{k_0}^2} \mathbf1_{\text{even}}\mathbf1_{\text{even}}^T
-\\ & - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}^2}
-    \mathbf1_{\text{odd}}\mathbf1_{\text{odd}}^T .
-\end{align*}
-As noted above for the gradient, the Hessian matrix will have rank $d-2$;
-eliminating the rows and columns with indices $k_0$ and $k_2$ will give a
-full rank $(d-2)\times(d-2)$ matrix which can be used for an implementation of
-Newton's method. This step in the parameter space $\text{R}^{d-2}$ then has
-to be translated back to $\text{R}^d$.
-
-The function `loglike_ivols` returns gradient and Hessian in zero of $\tilde F_\lambda$
-along with index vectors for the above described subsetting steps.
 
 
 

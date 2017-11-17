@@ -2,10 +2,10 @@
 title: "Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution"
 author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
-# output: rmarkdown::pdf_document
-# header-includes:
-#   - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+# output: html_vignette
+output: github_document
+header-includes:
+  - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
@@ -17,7 +17,8 @@ link-citations: true
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.path = "conic-intrinsic-volumes_figures/"
 )
 ```
 
