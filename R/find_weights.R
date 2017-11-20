@@ -405,7 +405,6 @@ estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           extrapolate=0, selfdual=FALSE, data=NULL) {
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop( paste0("\n Could not find package 'Rmosek'.",
-            "\n If MOSEK is not available, try using 'estim_gd' and 'estim_newton' instead of 'estim_em'.",
             "\n See the help entries for more information.") )
     if (!requireNamespace("Matrix", quietly = TRUE))
         stop("\n Could not find package 'Matrix'.")
@@ -593,7 +592,7 @@ estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' #@export #(gradient descent doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+.estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
@@ -738,7 +737,7 @@ estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' #@export  #(Newton's method doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-estim_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+.estim_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                               lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
