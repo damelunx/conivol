@@ -26,7 +26,8 @@
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{estim_em}}
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{loglike_ivols}},
+#' \code{\link[conivol]{estim_em}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -151,7 +152,7 @@ loglike_ivols <- function(v, data, mode=0){
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{rbichibarsq_polyh}}
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{loglike_ivols}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'

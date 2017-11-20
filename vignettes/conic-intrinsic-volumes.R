@@ -1,7 +1,8 @@
 ## ---- echo = FALSE-------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.path = "conic-intrinsic-volumes_figures/"
 )
 
 ## ----load-pkgs, include=FALSE--------------------------------------------
@@ -35,25 +36,11 @@ ellips_semiax( Q %*% diag(d:1) )      # compute semiaxes of rotated cone
 v_halfline <- c(1/2,1/2); v_halfline
 2^4 * prod_ivols( list(v_halfline, v_halfline, v_halfline, v_halfline) )
 
-## ----read-canc-data, warning=FALSE, message=FALSE, cache=TRUE------------
-address <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
-A_canc <- readr::read_tsv(address)[ , 1:33]
-A <- as.matrix(A_canc[ , 4:33])
-
 ## ----sum-canc-data-------------------------------------------------------
 dim(A)
 A[1:5,1:5]
 all(A>=0)
 colSums(A)
-
-## ----samp-canc-data, cache=TRUE------------------------------------------
-n <- 1e5
-S <- polyh_rivols_gen(n,A)         # sampling from intrinsic volumes distribution
-
-str(S)
-linC <- S$linC
-dimC <- S$dimC
-msamp <- S$multsamp
 
 ## ----plot-canc-samp, fig.width = 7---------------------------------------
 tib_plot <- as_tibble(msamp[1+linC:dimC]/n) %>%

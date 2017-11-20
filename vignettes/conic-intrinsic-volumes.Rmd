@@ -715,7 +715,7 @@ would be those comparing, say, the variance (or entropy) of the intrinsic volume
 of a cone with those of the circular cone with the same statistical dimension.
 Concretely, we conjecture the following: if $C\subseteq\text{R}^d$ is a closed
 convex cone and if the angle $\beta$ is such that
-$\delta(C)=\delta(\text{Circ}_d(\beta))=:\delta$ then
+$\delta(C)=\delta(\text{Circ}_d(\beta))$ then
 $\text{var}(C)\stackrel{?}{\leq} \text{var}(\text{Circ}_d(\beta))$.
 
 Note that by the above relation between the intrinsic volumes distribution and

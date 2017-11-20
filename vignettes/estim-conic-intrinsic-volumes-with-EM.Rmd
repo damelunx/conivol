@@ -14,11 +14,20 @@ bibliography: references.bib
 link-citations: true
 ---
 
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "estim-conic-intrinsic-volumes-with-EM_figures/"
+)
+```
+
 This note describes an approach to reconstruct the intrinsic
 volumes of a closed convex cone from samples of the associated bivariate
 chi-bar-squared distribution. The approach is based on the
 [expectation-maximization algorithm](https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm)
-and implemented in `estim_em`.
+and implemented in `estim_em`. We assume familiarity with the first of the two
+other vignettes:
 
 **Other vignettes:**
 
@@ -31,6 +40,11 @@ and implemented in `estim_em`.
     volumes distribution (in the case of polyhedral cones), or from the
     bivariate chi-bar-squared distribution, and which can be with or without
     enforcing log-concavity of the intrinsic volumes.
+
+```{r load-pkgs, include=FALSE}
+library(conivol)
+library(tidyverse)
+```
 
 ## The setup {#setup}
 
@@ -102,7 +116,7 @@ where $F_k(x)$ denotes the cdf of the chi-squared distribution.
 The step of "discarding" the sample points $(x_i,y_i)$ for which $x_i=0$ or
 $y_i=0$ then amounts to applying the map the sends $(x,0)$ to $(-1,0)$,
 that sends $(0,y)$ to $(0,-1)$, and that keeps points with positive components
-invariant. The sample of the bivariate chi-bar-squared distribution then becomes
+unchanged. The sample of the bivariate chi-bar-squared distribution then becomes
 a sample of the modified bivariate chi-bar-squared distribution.
 
 To save notation we assume that the sample points are indexed such that
@@ -139,7 +153,7 @@ and $\text{var}$, which we combine as follows:
    \displaystyle\widehat{\text{var}}_{\text{prim}} = \frac{1}{N}\sum_{i=1}^N x_i^2 - (\hat\delta+1)^2+1
 \\ \displaystyle\widehat{\text{var}}_{\text{pol}} = \frac{1}{N}\sum_{i=1}^N y_i^2 - (d-\hat\delta+1)^2+1
    \end{array} \right\} \quad \widehat{\text{var}} = \sqrt{ \widehat{\text{var}}_{\text{prim}} \widehat{\text{var}}_{\text{pol}} } . \]
-These formulas are implemented in `estimate_statdim_var`.
+These formulas are implemented in `estim_statdim_var`.
 
 We propose the following ways to choose a starting point for the iterative algorithms
 to find the intrinsic volumes:
@@ -163,6 +177,41 @@ statistical dimension, or the variance, or take an average of both fits:
     volumes obtained in (a) and (b).
 
 These formulas are implemented in `init_v`.
+
+**Example computations:** We analyze a randomly chosen ellipsoidal cone:
+
+```{r ellips-def}
+d <-12
+set.seed(1234)
+A <- matrix(rnorm(d^2),d,d)
+ellips_semiax(A)
+```
+
+Sample from the corresponding bivariate chi-bar-squared distribution, and use
+this to estimate statistical dimension and variance and find initial estimates
+of intrinsic volumes:
+
+```{r ellips-samp, fig.width = 7}
+N <- 1e5
+E <- ellips_rbichibarsq(N,A)
+str(E)
+
+# scatter plot of the sample
+ggplot(as_tibble(E$samples), aes(V1,V2)) + geom_point(alpha=.02) +
+    theme_bw() +
+    theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+mom <- estim_statdim_var(d, E$samples); mom
+v_est <- list( mode0 = init_ivols(d, 0),
+               mode1 = init_ivols(d, 1, mom$delta, mom$var),
+               mode2 = init_ivols(d, 2, mom$delta),
+               mode3 = init_ivols(d, 3, mom$delta, mom$var),
+               mode4 = init_ivols(d, 4, mom$delta, mom$var) )
+tib_plot <- as_tibble(v_est) %>%
+    add_column(k=0:d,.before=1) %>% gather(mode,v,2:6)
+ggplot(tib_plot,aes(x=k,y=v,color=mode)) +
+    geom_line() + theme_bw()
+```
+
 
 ## The likelihood function
 
@@ -214,6 +263,25 @@ For numerical reasons we work with the rescaled log-likelihood functions
 The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y})$
 is implemented in `loglike_ivols`.
 
+**Example computations:** We continue analyzing the above defined ellipsoidal cone.
+First, we prepare the data for multiple executions of the log-likelihood function
+and of the EM algorithm.
+
+```{r ellips-prep-data}
+out_prep <- prepare_em(d, E$samples)
+```
+
+Now evaluate the log-likelihood function in the simple estimate of the intrinsic
+volumes based on the moments.
+
+```{r ellips-loglike}
+loglike_ivols( v_est$mode0 , out_prep )
+loglike_ivols( v_est$mode1 , out_prep )
+loglike_ivols( v_est$mode2 , out_prep )
+loglike_ivols( v_est$mode3 , out_prep )
+loglike_ivols( v_est$mode4 , out_prep )
+```
+
 ### Log-concavity
 
 The log-concavity inequalities are the inequalities $v_k^2\geq v_{k-1}v_{k+1}$
@@ -254,10 +322,9 @@ Both of these methods are supported in `estim_em`.
 
 ## Expectation maximization (EM) algorithm
 
-The expectation maximization (EM) algorithm works by maximizing, with respect
-to the latent variable, the conditional
-expectation of the maximum likelihood method,
-given the current iterate for the parameter that is to be found.
+The expectation maximization (EM) algorithm works by maximizing the conditional
+expectation of the maximum likelihood method -- expectation with respect
+to the latent variable -- given the current iterate for the parameter that is to be found.
 
 For the situation at hand we obtain the conditional probabilities
 for the latent variable as follows:
@@ -306,19 +373,81 @@ $\{ u\in\text{R}^{d+1}\mid 2 u_k - u_{k-1} - u_{k+1} \geq c_k \}$ and then resca
 the resulting vector so that
 $v_0^{(t+1)}+v_2^{(t+1)}+\dots=v_1^{(t+1)}+v_3^{(t+1)}+\dots=\frac12$.
 
-## A moderate-sized example
+**Example computations:** We reconstruct the intrinsic volumes from the sample
+data. For this we run the EM algorithm with the different starting points for
+200 iterations, and display the every twenty-fifth iteration.
 
-(TBD) (Martin's example)
-[@Aetal13]
+```{r ellips-em, fig.width = 7}
+em0 <- estim_em( d, E$samples, N=200, v_init=v_est$mode0, data=out_prep )
+em1 <- estim_em( d, E$samples, N=200, v_init=v_est$mode1, data=out_prep )
+em2 <- estim_em( d, E$samples, N=200, v_init=v_est$mode2, data=out_prep )
+em3 <- estim_em( d, E$samples, N=200, v_init=v_est$mode3, data=out_prep )
+em4 <- estim_em( d, E$samples, N=200, v_init=v_est$mode4, data=out_prep )
+
+# prepare plots
+tib_plot0 <- as_tibble( t(em0$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+tib_plot1 <- as_tibble( t(em1$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+tib_plot2 <- as_tibble( t(em2$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+tib_plot3 <- as_tibble( t(em3$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+tib_plot4 <- as_tibble( t(em4$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+
+tib_plot0$step <- factor(tib_plot0$step, levels = paste0("s_",25*(0:8)))
+tib_plot1$step <- factor(tib_plot1$step, levels = paste0("s_",25*(0:8)))
+tib_plot2$step <- factor(tib_plot2$step, levels = paste0("s_",25*(0:8)))
+tib_plot3$step <- factor(tib_plot3$step, levels = paste0("s_",25*(0:8)))
+tib_plot4$step <- factor(tib_plot4$step, levels = paste0("s_",25*(0:8)))
+
+# plot mode 0
+ggplot(tib_plot0,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+# plot mode 1
+ggplot(tib_plot1,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+# plot mode 2
+ggplot(tib_plot2,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+# plot mode 3
+ggplot(tib_plot3,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+# plot mode 4
+ggplot(tib_plot4,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+Comparing the 200th iterates of the different runs shows that they have pretty
+much converged to the same estimate.
+```{r ellips-em-comp, fig.width = 7}
+# prepare plot
+tib_plot_comp <- tibble(  mode0=em0$iterates[201, ],
+                          mode1=em1$iterates[201, ],
+                          mode2=em2$iterates[201, ],
+                          mode3=em3$iterates[201, ],
+                          mode4=em4$iterates[201, ] ) %>%
+    add_column(k=0:d,.before=1) %>% gather(mode,value,2:6)
+
+# plot 200th iterate of different runs
+ggplot(tib_plot_comp,aes(x=k,y=value,color=mode)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+```
 
 
-
-
-## References
-
-
-
-
+<!-- ## References -->
 
 
 
