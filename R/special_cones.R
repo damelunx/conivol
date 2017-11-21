@@ -36,9 +36,9 @@ circ_ivols <- function(d, alpha, product = FALSE) {
         if (d[i]<=1 || alpha[i]<0 || alpha[i]>pi/2)
             v <- NA
         else if (alpha[i]==0)
-            v <- c(0.5, 0.5, rep(0,d[i]-2))
+            v <- c(0.5, 0.5, rep(0,d[i]-1))
         else if (alpha[i]==pi/2)
-            v <- c(rep(0,d[i]-2), 0.5, 0.5)
+            v <- c(rep(0,d[i]-1), 0.5, 0.5)
         else {
             v <- rep(0,d[i]+1)
             # v[1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
