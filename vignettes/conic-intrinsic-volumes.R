@@ -8,6 +8,8 @@ knitr::opts_chunk$set(
 ## ----load-pkgs, include=FALSE--------------------------------------------
 library(conivol)
 library(tidyverse)
+library(partitions)
+library(Rmisc)
 
 ## ----polyh-red-----------------------------------------------------------
 A <- matrix(c(-(1:4),1:24),4,7); A
@@ -96,4 +98,82 @@ ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
 est <- estim_statdim_var(d, m_samp); est
 list( statdim_true=sum((0:d)*v_true),
       var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
+
+## ----statdim-var-circ, fig.width = 7-------------------------------------
+d <- 9
+N <- 1e3
+alpha <- (0:N)/N * pi/2
+
+Sdim <- matrix(0,d-1,N+1)
+Var  <- matrix(0,d-1,N+1)
+for (k in 2:d) {
+    V <- circ_ivols( rep(k,N+1) , alpha)
+    Sdim[k-1,] <- sapply(V, function(v) return(sum((0:k) * v)))
+    Var[k-1,]  <- sapply(V, function(v) return(sum((0:k)^2 * v)))-Sdim[k-1,]^2
+}
+
+G <- ggplot()
+for (k in 2:d) {
+    G <- G + geom_line(data=tibble(sdim=Sdim[k-1,],var=Var[k-1,]), aes(sdim,var))
+}
+G <- G + theme_bw()
+G
+
+## ----statdim-var-part----------------------------------------------------
+P <- parts(d); P
+
+## ----statdim-var-prod-curv, fig.width = 7--------------------------------
+sing <- which(colSums(P>1)==1)
+
+G <- ggplot()
+for (k in sing) {
+    n_ray <- sum(P[,k]==1)
+    sdim <- Sdim[ P[1,k]-1, ] + n_ray/2
+    var  <- Var[  P[1,k]-1, ] + n_ray/4
+    G <- G + geom_line(data=tibble(sdim,var), aes(sdim,var))
+}
+G <- G + theme_bw(); G
+
+## ----statdim-var-prod-scatter, fig.width = 7, fig.height=10, echo=FALSE----
+# line of d-dimensional circular cones
+Gd <- geom_line(data=tibble(sdim=Sdim[d-1,],var=Var[d-1,]), aes(sdim,var))
+
+# recalculate statdim and variance with less points
+N_sm <- 20
+alpha_sm <- (0:N_sm)/N_sm * pi/2
+Sdim_sm <- matrix(0,d-1,N_sm+1)
+Var_sm  <- matrix(0,d-1,N_sm+1)
+for (k in 2:d) {
+    V <- circ_ivols( rep(k,N_sm+1) , alpha_sm )
+    Sdim_sm[k-1,] <- sapply(V, function(v) return(sum((0:k) * v)))
+    Var_sm[k-1,]  <- sapply(V, function(v) return(sum((0:k)^2 * v)))-Sdim_sm[k-1,]^2
+}
+
+# indices of nontrivial cones
+nonsing <- which(colSums(P>1)>1)
+
+# function that produces scatterplots
+plotSV <- function(k) {
+    n_ray <- sum(P[,k]==1)
+    n_full <- sum(P[,k]>1)
+    sdim <- Sdim_sm[ P[1,k]-1, ]
+    var  <- Var_sm[  P[1,k]-1, ]
+    for (l in 2:n_full) {
+        sdim <- c(rep(1,N_sm+1) %*% t(sdim) + Sdim_sm[ P[l,k]-1, ])
+        var  <- c(rep(1,N_sm+1) %*% t(var)  + Var_sm[  P[l,k]-1, ])
+    }
+    sdim <- sdim + n_ray/2
+    var  <- var  + n_ray/4
+    return(geom_point(data=tibble(sdim,var), aes(sdim,var), size=1, alpha=0.05))
+}
+
+plotsSV <- list()
+for (i in 1:length(nonsing)) {
+    plotsSV[[i]] <- ggplot() + Gd + plotSV(nonsing[i]) + theme_bw() +
+        theme(axis.title.x=element_blank(), axis.title.y=element_blank(),
+              axis.text.x =element_blank(), axis.text.y =element_blank(),
+              axis.ticks.x=element_blank(), axis.ticks.y=element_blank())
+}
+
+multiplot(plotlist = plotsSV, cols = 3)
 
