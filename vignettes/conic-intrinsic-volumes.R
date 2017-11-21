@@ -118,7 +118,6 @@ for (k in 2:d) {
 }
 G <- G + theme_bw()
 G
-<<<<<<< HEAD
 
 ## ----statdim-var-part----------------------------------------------------
 P <- parts(d); P
@@ -177,19 +176,4 @@ for (i in 1:length(nonsing)) {
 }
 
 multiplot(plotlist = plotsSV, cols = 3)
-=======
-# em_no_logconc <- estim_em( d, E$samples, N=200, v_init=v_est$mode0, data=out_prep,
-#                            no_of_lcc_projections=0 )
-# 
-# # prepare plot
-# tib_plot_no_logconc <- as_tibble( t(em_no_logconc$iterates[1+25*(0:8), ]) ) %>%
-#     `colnames<-`(paste0("s_",25*(0:8))) %>%
-#     add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
-# 
-# tib_plot_no_logconc$step <- factor(tib_plot_no_logconc$step, levels = paste0("s_",25*(0:8)))
-# 
-# ggplot(tib_plot_no_logconc,aes(x=k,y=value,color=step)) +
-#     geom_line() + theme_bw() +
-#     theme(axis.title.x=element_blank(), axis.title.y=element_blank())
->>>>>>> a3afb87b264134fc0a88f93a6df55bdb4238360e
 
