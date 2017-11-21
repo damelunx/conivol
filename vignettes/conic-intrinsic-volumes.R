@@ -8,6 +8,8 @@ knitr::opts_chunk$set(
 ## ----load-pkgs, include=FALSE--------------------------------------------
 library(conivol)
 library(tidyverse)
+library(partitions)
+library(Rmisc)
 
 ## ----polyh-red-----------------------------------------------------------
 A <- matrix(c(-(1:4),1:24),4,7); A
@@ -96,4 +98,37 @@ ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
 est <- estim_statdim_var(d, m_samp); est
 list( statdim_true=sum((0:d)*v_true),
       var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
+
+## ----statdim-var-circ, fig.width = 7-------------------------------------
+d <- 9
+N <- 1e3
+alpha <- (0:N)/N * pi/2
+
+Sdim <- matrix(0,d-1,N+1)
+Var  <- matrix(0,d-1,N+1)
+for (k in 2:d) {
+    V <- circ_ivols( rep(k,N+1) , alpha)
+    Sdim[k-1,] <- sapply(V, function(v) return(sum((0:k) * v)))
+    Var[k-1,]  <- sapply(V, function(v) return(sum((0:k)^2 * v)))-Sdim[k-1,]^2
+}
+
+G <- ggplot()
+for (k in 2:d) {
+    G <- G + geom_line(data=tibble(sdim=Sdim[k-1,],var=Var[k-1,]), aes(sdim,var))
+}
+G <- G + theme_bw()
+G
+# em_no_logconc <- estim_em( d, E$samples, N=200, v_init=v_est$mode0, data=out_prep,
+#                            no_of_lcc_projections=0 )
+# 
+# # prepare plot
+# tib_plot_no_logconc <- as_tibble( t(em_no_logconc$iterates[1+25*(0:8), ]) ) %>%
+#     `colnames<-`(paste0("s_",25*(0:8))) %>%
+#     add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+# 
+# tib_plot_no_logconc$step <- factor(tib_plot_no_logconc$step, levels = paste0("s_",25*(0:8)))
+# 
+# ggplot(tib_plot_no_logconc,aes(x=k,y=value,color=step)) +
+#     geom_line() + theme_bw() +
+#     theme(axis.title.x=element_blank(), axis.title.y=element_blank())
 
