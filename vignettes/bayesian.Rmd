@@ -7,11 +7,45 @@ output: rmarkdown::html_vignette
 # header-includes:
 #   - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: references.bib
+link-citations: true
 ---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "conic-intrinsic-volumes_figures/"
+)
+```
+
+```{r load-pkgs, include=FALSE}
+library(conivol)
+library(tidyverse)
+library(knitr)
+library(png)
+```
+
+```{r disp-img, echo=FALSE}
+img_paths <- list( dl="bayes_diagrams/bayes_direct_logconc.png",
+                   dnl="bayes_diagrams/bayes_direct_nologconc.png",
+                   idle="bayes_diagrams/bayes_indirect_logconc_even.png",
+                   idlo="bayes_diagrams/bayes_indirect_logconc_odd.png",
+                   idnle="bayes_diagrams/bayes_indirect_nologconc_even.png",
+                   idnlo="bayes_diagrams/bayes_indirect_nologconc_odd.png" )
+img_dpi <- 450
+
+include_graphics(img_paths$dl, dpi=img_dpi)
+include_graphics(img_paths$dnl, dpi=img_dpi)
+include_graphics(img_paths$idle, dpi=img_dpi)
+include_graphics(img_paths$idlo, dpi=img_dpi)
+include_graphics(img_paths$idnle, dpi=img_dpi)
+include_graphics(img_paths$idnlo, dpi=img_dpi)
+```
+
 
 In this vignette we derive Bayesian estimates of the conic intrinsic volumes: given a prior distribution on the intrinsic volumes, for which we will give two choices corresponding to an informative and a non-informative prior, we derive a sampling procedure for the posterior distribution corresponding to sample data of the corresponding bivariate chi-bar-squared distribution. More precisely, we will use sample data from a slightly modified distribution, which was also used in the EM algorithm, described in [this vignette](estim-conic-intrinsic-volumes-with-EM.html). See [this vignette](conic-intrinsic-volumes.html) for a short introduction to conic intrinsic volumes.
 
