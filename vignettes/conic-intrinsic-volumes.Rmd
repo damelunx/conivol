@@ -22,6 +22,13 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r load-pkgs, include=FALSE}
+library(conivol)
+library(tidyverse)
+library(partitions)
+library(Rmisc)
+```
+
 This note introduces the conic intrinsic volumes and the associated (bivariate)
 chi-bar-squared distributions. The focus is on algorithmic considerations; see
 the survey paper [@AL17] and the references therein for more
@@ -31,7 +38,7 @@ We will give further pointers to the literature within the text below.
 
 **Other vignettes:**
 
-* [Estimating conic intrinsic volumes via EM algorithm](estim-conic-intrinsic-volumes-with-EM.html):
+* [Estimating conic intrinsic volumes from bivariate chi-bar-squared data](estim-conic-intrinsic-volumes-with-EM.html):
     describes the details of the algorithm for finding the intrinsic volumes of closed
     convex cones from samples of the associated bivariate chi-bar-squared distribution,
 * [Bayesian estimates for conic intrinsic volumes](bayesian.html):
@@ -40,13 +47,6 @@ We will give further pointers to the literature within the text below.
     volumes distribution (in the case of polyhedral cones), or from the
     bivariate chi-bar-squared distribution, and which can be with or without
     enforcing log-concavity of the intrinsic volumes.
-
-```{r load-pkgs, include=FALSE}
-library(conivol)
-library(tidyverse)
-library(partitions)
-library(Rmisc)
-```
 
 ## Closed convex cones
 
@@ -712,27 +712,34 @@ Makowski and Scheuer [-@MS16] added to this inequality the following:
  & h_{d-2k+1}(C) & \geq h_{d-2k+1}(\text{Circ}_d(\alpha)) .
 \end{align*}
 
-The above inequalities are interesting, but more useful inequalities
-would be those comparing, say, the variance (or entropy) of the intrinsic volumes
-of a cone with those of the circular cone with the same statistical dimension.
-Concretely, we conjecture the following: if $C\subseteq\text{R}^d$ is a closed
-convex cone and if the angle $\beta$ is such that
-$\delta(C)=\delta(\text{Circ}_d(\beta))$ then
-$\text{var}(C)\stackrel{?}{\leq} \text{var}(\text{Circ}_d(\beta))$.
+### Variance conjecture
 
-Note that by the above relation between the intrinsic volumes distribution and
-the chi-bar-squared distribution, we can equivalently state the conjecture in the
+So far the only known inequality for the variance of the intrinsic volumes is
+  \[ \text{var}(C) \leq 2\text{min}\{\delta(C),d-\delta(C)\} , \]
+which was shown in [@McCT14]. We think that this inequality can be greatly
+improved (see the example computations below) through a new form of isoperimetric
+inequalities.  
+
+We conjecture that among all $d$-dimensional cones of a specific statistical
+dimension the variance of the intrinsic volumes is maximized by the
+corresponding $d$-dimensional circular cone of the same statistical dimension:
+if $C\subseteq\text{R}^d$ is a closed convex cone, then
+  \[ \delta(C)=\delta(\text{Circ}_d)
+    \quad \stackrel{?}{\Rightarrow} \quad
+  \text{var}(C)\leq\text{var}(\text{Circ}_d) . \]
+Using the tail functionals this conjecture can be quivalently stated in the form
+  \[ \sum_{k=1}^d t_k(C)=\sum_{k=1}^d t_k(\text{Circ}_d)
+    \quad \stackrel{?}{\Rightarrow} \quad
+  \sum_{k=1}^d k t_k(C)\leq\sum_{k=1}^d k t_k(\text{Circ}_d) . \]
+By the above described relation between the intrinsic volumes distribution and
+the chi-bar-squared distribution, we can also state the conjecture in the
 following way:
   \[ \text{E}\big[ \|\Pi_C(g)\|^2 \big] =
-    \text{E}\big[ \|\Pi_{\text{Circ}_d(\beta)}(g)\|^2 \big]
+    \text{E}\big[ \|\Pi_{\text{Circ}_d}(g)\|^2 \big]
     \quad \stackrel{?}{\Rightarrow} \quad
   \text{E}\big[ \|\Pi_C(g)\|^4 \big] \leq
-    \text{E}\big[ \|\Pi_{\text{Circ}_d(\beta)}(g)\|^4 \big] . \]
+    \text{E}\big[ \|\Pi_{\text{Circ}_d}(g)\|^4 \big] . \]
 
-What *is* known at this point is the inequality
-  \[ \text{var}(C) \leq 2\text{min}\{\delta(C),d-\delta(C)\} , \]
-which was shown in [@McCT14]. A proof of the above conjecture would greatly
-improve this bound; see the example computations below.
 
 **Example computations:** We test the above conjecture for products of circular
 cones in dimension $d=9$. We first compare the (statistical dimension, variance)
@@ -824,23 +831,27 @@ for (i in 1:length(nonsing)) {
 multiplot(plotlist = plotsSV, cols = 3)
 ```
 
-### Log-concavity
+### Log-concavity conjecture
 
 Log-concavity, as the name suggests, means concavity of the logarithms.
 In the context of intrinsic volumes this means $\log v_k(C) \stackrel{?}{\geq}
 \frac{\log v_{k-1}(C)+\log v_{k+1}(C)}{2}$, equivalently,
    \[ v_k(C)^2 \stackrel{?}{\geq} v_{k-1}(C) v_{k+1}(C) . \]
 These inequalities imply unimodality, and are in general useful for estimating
-intrinsic volumes. Unfortunately, these inequalities are so far just conjectured
+intrinsic volumes; cp. the vignettes 
+[Estimating conic intrinsic volumes from bivariate chi-bar-squared data](estim-conic-intrinsic-volumes-with-EM.html)
+and [Bayesian estimates for conic intrinsic volumes](bayesian.html).
+Unfortunately, these inequalities are so far just conjectured
 for general cones; they are true for circular cones, Weyl chambers, and direct
-products of cones for which they are known to hold.
+products of cones for which they are known to hold.  
 In the euclidean case the log-concavity of the euclidean intrinsic volumes
 follows from the [Alexandrov-Fenchel inequality](https://en.wikipedia.org/wiki/Mixed_volume),
-and log-concavity of conic intrinsic volumes directly implies log-concavity
-of euclidean intrinsic volumes.
-In the other direction it can be shown that log-concavity of conic intrinsic volumes
-hold for dimension $d\leq5$ using the Alexandrov-Fenchel inequality, but for
-general dimensions it seems that this inequality is not enough.
+and it can easily be shown that log-concavity of conic intrinsic volumes
+directly implies log-concavity of euclidean intrinsic volumes.  
+As for the other direction, it can be shown that in dimension $d\leq5$
+log-concavity of conic intrinsic volumes does indeed hold
+and follows from the Alexandrov-Fenchel inequality.
+For general dimensions it seems that this inequality is not enough.
 
 ## Appendix: Proof of ellipsoidal cone representation {#proof_ellips}
 

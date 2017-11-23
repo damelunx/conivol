@@ -1,5 +1,5 @@
 ---
-title: "Estimating conic intrinsic volumes via EM algorithm"
+title: "Estimating conic intrinsic volumes from bivariate chi-bar-squared data"
 author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -7,7 +7,7 @@ output: rmarkdown::html_vignette
 # header-includes:
 #   - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
 vignette: >
-  %\VignetteIndexEntry{Estimating conic intrinsic volumes via EM algorithm}
+  %\VignetteIndexEntry{Estimating conic intrinsic volumes from bivariate chi-bar-squared data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: references.bib
@@ -20,6 +20,11 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.path = "estim-conic-intrinsic-volumes-with-EM_figures/"
 )
+```
+
+```{r load-pkgs, include=FALSE}
+library(conivol)
+library(tidyverse)
 ```
 
 This note describes an approach to reconstruct the intrinsic
@@ -40,11 +45,6 @@ other vignettes:
     volumes distribution (in the case of polyhedral cones), or from the
     bivariate chi-bar-squared distribution, and which can be with or without
     enforcing log-concavity of the intrinsic volumes.
-
-```{r load-pkgs, include=FALSE}
-library(conivol)
-library(tidyverse)
-```
 
 ## The setup {#setup}
 

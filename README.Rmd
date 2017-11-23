@@ -13,6 +13,11 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r load-pkgs, include=FALSE}
+library(conivol)
+library(tidyverse)
+```
+
 This R package provides functions for the chi-bar-squared distribution,
 the bivariate chi-bar-squared distribution, and the conic intrinsic volumes.
 It supports standard functions for the density/cdf/sampling of the (bivariate)
@@ -43,7 +48,7 @@ to this reconstruction:
 * [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](../doc/conic-intrinsic-volumes.html):
     introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions,
     as well as the computations involving polyhedral cones,
-* [Estimating conic intrinsic volumes via EM algorithm](../doc/estim-conic-intrinsic-volumes-with-EM.html):
+* [Estimating conic intrinsic volumes from bivariate chi-bar-squared data](../doc/estim-conic-intrinsic-volumes-with-EM.html):
     describes the details of the algorithm for finding the intrinsic volumes of closed
     convex cones from samples of the associated bivariate chi-bar-squared distribution,
 * [Bayesian estimates for conic intrinsic volumes](../doc/bayesian.html):
@@ -71,11 +76,6 @@ cumulative distribution functions, and sampling methods:
     (bivariate) chi-bar-squared distributions,
 * `rchibarsq`, `rbichibarsq`: produce samples of the (bivariate) chi-bar-squared
     distributions.
-
-```{r load-pkgs, include=FALSE}
-library(conivol)
-library(tidyverse)
-```
 
 **Usage:**
 ```{r ex-biv-chi-bar-sq}
