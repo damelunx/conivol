@@ -29,7 +29,7 @@ library(knitr)
 library(png)
 ```
 
-```{r disp-img, echo=FALSE}
+```{r load-imgs, include=FALSE}
 img_paths <- list( dl="bayes_diagrams/bayes_direct_logconc.png",
                    dnl="bayes_diagrams/bayes_direct_nologconc.png",
                    idle="bayes_diagrams/bayes_indirect_logconc_even.png",
@@ -37,17 +37,251 @@ img_paths <- list( dl="bayes_diagrams/bayes_direct_logconc.png",
                    idnle="bayes_diagrams/bayes_indirect_nologconc_even.png",
                    idnlo="bayes_diagrams/bayes_indirect_nologconc_odd.png" )
 img_dpi <- 450
+```
 
-include_graphics(img_paths$dl, dpi=img_dpi)
+This note describes how to derive Bayesian estimates of the conic intrinsic volumes,
+given sample data either from the intrinsic volumes distribution or from
+the bivariate chi-bar-squared distribution.
+The simplest case of direct samples from the intrinsic volumes distribution
+and without any other assumptions can be solved analytically, but assuming
+log-concavity already prohibits an analytical solution. The case of reconstructing
+the intrinsic volumes based on bivariate chi-bar-squared data is even more
+challenging. Therefore, the posterior distribution will be sampled through
+Monte-Carlo sampling. The functions in `conivol` mostly use the sampler
+[Stan](http://mc-stan.org/)
+([wikipedia](https://en.wikipedia.org/wiki/Stan_(software))),
+although [JAGS](http://mcmc-jags.sourceforge.net/)
+([wikipedia](https://en.wikipedia.org/wiki/Just_another_Gibbs_sampler))
+is also partially supported. See below for more details.
+
+We assume familiarity with the other two vignettes:
+
+**Other vignettes:**
+
+* [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](conic-intrinsic-volumes.html):
+    introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions,
+    as well as the computations involving polyhedral cones,
+* [Estimating conic intrinsic volumes from bivariate chi-bar-squared data](estim-conic-intrinsic-volumes-with-EM.html):
+    describes the details of the algorithm for finding the intrinsic volumes of closed
+    convex cones from samples of the associated bivariate chi-bar-squared distribution.
+
+## Setup and notation
+
+As in the [previous vignette](estim-conic-intrinsic-volumes-with-EM.html#setup),
+we use the following notation:
+
+* $C\subseteq\text{R}^d$ denotes a closed convex cone,
+$C^\circ=\{y\in\text{R}^d\mid \forall x\in C: x^Ty\leq 0\}$ the polar cone,
+and $\Pi_C\colon\text{R}^d\to C$ denotes the orthogonal projection map,
+  \[ \Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\} . \]
+We will assume in the following that $C$ (and thus $C^\circ$) is not a linear
+subspace so that the intrinsic volumes with even and with odd indices each
+add up to $\frac12$.
+* $v = v(C) = (v_0(C),\ldots,v_d(C))$ denotes the vector of intrinsic volumes.
+* We work with the two main random variables
+  \[ X=\|\Pi_C(g)\|^2 ,\quad Y=\|\Pi_{C^\circ}(g)\|^2, \]
+where $g\sim N(0,I_d)$. So $X$ and $Y$ are chi-bar-squared distributed with
+reference cones $C$ and $C^\circ$, respectively, and the pair $(X,Y)$ is distributed
+according to the bivariate chi-bar-squared distribution with reference cone $C$.
+* We also define the "latent" variable
+$Z\in\{0,1,\ldots,d\}$, $\text{Prob}\{Z=k\}=v_k$. In the case of a polyhedral cone
+we may indeed have direct samples from the variable $Z$, and also in the case
+of bivariate chi-bar-squared data, the variable $Z$ is
+[not entirely latent](estim-conic-intrinsic-volumes-with-EM.html#mod_bivchibarsq);
+we will explain this subtlety again [below](#biv-chibsq).
+
+## Prior distribution
+
+In a Bayesian approach we do not consider the intrinsic volumes as fixed parameters
+but rather as random themselves. Hence, we introduce the random variable
+$V=(V_0,\ldots,V_d)$ that takes values in the probability simplex
+  \[ \Delta^d = \big\{x\in\text{R}^{d+1}\mid 0\leq x_k\leq 1 \text{ for all }k,\; x_0+\dots+x_d=1\big\} . \]
+
+For taking the parity equation $V_0+V_2+V_4+\dots=V_1+V_3+V_5+\dots=\frac{1}{2}$
+into account, we further introduce the two random variables $V^e=2(V_0,V_2,V_4,\ldots)^T$
+and $V^o=2(V_1,V_3,V_5,\ldots)^T$.
+A random model for the intrinsic volumes that respects the parity equation thus
+can be modeled through $V^e$ and $V^o$ taking values in the corresponding probability simplex:
+$V^e\in \Delta^{d^e}$ and $V^o\in \Delta^{d^o}$ with
+$d^e=\lfloor \frac{d}{2}\rfloor$ and $d^o=\lceil \frac{d}{2}\rceil-1$.
+
+For taking the
+[log-concavity inequalities](conic-intrinsic-volumes.html#log-conc)
+into account we further introduce the variables
+  \[ U=(U_0,\ldots,U_d) ,\qquad U_k=\log(V_k) , \]
+as well as the transformed vector
+  \[ S=(S_0,\ldots,S_d)=TU ,\qquad S_k=\begin{cases}
+    -U_k+2U_{k+1}-U_{k+2} & \text{if } 0\leq k\leq d-2
+    \\[1mm] U_0+U_2+U_4+\dots & \text{if } k=d-1
+    \\[1mm] U_1+U_3+U_5+\dots & \text{if } k=d \text{ and $d$ odd}
+    \\[1mm] U_0+U_1+U_3+U_5+\dots & \text{if } k=d \text{ and $d$ even} ,
+    \end{cases} \]
+with $T\in\text{R}^{(d+1)\times(d+1)}$.
+The log-concavity inequalities $V_k^2\geq V_{k-1}V_{k+1}$, $k=1,\ldots,d-1$,
+are thus equivalent to the inequalities $S_k\geq0$, $k=0,\ldots,d-2$.
+
+Note that it would be possible to reconstruct $(V_0,\ldots,V_d)$ entirely from
+$(S_0,\ldots,S_{d-2})$ by using the parity equations, which translate into
+$\exp(U_0)+\exp(U_2)+\exp(U_4)+\dots=\exp(U_1)+\exp(U_3)+\exp(U_5)+\dots=\frac{1}{2}$.
+But following this approach eventually leads to the problem of sampling the
+posterior distribution on a nonlinear manifold, which is at the moment not
+supported in [Stan](http://mc-stan.org/). The additional components
+$S_{d-1}$ and $S_d$ are used for pragmatic reasons, and should ideally be avoided.
+We reconstruct the values of $V$ through the equation
+  \[ V = \frac{\text{exp}(T^{-1}S)}{\|\text{exp}(T^{-1}S)\|} . \]
+Log-concavity will be enforced by assuming a prior distribution for $S$, whose
+support lies in the positive orthant.
+One might additionally think of discarding those samples for $V$ from the posterior
+distribution where the parity equation is too much violated, or one might project
+these points on the corresponding linear subspace. But this step is not supported
+in `conivol` as it is unclear what approach will yield the best results.
+
+### No enforced parity or log-concavity
+
+The natural choice for the prior distribution of $V$ as a random element in the
+probability simplex $\Delta^d$ is the Dirichlet distribution,
+$V\sim \text{Dirichlet}(\alpha)$ with $\alpha=(\alpha_0,\ldots,\alpha_d)$,
+$\alpha_k>0$ for all $k$; that is,
+\begin{align*}
+   p(V=v) & \propto v_0^{a_0-1}\dots v_d^{a_d-1}
+\end{align*}
+for $v\in\Delta^d$, and zero else. The expectation of $V$ is given by
+  \[ \text{E}[V] = \frac{(\alpha_0,\ldots,\alpha_d)}{\alpha_0+\dots+\alpha_d} , \]
+and the *prior sample size*, cf. [@GCSDVR14], is given by $\alpha_0+\dots+\alpha_d$.
+The $k$th marginal distribution is concave iff $\alpha_k\geq1$, and if $\alpha_k>1$
+for all $k$, then the mode of the $k$th marginal distribution is given by
+  \[ \text{mode}(V_k) = \frac{\alpha_k-1}{(\alpha_0-1)+\dots+(\alpha_d-1)} . \]
+We thus arrive at two natural choices for the parameters of the prior distribution,
+one noninformative, the other (slightly) informative; both using the starting
+point of the EM algorithm $v^{(0)}$ (see the
+[previous vignette](estim-conic-intrinsic-volumes-with-EM.html#start_EM)):
+
+1. *noninformative:* $\alpha_k = v^{(0)}_k$ for $k=0,\ldots,d$.
+    In this case we have matched the first moment: $\text{E}[V]=v^{(0)}$.
+    The marginal distributions are convex and widely spread; the prior sample
+    size is $\alpha_0+\dots+\alpha_d=1$.
+    Note that in this case we must have $v^{(0)}_k>0$ for all $k$.
+2. *informative:* $\alpha_k = 1 + v^{(0)}_k$ for $k=0,\ldots,d$.
+    In this case we have matched the modes: $\text{mode}(V_k)=v^{(0)}_k$.
+    The marginal distributions are concave; the prior sample size is
+    $\alpha_0+\dots+\alpha_d=d+2$.
+
+### Enforced parity equation
+
+The parity equations are enforced simply by using the two random probability
+vectors $V^e$ and $V^o$. We use the same reasoning as above to find priors
+for these variables:
+  \[ V^e\sim \text{Dirichlet}(\alpha^e) ,\quad V^o\sim \text{Dirichlet}(\alpha^o) , \]
+with the constants $\alpha^e=(\alpha^e_0,\alpha^e_2,\alpha^e_4,\ldots)$ and
+$\alpha^o=(\alpha^o_1,\alpha^o_3,\alpha^o_5,\ldots)$ chosen either in a
+noninformative or in an informative way:
+
+1. *noninformative:* $\alpha^e_j = 2v^{(0)}_j$, $\alpha^o_k = 2v^{(0)}_k$,
+    for $j$ even and $k$ odd,
+2. *informative:* $\alpha^e_j = 1 + 2v^{(0)}_j$, $\alpha^o_k = 1 + 2v^{(0)}_k$,
+    for $j$ even and $k$ odd.
+
+### Enforced log-concavity
+
+The log-concavity inequalities are enforced by using the transformed vector
+$S=T\log(V)$ and by choosing a prior distribution whose support lies in the
+positive orthant. We use the gamma distribution,
+  \[ S_k \sim \text{Gamma}(\alpha_k,\beta_k) , k=0,\ldots, \]
+where $\alpha_k>0$ and $\beta_k>0$ denote the shape and inverse scale, that is,
+  \[ p(S_k=\theta) \propto \frac{\theta^{\alpha_k-1}}{\exp(\beta_k\theta)} . \]
+Expectation and mode are given by 
+\begin{align*}
+    \text{E}[S_k] & = \frac{\alpha_k}{\beta_k} ,
+    & \text{mode}(S_k) & = \frac{\alpha_k-1}{\beta_k} .
+\end{align*}
+We choose these constants in the following way: the initial guess for the
+intrinsic volumes $v^{(0)}$ yields an initial guess for the transformed variable,
+$s^{(0)}=T\log(v^{(0)})$, which we then use in one of the following ways to
+find the shape and inverse scale of the gamma distribution,
+
+1. *noninformative:* $\alpha_k = 1$, $\beta_k = \frac{1}{s^{(0)}_k}$,
+2. *informative:* $\alpha_k = \frac{s^{(0)}_k}{2}$, $\beta_k = \frac{1}{2}$,
+
+for $k=0,\ldots,d$.
+
+## Posterior for intrinsic volumes data
+
+If the underlying cone is polyhedral, then we can obtain direct samples from
+the intrinsic volumes distribution (via `polyh_rivols_gen` and `polyh_rivols_ineq`).
+This case is the best case scenario, where estimates for the intrinsic volumes
+are immediate and errors can be bound easily. We describe this case to prepare
+for the more difficult case of reconstructing the intrinsic volumes from
+bivariate chi-bar-squared data, and for illustrating the use of the functions
+in `conivol`.
+
+Let $z_1,\ldots,z_n\in\{0,1,\ldots,d\}$ be independent samples of the latent
+variable $Z$. Identifying the data with the counting weight,
+$w=(w_0,\ldots,w_d)$, $w_k=|\{i\mid z_i=k\}|$, we see that $w$ is a sample of the
+random variable
+  \[ W\sim\text{Multinom}(n;v_0,\ldots,v_d) . \]
+The Dirichlet distribution is a conjugate prior for the multinomial distribution,
+and the posterior distribution is obtained by adding the weight vector to the
+parameter vector:
+  \[ \text{pre($V$): } \text{Dirichlet}(\alpha) \quad\Rightarrow\quad
+    \text{post($V$): } \text{Dirichlet}(\alpha+w) . \]
+In the following we describe the posterior distribution for the
+case of enforced parity equation and for the case of enforced log-concavity
+(including some sample computations). In the latter case the posterior
+distribution can not be derived analytically; instead we will use the MCMC
+samplers [Stan](http://mc-stan.org/) and
+[JAGS](http://mcmc-jags.sourceforge.net/) to sample from the
+posterior distribution.
+
+### Enforced parity equation
+
+```{r disp-dnl, echo=FALSE}
 include_graphics(img_paths$dnl, dpi=img_dpi)
-include_graphics(img_paths$idle, dpi=img_dpi)
-include_graphics(img_paths$idlo, dpi=img_dpi)
+```
+
+### Enforced log-concavity
+
+```{r disp-dl, echo=FALSE}
+include_graphics(img_paths$dl, dpi=img_dpi)
+```
+
+## Posterior for bivariate chi-bar-squared data {#biv-chibsq}
+
+### No enforced log-concavity
+
+```{r disp-idnle, echo=FALSE}
 include_graphics(img_paths$idnle, dpi=img_dpi)
+```
+
+```{r disp-idnlo, echo=FALSE}
 include_graphics(img_paths$idnlo, dpi=img_dpi)
 ```
 
+### Enforced log-concavity
 
-In this vignette we derive Bayesian estimates of the conic intrinsic volumes: given a prior distribution on the intrinsic volumes, for which we will give two choices corresponding to an informative and a non-informative prior, we derive a sampling procedure for the posterior distribution corresponding to sample data of the corresponding bivariate chi-bar-squared distribution. More precisely, we will use sample data from a slightly modified distribution, which was also used in the EM algorithm, described in [this vignette](estim-conic-intrinsic-volumes-with-EM.html). See [this vignette](conic-intrinsic-volumes.html) for a short introduction to conic intrinsic volumes.
+```{r disp-idle, echo=FALSE}
+include_graphics(img_paths$idle, dpi=img_dpi)
+```
+
+```{r disp-idlo, echo=FALSE}
+include_graphics(img_paths$idlo, dpi=img_dpi)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## The modified bivariate chi-bar-squared distribution {#mod_bivchibarsq}
 

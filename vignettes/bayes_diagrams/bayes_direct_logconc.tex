@@ -17,16 +17,16 @@
 
 \begin{center}
 \begin{tikzpicture}
-   \node[latent] (t) {$t_k$} ;
+   \node[latent] (t) {$S_k$} ;
    \node[const, above=1 of t] (alpbet) {$\alpha_k,\beta_k$} ;
    \factor[above=.5 of t] {alpbet-t} {left:Gamma} {alpbet} {t} ;
    \plate {alpbett} {(alpbet)(t)} {\rule{2mm}{0mm}$k=0,\ldots,d$} ;
    
    \node[det, below=1 of t] (Tinv) {$T^{-1}$} ;
-   \node[latent, below=.5 of Tinv] (u) {$\vct u$} ;
+   \node[latent, below=.5 of Tinv] (u) {$U$} ;
    \node[det, below=.5 of u] (exp) {$\exp$} ;
-   \node[latent, below=.5 of exp] (v) {$\vct{v}$} ;
-   \node[obs, below=1 of v] (N) {$\vct{N}$} ;
+   \node[latent, below=.5 of exp] (v) {$V$} ;
+   \node[obs, below=1 of v] (N) {$W$} ;
    \edge[->] {t} {Tinv} ;
    \edge[->] {Tinv} {u} ;
    \edge[->] {u} {exp} ;

@@ -8,6 +8,7 @@ knitr::opts_chunk$set(
 ## ----load-pkgs, include=FALSE--------------------------------------------
 library(conivol)
 library(tidyverse)
+library(logcondiscr)
 library(partitions)
 library(Rmisc)
 
@@ -38,27 +39,77 @@ ellips_semiax( Q %*% diag(d:1) )      # compute semiaxes of rotated cone
 v_halfline <- c(1/2,1/2); v_halfline
 2^4 * prod_ivols( list(v_halfline, v_halfline, v_halfline, v_halfline) )
 
+## ----read-canc-data, warning=FALSE, message=FALSE------------------------
+address <- "http://cancer.sanger.ac.uk/cancergenome/assets/signatures_probabilities.txt"
+A_canc <- readr::read_tsv(address)[ , 1:33]
+A <- as.matrix(A_canc[ , 4:33])
+
 ## ----sum-canc-data-------------------------------------------------------
 dim(A)
 A[1:5,1:5]
 all(A>=0)
 colSums(A)
 
+## ----samp-canc-data------------------------------------------------------
+n <- 1e5
+S <- polyh_rivols_gen(n,A)         # sampling from intrinsic volumes distribution
+
+str(S)
+linC <- S$linC
+dimC <- S$dimC
+msamp <- S$multsamp
+
 ## ----plot-canc-samp, fig.width = 7---------------------------------------
-tib_plot <- as_tibble(msamp[1+linC:dimC]/n) %>%
-    add_column( k=linC:dimC, .before=1)
+tib_plot <- tibble( k=linC:dimC, value=msamp[1+linC:dimC]/n )
 ggplot(tib_plot, aes(x=k, y=value))      + geom_line() + theme_bw()
 ggplot(tib_plot, aes(x=k, y=log(value))) + geom_line() + theme_bw()
 
 ## ----canc-bayes, fig.width = 7-------------------------------------------
 bayes_est <- polyh_bayes( msamp, dimC, linC )
-tib_plot <- bayes_est$post_samp(1e4) %>%
+tib_plot_bay <- bayes_est$post_samp(1e4) %>%
     as_tibble() %>%
     `colnames<-`(paste0(rep("V",dimC-linC+1),as.character(linC:dimC))) %>%
     gather(factor_key=TRUE)
-ggplot(tib_plot, aes(x=key, y=value)) +
+ggplot(tib_plot_bay, aes(x=key, y=value)) +
     geom_boxplot() + theme_bw() +
     theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----samp-canc-data-small, fig.width = 7---------------------------------
+n_sm <- 3e2
+set.seed(1111)
+S_sm <- polyh_rivols_gen(n_sm,A)
+msamp_sm <- S_sm$multsamp
+
+# point estimate:
+tib_plot_sm <- tibble( k=linC:dimC, value=msamp_sm[1+linC:dimC]/n_sm )
+ggplot(tib_plot_sm, aes(x=k, y=value)) + geom_line() + theme_bw() +
+    geom_line(data=tib_plot, aes(x=k, y=value), linetype="dashed", color="red")
+ggplot(tib_plot_sm, aes(x=k, y=log(value))) + geom_line() + theme_bw() +
+    geom_line(data=tib_plot, aes(x=k, y=log(value)), linetype="dashed", color="red")
+# Bayes posterior:
+bayes_est_sm <- polyh_bayes( msamp_sm, dimC, linC )
+tib_plot_bay_sm <- bayes_est_sm$post_samp(1e4) %>%
+    as_tibble() %>%
+    `colnames<-`(paste0(rep("V",dimC-linC+1),as.character(linC:dimC))) %>%
+    gather(factor_key=TRUE)
+ggplot(tib_plot_bay_sm, aes(x=key, y=value)) +
+    geom_boxplot() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank()) +
+    geom_line(data=tib_plot, aes(x=k+1, y=value), linetype="dashed", color="red")
+
+## ----samp-canc-data-logconc, fig.width = 7-------------------------------
+logconc_MLE <- logConDiscrMLE(S_sm$samples, output=FALSE)
+log_est <- rep(0,dimC-linC+1)
+log_est[logconc_MLE$x+linC+1] <- exp(logconc_MLE$psi)
+
+# log-concavity improved point estimate:
+tib_plot_logc <- tibble( k=linC:dimC, value=log_est )
+ggplot(tib_plot_logc, aes(x=k, y=value)) + geom_line() + theme_bw() +
+    geom_line(data=tib_plot_sm, aes(x=k, y=value), linetype="dashed", color="blue") +
+    geom_line(data=tib_plot, aes(x=k, y=value), linetype="dashed", color="red")
+ggplot(tib_plot_logc, aes(x=k, y=log(value))) + geom_line() + theme_bw() +
+    geom_line(data=tib_plot_sm, aes(x=k, y=log(value)), linetype="dashed", color="blue") +
+    geom_line(data=tib_plot, aes(x=k, y=log(value)), linetype="dashed", color="red")
 
 ## ----weyl-ivols1---------------------------------------------------------
 factorial(6) * weyl_ivols(5,"A")

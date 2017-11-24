@@ -109,7 +109,7 @@ as well as Bayesian estimates via JAGS and Stan.
         volumes and (bivariate) chi-bar-squared distribution}:
         introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions,
         as well as the computations involving polyhedral cones}
-  \item{vignette}{\href{../doc/estim-conic-intrinsic-volumes-with-EM.html}{Estimating conic intrinsic volumes via EM algorithm}:
+  \item{vignette}{\href{../doc/estim-conic-intrinsic-volumes-with-EM.html}{Estimating conic intrinsic volumes from bivariate chi-bar-squared data}:
         describes the details of the algorithm for finding the intrinsic volumes of closed
         convex cones from samples of the associated bivariate chi-bar-squared distribution}
   \item{vignette}{\href{../doc/bayesian.html}{Bayesian estimates for conic intrinsic volumes}:
