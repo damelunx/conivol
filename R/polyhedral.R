@@ -659,12 +659,12 @@ polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA
     I_even <- 2*(0:floor(d/2)) + 1          # final +1 is because of R indices start at 1
     I_odd  <- 1+2*(0:floor((d-1)/2)) + 1    # final +1 is because of R indices start at 1
 
-    if (is.na(v_prior)) {
+    if (all(is.na(v_prior))) {
         v_prior_adj <- rep(0,d+1)
         v_prior_adj[I_even] <- 1/ceiling((d+1)/2) / 2
         v_prior_adj[I_odd]  <- 1/floor((d+1)/2) / 2
     } else {
-        v_prior_adj <- v_prior[linC:dimC]
+        v_prior_adj <- v_prior[1+linC:dimC]
     }
 
     Dir_prior_even <- 2*v_prior_adj[I_even]
