@@ -27,8 +27,8 @@
    \node[const, above=1 of t] (alpbet) {$\alpha_k,\beta_k$} ;
    \factor[above=.5 of t] {alpbet-t} {left:Gamma} {alpbet} {t} ;
    \plate {alpbett} {(alpbet)(t)} {\rule{2mm}{0mm}$k=0,\ldots,d$} ;   
-   \node[det, below=1 of t] (Tinv) {$T^{-1}$} ;
-   \node[latent, below=.5 of Tinv] (u) {$U$} ;
+   \node[det, below=1 of t] (Tinv) {$-T^{-1}$} ;
+   \node[latent, below=.5 of Tinv] (u) {$-U$} ;
    \node[det, below=.5 of u] (exp) {$\exp$} ;
 
    \edge[->] {t} {Tinv} ;

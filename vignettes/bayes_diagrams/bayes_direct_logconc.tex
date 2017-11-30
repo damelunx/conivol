@@ -3,7 +3,7 @@
 % tight measures:
 % \usepackage[margin=0mm, paperwidth=22.3mm, paperheight=98.1mm]{geometry}
 % loose measures:
-\usepackage[margin=2mm, paperwidth=26.3mm, paperheight=102.1mm]{geometry}
+\usepackage[margin=2mm, paperwidth=27.1mm, paperheight=105.5mm]{geometry}
 
 \usepackage{amsmath}
 \usepackage{tikz}
@@ -22,8 +22,8 @@
    \factor[above=.5 of t] {alpbet-t} {left:Gamma} {alpbet} {t} ;
    \plate {alpbett} {(alpbet)(t)} {\rule{2mm}{0mm}$k=0,\ldots,d$} ;
    
-   \node[det, below=1 of t] (Tinv) {$T^{-1}$} ;
-   \node[latent, below=.5 of Tinv] (u) {$U$} ;
+   \node[det, below=1 of t] (Tinv) {$-T^{-1}$} ;
+   \node[latent, below=.5 of Tinv] (u) {$-U$} ;
    \node[det, below=.5 of u] (exp) {$\exp$} ;
    \node[latent, below=.5 of exp] (v) {$V$} ;
    \node[obs, below=1 of v] (N) {$W$} ;
