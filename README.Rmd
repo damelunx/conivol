@@ -192,8 +192,8 @@ bayes_est <- polyh_bayes( out$multsamp, out$dimC, out$linC )
 
 # compare posterior median with true values
 v_est_med <- bayes_est$post_marg_quant(0:12,0.5)
-v_est_med / v
-sum( (v_est_med-v)^2 )
+v_est_med / v_true
+sum( (v_est_med-v_true)^2 )
 
 # display boxplot of posterior distribution, overlayed with true values
 data <- as.data.frame( bayes_est$post_samp(1e4) )
