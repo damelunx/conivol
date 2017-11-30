@@ -576,8 +576,8 @@ polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'                 multinomial intrinsic volumes distribution of a convex cone
 #' @param dimC the dimension of the cone
 #' @param linC the lineality of the cone
-#' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
+#' @param prior_sample_size the sample size for the prior estimate (1 by default -> noninformative)
 #'
 #' @return The output of \code{polyh_bayes} is a list containing the following elements:
 #' \itemize{
@@ -647,9 +647,7 @@ polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'
 #' @export
 #'
-polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA) {
-    if ( !(prior %in% c("noninformative", "informative")) )
-        stop("\n Parameter prior must be \"noninformative\" or \"informative\".")
+polyh_bayes <- function(multsamp, dimC, linC, v_prior=NA, prior_sample_size=1) {
     if ( linC>dimC )
         stop("\n Lineality linC must be less than dimension dimC.")
     if ( linC==dimC )
@@ -667,13 +665,9 @@ polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA
         v_prior_adj <- v_prior[1+linC:dimC]
     }
 
-    Dir_prior_even <- 2*v_prior_adj[I_even]
-    Dir_prior_odd  <- 2*v_prior_adj[I_odd]
+    Dir_prior_even <- 2*prior_sample_size*v_prior_adj[I_even]
+    Dir_prior_odd  <- 2*prior_sample_size*v_prior_adj[I_odd]
 
-    if (prior=="informative"){
-        Dir_prior_even <- 1+Dir_prior_even
-        Dir_prior_odd  <- 1+Dir_prior_odd
-    }
     update <- multsamp[linC:(dimC-linC)+1]
 
     Dir_post_even <- Dir_prior_even + update[I_even]
