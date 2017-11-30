@@ -27,6 +27,7 @@ library(conivol)
 library(tidyverse)
 library(knitr)
 library(png)
+library(rstan)
 ```
 
 ```{r load-imgs, include=FALSE}
@@ -42,19 +43,21 @@ img_dpi <- 450
 This note describes how to derive Bayesian estimates of the conic intrinsic volumes,
 given sample data either from the intrinsic volumes distribution or from
 the bivariate chi-bar-squared distribution.
-The simplest case of direct samples from the intrinsic volumes distribution
-and without any other assumptions can be solved analytically, but assuming
-log-concavity already prohibits an analytical solution. The case of reconstructing
+The simplest case of direct samples from the intrinsic volumes distribution,
+and without enforcing any properties for the intrinsic volumes,
+can be solved analytically; enforcing the log-concavity inequalities already
+prohibits an analytical solution. The case of reconstructing
 the intrinsic volumes based on bivariate chi-bar-squared data is even more
-challenging. Therefore, the posterior distribution will be sampled through
-Monte-Carlo sampling. The functions in `conivol` mostly use the sampler
+challenging. In these more complicated cases the posterior distribution
+will be sampled through Monte-Carlo sampling.
+The functions in `conivol` mostly use the sampler
 [Stan](http://mc-stan.org/)
 ([wikipedia](https://en.wikipedia.org/wiki/Stan_(software))),
 although [JAGS](http://mcmc-jags.sourceforge.net/)
 ([wikipedia](https://en.wikipedia.org/wiki/Just_another_Gibbs_sampler))
 is also partially supported. See below for more details.
 
-We assume familiarity with the other two vignettes:
+We assume familiarity with the
 
 **Other vignettes:**
 
@@ -90,6 +93,63 @@ of bivariate chi-bar-squared data, the variable $Z$ is
 [not entirely latent](estim-conic-intrinsic-volumes-with-EM.html#mod_bivchibarsq);
 we will explain this subtlety again [below](#biv-chibsq).
 
+**Example computations:**
+
+We study in this vignette the intrinsic volumes of the following
+randomly defined polyhedral cone, $C=\{Ax\mid x\geq0\}$ with $A\in\text{R}^d$
+given by:
+
+```{r define-cone}
+d <- 17
+num_gen <- 50
+set.seed(1324)
+A <- matrix( c(rep(1,num_gen), rnorm((d-1)*num_gen)), d, num_gen, byrow = TRUE )
+out <- polyh_reduce_gen(A)
+str(out)
+dimC <- out$dimC
+linC <- out$linC
+A_red <- out$A_reduced
+```
+
+In other words, the generators of the cone are iid Gaussian vectors chosen
+in an affine hyperplane of height one. We choose two batches of samples both from
+the intrinsic volumes distribution and from the bivariate chi-bar-squared 
+distribution to illustrate the different approaches for deriving posterior
+distributions.
+
+```{r coll-samples}
+samp_iv_sm <- polyh_rivols_gen(1e2, A_red, reduce=FALSE)$multsamp
+samp_iv_la <- polyh_rivols_gen(1e4, A_red, reduce=FALSE)$multsamp
+samp_bcb_sm <- polyh_rbichibarsq_gen(1e2, A_red, reduce=FALSE)
+samp_bcb_la <- polyh_rbichibarsq_gen(1e4, A_red, reduce=FALSE)
+```
+
+The prior distributions can take initial guesses for the intrinsic volumes
+into account. To illustrate this we will only use the initial estimate that is
+based on the statistical dimension and the normal approximation:
+
+```{r start-V}
+v0_iv_sm <- init_ivols( dimC, sum(0:dimC * samp_iv_sm/sum(samp_iv_sm)), init_mode=1 )
+v0_iv_la <- init_ivols( dimC, sum(0:dimC * samp_iv_la/sum(samp_iv_la)), init_mode=1 )
+v0_bcb_sm <- init_ivols( dimC, estim_statdim_var(dimC,samp_bcb_sm)$delta, init_mode=1)
+v0_bcb_la <- init_ivols( dimC, estim_statdim_var(dimC,samp_bcb_la)$delta, init_mode=1)
+```
+
+The different initial starting points (their closeness is explained by the fact
+that the starting point depends on a single parameter (the statistical dimension),
+which is easily estimated):
+```{r start-V-disp, fig.width = 7, echo=FALSE}
+tib_plot <- tibble(iv_small = v0_iv_sm,
+                   iv_large = v0_iv_la,
+                   bcb_small = v0_bcb_sm,
+                   bcb_large = v0_bcb_la) %>%
+    add_column(k=0:dimC,.before=1) %>% gather(sampling,v,2:5,factor_key=TRUE)
+ggplot(tib_plot,aes(x=k,y=v,color=sampling)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+
 ## Prior distribution
 
 In a Bayesian approach we do not consider the intrinsic volumes as fixed parameters
@@ -97,21 +157,22 @@ but rather as random themselves. Hence, we introduce the random variable
 $V=(V_0,\ldots,V_d)$ that takes values in the probability simplex
   \[ \Delta^d = \big\{x\in\text{R}^{d+1}\mid 0\leq x_k\leq 1 \text{ for all }k,\; x_0+\dots+x_d=1\big\} . \]
 
-For taking the parity equation $V_0+V_2+V_4+\dots=V_1+V_3+V_5+\dots=\frac{1}{2}$
+For taking the parity equations
+  \[ V_0+V_2+V_4+\dots=V_1+V_3+V_5+\dots=\tfrac{1}{2} \]
 into account, we further introduce the two random variables $V^e=2(V_0,V_2,V_4,\ldots)^T$
 and $V^o=2(V_1,V_3,V_5,\ldots)^T$.
 A random model for the intrinsic volumes that respects the parity equation thus
-can be modeled through $V^e$ and $V^o$ taking values in the corresponding probability simplex:
+can be modeled through $V^e$ and $V^o$ taking values in the corresponding probability simplices:
 $V^e\in \Delta^{d^e}$ and $V^o\in \Delta^{d^o}$ with
 $d^e=\lfloor \frac{d}{2}\rfloor$ and $d^o=\lceil \frac{d}{2}\rceil-1$.
 
 For taking the
 [log-concavity inequalities](conic-intrinsic-volumes.html#log-conc)
 into account we further introduce the variables
-  \[ U=(U_0,\ldots,U_d) ,\qquad U_k=\log(V_k) , \]
+  \[ U=(U_0,\ldots,U_d) ,\qquad U_k=-\log(V_k) , \]
 as well as the transformed vector
   \[ S=(S_0,\ldots,S_d)=TU ,\qquad S_k=\begin{cases}
-    -U_k+2U_{k+1}-U_{k+2} & \text{if } 0\leq k\leq d-2
+    U_k-2U_{k+1}+U_{k+2} & \text{if } 0\leq k\leq d-2
     \\[1mm] U_0+U_2+U_4+\dots & \text{if } k=d-1
     \\[1mm] U_1+U_3+U_5+\dots & \text{if } k=d \text{ and $d$ odd}
     \\[1mm] U_0+U_1+U_3+U_5+\dots & \text{if } k=d \text{ and $d$ even} ,
@@ -122,19 +183,20 @@ are thus equivalent to the inequalities $S_k\geq0$, $k=0,\ldots,d-2$.
 
 Note that it would be possible to reconstruct $(V_0,\ldots,V_d)$ entirely from
 $(S_0,\ldots,S_{d-2})$ by using the parity equations, which translate into
-$\exp(U_0)+\exp(U_2)+\exp(U_4)+\dots=\exp(U_1)+\exp(U_3)+\exp(U_5)+\dots=\frac{1}{2}$.
+  \[ \exp(-U_0)+\exp(-U_2)+\exp(-U_4)+\dots
+    =\exp(-U_1)+\exp(-U_3)+\exp(-U_5)+\dots=\tfrac{1}{2} . \]
 But following this approach eventually leads to the problem of sampling the
 posterior distribution on a nonlinear manifold, which is at the moment not
 supported in [Stan](http://mc-stan.org/). The additional components
 $S_{d-1}$ and $S_d$ are used for pragmatic reasons, and should ideally be avoided.
 We reconstruct the values of $V$ through the equation
-  \[ V = \frac{\text{exp}(T^{-1}S)}{\|\text{exp}(T^{-1}S)\|} . \]
+  \[ V = \frac{\text{exp}(-T^{-1}S)}{\|\text{exp}(-T^{-1}S)\|} . \]
 Log-concavity will be enforced by assuming a prior distribution for $S$, whose
 support lies in the positive orthant.
 One might additionally think of discarding those samples for $V$ from the posterior
 distribution where the parity equation is too much violated, or one might project
 these points on the corresponding linear subspace. But this step is not supported
-in `conivol` as it is unclear what approach will yield the best results.
+in `conivol` as it is unclear which approach will yield the best results.
 
 ### No enforced parity or log-concavity
 
@@ -145,26 +207,29 @@ $\alpha_k>0$ for all $k$; that is,
 \begin{align*}
    p(V=v) & \propto v_0^{a_0-1}\dots v_d^{a_d-1}
 \end{align*}
-for $v\in\Delta^d$, and zero else. The expectation of $V$ is given by
-  \[ \text{E}[V] = \frac{(\alpha_0,\ldots,\alpha_d)}{\alpha_0+\dots+\alpha_d} , \]
-and the *prior sample size*, cf. [@GCSDVR14], is given by $\alpha_0+\dots+\alpha_d$.
-The $k$th marginal distribution is concave iff $\alpha_k\geq1$, and if $\alpha_k>1$
-for all $k$, then the mode of the $k$th marginal distribution is given by
-  \[ \text{mode}(V_k) = \frac{\alpha_k-1}{(\alpha_0-1)+\dots+(\alpha_d-1)} . \]
-We thus arrive at two natural choices for the parameters of the prior distribution,
-one noninformative, the other (slightly) informative; both using the starting
+for $v\in\Delta^d$, and zero else. The expectation of $V$ and the marginal variances
+are given by
+\begin{align*}
+    \text{E}[V] & = \frac{(\alpha_0,\ldots,\alpha_d)}{\sum_j\alpha_j} ,
+    & \text{var}[V_k] & = \frac{1}{1+\sum_j\alpha_j}
+    \frac{\alpha_k}{\sum_j\alpha_j}
+    \Big( 1-\frac{\alpha_k}{\sum_j\alpha_j} \Big) .
+\end{align*}
+The sum of the parameters, $\sum_{j=0}^d\alpha_j$, is the
+*prior sample size*, cf. [@GCSDVR14], and its effect is clearly seen in the above
+formulas: scaling the parameters $\alpha_j$ by a constant $c$ keeps the 
+expected values fixed, but changes the variance by a factor of
+$(1+\sum_j\alpha_j)/(1+c\sum_j\alpha_j)$.
+
+We thus arrive at a natural choice for the parameters of the prior distribution,
+using the starting
 point of the EM algorithm $v^{(0)}$ (see the
 [previous vignette](estim-conic-intrinsic-volumes-with-EM.html#start_EM)):
-
-1. *noninformative:* $\alpha_k = v^{(0)}_k$ for $k=0,\ldots,d$.
-    In this case we have matched the first moment: $\text{E}[V]=v^{(0)}$.
-    The marginal distributions are convex and widely spread; the prior sample
-    size is $\alpha_0+\dots+\alpha_d=1$.
-    Note that in this case we must have $v^{(0)}_k>0$ for all $k$.
-2. *informative:* $\alpha_k = 1 + v^{(0)}_k$ for $k=0,\ldots,d$.
-    In this case we have matched the modes: $\text{mode}(V_k)=v^{(0)}_k$.
-    The marginal distributions are concave; the prior sample size is
-    $\alpha_0+\dots+\alpha_d=d+2$.
+  \[ \alpha_k = c\,v^{(0)}_k \;,\quad \text{for $k=0,\ldots,d$} . \]
+The expectation is given by $\text{E}[V]=v^{(0)}$, and the prior sample size is
+given by $\sum_j c v^{(0)}_j=c$. Choosing a prior sample size $c=1$ will yield
+a noninformative prior; setting this parameter to a higher value will
+make the prior more informative.
 
 ### Enforced parity equation
 
@@ -173,36 +238,125 @@ vectors $V^e$ and $V^o$. We use the same reasoning as above to find priors
 for these variables:
   \[ V^e\sim \text{Dirichlet}(\alpha^e) ,\quad V^o\sim \text{Dirichlet}(\alpha^o) , \]
 with the constants $\alpha^e=(\alpha^e_0,\alpha^e_2,\alpha^e_4,\ldots)$ and
-$\alpha^o=(\alpha^o_1,\alpha^o_3,\alpha^o_5,\ldots)$ chosen either in a
-noninformative or in an informative way:
+$\alpha^o=(\alpha^o_1,\alpha^o_3,\alpha^o_5,\ldots)$ chosen with respect
+to a sample size $c$:
+  \[ \alpha^e_j = 2v^{(0)}_j \;,\quad \alpha^o_k = 2v^{(0)}_k \;,\quad
+    \text{for $j$ even and $k$ odd} . \]
 
-1. *noninformative:* $\alpha^e_j = 2v^{(0)}_j$, $\alpha^o_k = 2v^{(0)}_k$,
-    for $j$ even and $k$ odd,
-2. *informative:* $\alpha^e_j = 1 + 2v^{(0)}_j$, $\alpha^o_k = 1 + 2v^{(0)}_k$,
-    for $j$ even and $k$ odd.
+**Example computations:**
+
+We illustrate the prior distributions (noninformative and informative) using
+the initial estimate for the small sample from the
+intrinsic volumes distribution by sampling ten elements.
+(Note that the prior can be made "completely noninformative" by choosing
+the uniform distribution for the initial estimate $v^{(0)}$, which is the default
+in the function `polyh_bayes`.)  
+
+**Noninformative (prior sample size $=1$):**
+```{r prior-iv-noninf, fig.width=7, echo=FALSE}
+# we use the built-in function; by providing zero weights the posterior will equal the prior
+prior_iv <- polyh_bayes(rep(0,dimC+1),dimC,linC,v_prior=v0_iv_sm)
+N <- 10
+tib_plot <- t(prior_iv$post_samp(N)) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Informative (prior sample size $=d$):**
+```{r prior-iv-inf, fig.width=7, echo=FALSE}
+# we use the built-in function; by providing zero weights the posterior will equal the prior
+prior_iv <- polyh_bayes(rep(0,dimC+1),dimC,linC,v_prior=v0_iv_sm,prior_sample_size=d)
+N <- 10
+tib_plot <- t(prior_iv$post_samp(N)) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
 
 ### Enforced log-concavity
 
 The log-concavity inequalities are enforced by using the transformed vector
 $S=T\log(V)$ and by choosing a prior distribution whose support lies in the
 positive orthant. We use the gamma distribution,
-  \[ S_k \sim \text{Gamma}(\alpha_k,\beta_k) , k=0,\ldots, \]
-where $\alpha_k>0$ and $\beta_k>0$ denote the shape and inverse scale, that is,
-  \[ p(S_k=\theta) \propto \frac{\theta^{\alpha_k-1}}{\exp(\beta_k\theta)} . \]
-Expectation and mode are given by 
+  \[ S_k \sim \text{Gamma}(\alpha_k,\theta_k) ,\quad k=0,\ldots,d, \]
+where $\alpha_k>0$ and $\theta_k>0$ denote the shape and scale, that is,
+  \[ p(S_k=s) \propto \frac{s^{\alpha_k-1}}{\exp(s/\theta_k)} . \]
+Expectation and variance are given by 
 \begin{align*}
-    \text{E}[S_k] & = \frac{\alpha_k}{\beta_k} ,
-    & \text{mode}(S_k) & = \frac{\alpha_k-1}{\beta_k} .
+    \text{E}[S_k] & = \alpha_k\theta_k ,
+    & \text{var}(S_k) & = \alpha_k\theta_k^2 .
 \end{align*}
-We choose these constants in the following way: the initial guess for the
-intrinsic volumes $v^{(0)}$ yields an initial guess for the transformed variable,
-$s^{(0)}=T\log(v^{(0)})$, which we then use in one of the following ways to
-find the shape and inverse scale of the gamma distribution,
+We choose these constants again through the initial guess for the
+intrinsic volumes $v^{(0)}$, which yields an initial guess for the transformed variable,
+$s^{(0)}=-T\log(v^{(0)})$, which in turn can be used to
+find the shape and inverse scale of the gamma distribution:
 
-1. *noninformative:* $\alpha_k = 1$, $\beta_k = \frac{1}{s^{(0)}_k}$,
-2. *informative:* $\alpha_k = \frac{s^{(0)}_k}{2}$, $\beta_k = \frac{1}{2}$,
+1. *noninformative:* $\alpha_k = 2$, $\theta_k = s^{(0)}_k/2$,
+2. *informative:* $\alpha_k = s^{(0)}_k$, $\theta_k = 1$,
 
 for $k=0,\ldots,d$.
+
+**Example computations:**
+
+We use the same initial estimate for $v^{(0)}$ as above, transform this to an
+initial estimate $s^{(0)}=T\log(v^{(0)})$, set the prior for $S$ and sample ten
+elements from this distribution, and transform those back to prior samples
+for $V$.
+
+**Noninformative:**
+```{r prior-iv-noninf-logc, fig.width=7, echo=FALSE}
+# construct matrix T
+T <- matrix(0,d+1,d+1)
+for (k in 0:(d-2)) {
+    T[k+1,k+1] <- 1
+    T[k+1,k+2] <- -2
+    T[k+1,k+3] <- 1
+}
+T[d,] <- rep_len(c(1,0),d+1)
+T[d+1,] <- rep_len(c(0,1),d+1)
+if (d%%2==0) T[d+1,1] <- 1
+
+# find s^(0) and sample from prior
+s0 <- T %*% (-log(v0_iv_sm))
+
+S_samp <- matrix(0,d+1,N)
+for (k in 0:d)
+    S_samp[k+1,] <- rgamma(N,shape=2,scale=s0[k+1]/2)
+
+# compute back to sample for V
+V_samp_unnorm <- t(exp(-solve(T,S_samp)))
+V_samp <- t(V_samp_unnorm/rowSums(V_samp_unnorm))
+
+tib_plot <- V_samp %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Informative:**
+```{r prior-iv-inf-logc, fig.width=7, echo=FALSE}
+S_samp <- matrix(0,d+1,N)
+for (k in 0:d)
+    S_samp[k+1,] <- rgamma(N,shape=s0[k+1],scale=1)
+
+# compute back to sample for V
+V_samp_unnorm <- t(exp(-solve(T,S_samp)))
+V_samp <- t(V_samp_unnorm/rowSums(V_samp_unnorm))
+
+tib_plot <- V_samp %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
 
 ## Posterior for intrinsic volumes data
 
@@ -234,19 +388,194 @@ posterior distribution.
 
 ### Enforced parity equation
 
+As described above, the only thing we need to do to enforce the parity equation
+is to decompose the vector into even and odd parts. The corresponding graphical
+model thus has a very simple form:
+
 ```{r disp-dnl, echo=FALSE}
 include_graphics(img_paths$dnl, dpi=img_dpi)
 ```
 
+Decomposing the sample data accordingly,
+\begin{align*}
+    w^e & = (w_0,w_2,w_4,\ldots) ,
+    & w^o & = (w_1,w_3,w_5,\ldots) ,
+\end{align*}
+we obtain the posterior distributions for $V^e$ and $V^o$ as
+  \[ \text{post($V^e$): } \text{Dirichlet}(\alpha^e+w^e) \;,\quad
+    \text{post($V^o$): } \text{Dirichlet}(\alpha^o+w^o) . \]
+The function `polyh_bayes` computes the weights and generates functions
+for sampling and for computing marginal quantiles of the posterior distribution.
+
+**Example computations:**
+
+We sample again ten elements each from the posterior distributions using the small
+and large samples, and using a noninformative and an informative prior,
+as described above.
+
+**Small sample, noninformative prior:**
+```{r dir-enf-par-sm-noninf-comp}
+post_iv <- polyh_bayes(samp_iv_sm,dimC,linC,v_prior=v0_iv_sm,prior_sample_size=1)
+str(post_iv)
+```
+```{r dir-enf-par-sm-noninf, fig.width=7, echo=FALSE}
+tib_plot <- t(post_iv$post_samp(N)) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Small sample, informative prior:**
+```{r dir-enf-par-sm-inf, fig.width=7, echo=FALSE}
+post_iv <- polyh_bayes(samp_iv_sm,dimC,linC,v_prior=v0_iv_sm,prior_sample_size=d)
+tib_plot <- t(post_iv$post_samp(N)) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Large sample, noninformative prior:**
+```{r dir-enf-par-la-noninf, fig.width=7, echo=FALSE}
+post_iv <- polyh_bayes(samp_iv_la,dimC,linC,v_prior=v0_iv_la)
+tib_plot <- t(post_iv$post_samp(N)) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Large sample, informative prior:**
+```{r dir-enf-par-la-inf, fig.width=7, echo=FALSE}
+post_iv <- polyh_bayes(samp_iv_la,dimC,linC,v_prior=v0_iv_la,prior_sample_size=d)
+tib_plot <- t(post_iv$post_samp(N)) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+
 ### Enforced log-concavity
+
+In order to enforce log-concavity we use the prior on the transformed parameters
+$S_k=-T\log(V_k)$, as described above. We arrive at the following 
+graphical model:
 
 ```{r disp-dl, echo=FALSE}
 include_graphics(img_paths$dl, dpi=img_dpi)
 ```
 
+The posterior distribution for $V$ can not be solved analytically.
+We can sample from the posterior distribution using a Markov chain Monte Carlo
+approach. The function `polyh_stan` creates the input for the sampler 
+[Stan](http://mc-stan.org/), which can be used in R via the `rstan` package.
+
+**Example computations:**
+
+We use the function `polyh_stan` to create the input for Stan, which we pass
+through an input file using the `rstan` package. We sample one thousand elements
+from the posterior distribution (after a burn-in phase) and then display
+every one-hundredth element so that in the end we see again ten elements from the 
+posterior distribution. We do this for the small and large sample and using
+a noninformative and an informative prior distribution.
+
+**Small sample, noninformative prior:**
+```{r dir-enf-logc-comp, warning=FALSE}
+# define Stan model
+filename <- "ex_stan_model.stan"
+staninp <- polyh_stan(samp_iv_sm, dimC, linC, prior="noninformative", filename=filename)
+# run Stan model
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 11000, cores = 2, refresh = 2500 )
+# remove Stan input file
+file.remove(filename)
+
+str(extract(stanfit))
+
+post_iv_logc <- extract(stanfit)$V[100*(1:10),]
+```
+
+```{r dir-enf-logc-sm-noninf, fig.width=7, echo=FALSE}
+tib_plot <- t(post_iv_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Small sample, informative prior:**
+```{r dir-enf-logc-sm-inf, fig.width=7, echo=FALSE, warning=FALSE}
+# define Stan model
+filename <- "ex_stan_model.stan"
+staninp <- polyh_stan(samp_iv_sm, dimC, linC, prior="informative", filename=filename)
+# run Stan model
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 11000, cores = 2, refresh = 2500 )
+# remove Stan input file
+file.remove(filename)
+
+post_iv_logc <- extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_iv_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Large sample, noninformative prior:**
+```{r dir-enf-logc-la-noninf, fig.width=7, echo=FALSE, warning=FALSE}
+# define Stan model
+filename <- "ex_stan_model.stan"
+staninp <- polyh_stan(samp_iv_la, dimC, linC, prior="noninformative", filename=filename)
+# run Stan model
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 11000, cores = 2, refresh = 2500 )
+# remove Stan input file
+file.remove(filename)
+
+post_iv_logc <- extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_iv_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Large sample, informative prior:**
+```{r dir-enf-logc-la-inf, fig.width=7, echo=FALSE, warning=FALSE}
+# define Stan model
+filename <- "ex_stan_model.stan"
+staninp <- polyh_stan(samp_iv_la, dimC, linC, prior="informative", filename=filename)
+# run Stan model
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 11000, cores = 2, refresh = 2500 )
+# remove Stan input file
+file.remove(filename)
+
+post_iv_logc <- extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_iv_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
 ## Posterior for bivariate chi-bar-squared data {#biv-chibsq}
 
-### No enforced log-concavity
+### Enforced parity
 
 ```{r disp-idnle, echo=FALSE}
 include_graphics(img_paths$idnle, dpi=img_dpi)
@@ -256,6 +585,14 @@ include_graphics(img_paths$idnle, dpi=img_dpi)
 include_graphics(img_paths$idnlo, dpi=img_dpi)
 ```
 
+
+**Example computations:**
+
+```{r indir-enf-par}
+# asdf
+```
+
+
 ### Enforced log-concavity
 
 ```{r disp-idle, echo=FALSE}
@@ -264,6 +601,13 @@ include_graphics(img_paths$idle, dpi=img_dpi)
 
 ```{r disp-idlo, echo=FALSE}
 include_graphics(img_paths$idlo, dpi=img_dpi)
+```
+
+
+**Example computations:**
+
+```{r indir-enf-logc}
+# asdf
 ```
 
 
