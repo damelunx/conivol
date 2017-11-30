@@ -825,12 +825,12 @@ polyh_stan <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA,
         v_nonz_prior <- v_prior[linC:dimC]
     }
 
-    if (prior=="informative"){
-        alpha <- v_nonz_prior / 2
-        beta  <- rep(1/2,dimC-linC+1)
+    if (prior=="noninformative"){
+        alpha <- rep(2,dimC-linC+1)
+        beta  <- 2 / v_nonz_prior
     } else {
-        alpha <- rep(1,dimC-linC+1)
-        beta  <- 1 / v_nonz_prior
+        alpha <- v_nonz_prior
+        beta  <- rep(1,dimC-linC+1)
     }
 
     T <- matrix( rep(0,(dimC-linC+1)^2), dimC-linC+1, dimC-linC+1 )
