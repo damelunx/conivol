@@ -12,8 +12,8 @@
 #' @param d the dimension of the ambient space
 #' @param dimC the dimension of the cone
 #' @param linC the lineality of the cone
-#' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
+#' @param prior_sample_size the sample size for the prior estimate (1 by default -> noninformative)
 #' @param filename filename for output (NA by default, in which case the return is a string)
 #' @param overwrite logical; determines whether the output should overwrite an existing file
 #'
@@ -65,7 +65,7 @@
 #' v0 <- init_ivols(d,init_mode=1,delta=est$delta,var=est$var)
 #'
 #' # obtain input data for JAGS model; use v0 as prior
-#' in_jags <- estim_jags(m_samp, d, prior="informative", v_prior=v0)
+#' in_jags <- estim_jags(m_samp, d, v_prior=v0)
 #'
 #' # create JAGS model
 #' model_connection <- textConnection(in_jags$model)
@@ -101,7 +101,9 @@
 #'
 #' @export
 #'
-estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+estim_jags <- function(samples, d, dimC=d, linC=0,
+                       v_prior=NA, prior_sample_size=1,
+                       filename=NA, overwrite=FALSE) {
 
     I_pol  <- which(samples[ ,1]==0)
     I_prim <- which(samples[ ,2]==0)
@@ -121,13 +123,8 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
         v_prior_adj <- v_prior
     }
 
-    Dir_prior_0 <- 2*v_prior_adj[I_0]
-    Dir_prior_1 <- 2*v_prior_adj[I_1]
-
-    if (prior=="informative"){
-        Dir_prior_0 <- 1+Dir_prior_0
-        Dir_prior_1 <- 1+Dir_prior_1
-    }
+    Dir_prior_0 <- 2*prior_sample_size*v_prior_adj[I_0]
+    Dir_prior_1 <- 2*prior_sample_size*v_prior_adj[I_1]
 
     data_list <- list(
         d           = d ,
@@ -327,8 +324,6 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
     }
     return(out)
 }
-
-
 
 
 
