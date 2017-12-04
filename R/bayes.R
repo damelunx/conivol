@@ -871,7 +871,7 @@ transformed parameters {
     row_vector[d-1] logV_bulk ;
 
     u = T \\ t ;
-    V = exp(u)/sum(exp(u)) ;
+    V = exp(-u)/sum(exp(-u)) ;
     V_extreme[1] = V[1] ;
     V_extreme[2] = sum(V[2:d]) ;
     V_extreme[3] = V[d+1] ;
@@ -946,7 +946,7 @@ transformed parameters {
 
     u = T \\ t ;
     V[1:linC] = 0 ;
-    V[(linC+1):(d+1)] = exp(u)/sum(exp(u)) ;
+    V[(linC+1):(d+1)] = exp(-u)/sum(exp(-u)) ;
     V_extreme[1] = sum(V[(linC+1):d]) ;
     V_extreme[2] = V[d+1] ;
     logV_bulk = to_row_vector( log(V[(linC+1):d]) ) ;
@@ -1020,7 +1020,7 @@ transformed parameters {
 
     u = T \\ t ;
     V[(dimC+2):(d+1)] = 0 ;
-    V[1:(dimC+1)] = exp(u)/sum(exp(u)) ;
+    V[1:(dimC+1)] = exp(-u)/sum(exp(-u)) ;
     V_extreme[1] = V[1] ;
     V_extreme[2] = sum(V[2:(dimC+1)]) ;
     logV_bulk = to_row_vector( log(V[2:(dimC+1)]) ) ;
@@ -1092,7 +1092,7 @@ transformed parameters {
     u = T \\ t ;
     V[1:linC] = 0 ;
     V[(dimC+2):(d+1)] = 0 ;
-    V[(linC+1):(dimC+1)] = exp(u)/sum(exp(u)) ;
+    V[(linC+1):(dimC+1)] = exp(-u)/sum(exp(-u)) ;
     logV_bulk = to_row_vector( log(V[(linC+1):(dimC+1)]) ) ;
 }
 
