@@ -360,7 +360,8 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
             out[i, ] <- c(p,sum(y^2)-p)
         }
     }
-
+    # to avoid complications due to rounding errors resulting in negative values:
+    out <- pmax(out,0)
     if (!reduce)
         return(out)
     else
