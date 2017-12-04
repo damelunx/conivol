@@ -107,7 +107,11 @@ estim_jags <- function(samples, d, dimC=d, linC=0,
 
     I_pol  <- which(samples[ ,1]==0)
     I_prim <- which(samples[ ,2]==0)
-    samples_bulk <- samples[ -c(I_pol,I_prim) , ]
+    if (length(I_pol)==0 && length(I_prim)==0)
+        samples_bulk <- samples
+    else
+        samples_bulk <- samples[ -c(I_pol,I_prim) , ]
+    N <- dim(samples)[1]
     N_pol  <- length(I_pol)
     N_prim <- length(I_prim)
     N_bulk <- N-N_pol-N_prim
@@ -128,8 +132,8 @@ estim_jags <- function(samples, d, dimC=d, linC=0,
 
     data_list <- list(
         d           = d ,
-        dimC         = dimC ,
-        linC         = linC ,
+        dimC        = dimC ,
+        linC        = linC ,
         d_0         = floor((dimC-linC)/2) ,
         d_1         = ceiling((dimC-linC)/2)-1 ,
         N           = N ,
@@ -426,7 +430,11 @@ estim_stan <- function(samples, d, dimC=d, linC=0, enforce_logconc=FALSE,
 
     I_pol  <- which(samples[ ,1]==0)
     I_prim <- which(samples[ ,2]==0)
-    samples_bulk <- samples[ -c(I_pol,I_prim) , ]
+    if (length(I_pol)==0 && length(I_prim)==0)
+        samples_bulk <- samples
+    else
+        samples_bulk <- samples[ -c(I_pol,I_prim) , ]
+    N <- dim(samples)[1]
     N_pol  <- length(I_pol)
     N_prim <- length(I_prim)
     N_bulk <- N-N_pol-N_prim

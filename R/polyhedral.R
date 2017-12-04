@@ -819,10 +819,10 @@ polyh_stan <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA,
     if ( linC==dimC )
         stop("\n Lineality and dimension (linC==dimC) indicate that cone is linear subspace.")
 
-    if (is.na(v_prior)) {
+    if (all(is.na(v_prior))) {
         v_nonz_prior <- rep(1,dimC-linC+1)/(dimC-linC+1)
     } else {
-        v_nonz_prior <- v_prior[linC:dimC]
+        v_nonz_prior <- v_prior[1+linC:dimC]
     }
 
     if (prior=="noninformative"){
