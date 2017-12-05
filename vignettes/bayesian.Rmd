@@ -28,15 +28,19 @@ library(tidyverse)
 library(knitr)
 library(png)
 library(rstan)
+library(rjags)
+options(mc.cores = parallel::detectCores())
 ```
 
 ```{r load-imgs, include=FALSE}
-img_paths <- list( dl="bayes_diagrams/bayes_direct_logconc.png",
-                   dnl="bayes_diagrams/bayes_direct_nologconc.png",
+img_paths <- list( d="bayes_diagrams/bayes_direct.png",
+                   dp="bayes_diagrams/bayes_direct_par.png",
+                   dl="bayes_diagrams/bayes_direct_logconc.png",
+                   id="bayes_diagrams/bayes_indirect.png",
+                   idpe="bayes_diagrams/bayes_indirect_par_even.png",
+                   idpo="bayes_diagrams/bayes_indirect_par_odd.png",
                    idle="bayes_diagrams/bayes_indirect_logconc_even.png",
-                   idlo="bayes_diagrams/bayes_indirect_logconc_odd.png",
-                   idnle="bayes_diagrams/bayes_indirect_nologconc_even.png",
-                   idnlo="bayes_diagrams/bayes_indirect_nologconc_odd.png" )
+                   idlo="bayes_diagrams/bayes_indirect_logconc_odd.png" )
 img_dpi <- 450
 ```
 
@@ -119,9 +123,9 @@ distributions.
 
 ```{r coll-samples}
 samp_iv_sm <- polyh_rivols_gen(1e2, A_red, reduce=FALSE)$multsamp
-samp_iv_la <- polyh_rivols_gen(1e4, A_red, reduce=FALSE)$multsamp
+samp_iv_la <- polyh_rivols_gen(2e3, A_red, reduce=FALSE)$multsamp
 samp_bcb_sm <- polyh_rbichibarsq_gen(1e2, A_red, reduce=FALSE)
-samp_bcb_la <- polyh_rbichibarsq_gen(1e4, A_red, reduce=FALSE)
+samp_bcb_la <- polyh_rbichibarsq_gen(2e3, A_red, reduce=FALSE)
 ```
 
 The prior distributions can take initial guesses for the intrinsic volumes
@@ -373,6 +377,11 @@ variable $Z$. Identifying the data with the counting weight,
 $w=(w_0,\ldots,w_d)$, $w_k=|\{i\mid z_i=k\}|$, we see that $w$ is a sample of the
 random variable
   \[ W\sim\text{Multinom}(n;v_0,\ldots,v_d) . \]
+The corresponding graphical model thus has a very simple form:  
+```{r disp-d, echo=FALSE}
+include_graphics(img_paths$d, dpi=img_dpi)
+```
+
 The Dirichlet distribution is a conjugate prior for the multinomial distribution,
 and the posterior distribution is obtained by adding the weight vector to the
 parameter vector:
@@ -390,10 +399,9 @@ posterior distribution.
 
 As described above, the only thing we need to do to enforce the parity equation
 is to decompose the vector into even and odd parts. The corresponding graphical
-model thus has a very simple form:
-
-```{r disp-dnl, echo=FALSE}
-include_graphics(img_paths$dnl, dpi=img_dpi)
+model thus still has a very simple form:  
+```{r disp-dp, echo=FALSE}
+include_graphics(img_paths$dp, dpi=img_dpi)
 ```
 
 Decomposing the sample data accordingly,
@@ -465,8 +473,7 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
 
 In order to enforce log-concavity we use the prior on the transformed parameters
 $S_k=-T\log(V_k)$, as described above. We arrive at the following 
-graphical model:
-
+graphical model:  
 ```{r disp-dl, echo=FALSE}
 include_graphics(img_paths$dl, dpi=img_dpi)
 ```
@@ -485,20 +492,27 @@ every one-hundredth element so that in the end we see again ten elements from th
 posterior distribution. We do this for the small and large sample and using
 a noninformative and an informative prior distribution.
 
-**Small sample, noninformative prior:**
+**Small sample, noninformative prior:**  
+Define Stan model:
 ```{r dir-enf-logc-comp, warning=FALSE}
-# define Stan model
-filename <- "ex_stan_model.stan"
-staninp <- polyh_stan(samp_iv_sm, dimC, linC, prior="noninformative", filename=filename)
-# run Stan model
+filename <- "ex_stan_model_iv.stan"
+staninp <- polyh_stan(samp_iv_sm, dimC, linC,
+                      v_prior=v0_iv_sm, prior="noninformative", filename=filename)
+```
+```{r include=FALSE}
+# this is so that some compiler warnings do not appear in the markdown
+# (those warnings are only shown when running the Stan model the first time)
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 11000, cores = 2, refresh = 2500 )
-# remove Stan input file
-file.remove(filename)
+                 warmup = 1, iter = 2, cores = 1, refresh = 10 )
+```
+Run Stan model:
+```{r dir-enf-logc-comp2, fig.width=7, warning=FALSE}
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
 
-str(extract(stanfit))
+str(rstan::extract(stanfit))
 
-post_iv_logc <- extract(stanfit)$V[100*(1:10),]
+post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
 ```
 
 ```{r dir-enf-logc-sm-noninf, fig.width=7, echo=FALSE}
@@ -512,16 +526,14 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
 
 **Small sample, informative prior:**
 ```{r dir-enf-logc-sm-inf, fig.width=7, echo=FALSE, warning=FALSE}
-# define Stan model
-filename <- "ex_stan_model.stan"
-staninp <- polyh_stan(samp_iv_sm, dimC, linC, prior="informative", filename=filename)
+# obtain Stan input (model already defined)
+staninp <- polyh_stan(samp_iv_sm, dimC, linC,
+                      v_prior=v0_iv_sm, prior="informative")
 # run Stan model
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 11000, cores = 2, refresh = 2500 )
-# remove Stan input file
-file.remove(filename)
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
 
-post_iv_logc <- extract(stanfit)$V[100*(1:10),]
+post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
 
 tib_plot <- t(post_iv_logc) %>%
     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
@@ -533,16 +545,14 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
 
 **Large sample, noninformative prior:**
 ```{r dir-enf-logc-la-noninf, fig.width=7, echo=FALSE, warning=FALSE}
-# define Stan model
-filename <- "ex_stan_model.stan"
-staninp <- polyh_stan(samp_iv_la, dimC, linC, prior="noninformative", filename=filename)
+# obtain Stan input (model already defined)
+staninp <- polyh_stan(samp_iv_la, dimC, linC,
+                      v_prior=v0_iv_la, prior="noninformative")
 # run Stan model
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 11000, cores = 2, refresh = 2500 )
-# remove Stan input file
-file.remove(filename)
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
 
-post_iv_logc <- extract(stanfit)$V[100*(1:10),]
+post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
 
 tib_plot <- t(post_iv_logc) %>%
     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
@@ -554,16 +564,16 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
 
 **Large sample, informative prior:**
 ```{r dir-enf-logc-la-inf, fig.width=7, echo=FALSE, warning=FALSE}
-# define Stan model
-filename <- "ex_stan_model.stan"
-staninp <- polyh_stan(samp_iv_la, dimC, linC, prior="informative", filename=filename)
+# obtain Stan input (model already defined)
+staninp <- polyh_stan(samp_iv_la, dimC, linC,
+                      v_prior=v0_iv_la, prior="informative")
 # run Stan model
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 11000, cores = 2, refresh = 2500 )
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
 # remove Stan input file
 file.remove(filename)
 
-post_iv_logc <- extract(stanfit)$V[100*(1:10),]
+post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
 
 tib_plot <- t(post_iv_logc) %>%
     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
@@ -575,481 +585,351 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
 
 ## Posterior for bivariate chi-bar-squared data {#biv-chibsq}
 
+If the given data are samples from the bivariate chi-bar-squared distribution,
+we work with the variable $Z$ as a latent variable. Recall that this variable
+is not entirely latent, as we have the equivalences
+  \[ Z=d\iff g\in \text{int}(C) \stackrel{\text{a.s.}}{\iff} Y=0 ,\qquad
+    Z=0\iff g\in \text{int}(C^\circ) \stackrel{\text{a.s.}}{\iff} X=0 . \]
+We will thus only regard the data points $(X_i,Y_i)$ such that both components
+are nonzero. These on the other hand follow independent chi-squared distributions
+with degrees of freedom given by the value of the latent variable. The graphical
+model looks as follows:  
+```{r disp-id, echo=FALSE}
+include_graphics(img_paths$id, dpi=img_dpi)
+```
+
+
 ### Enforced parity
 
-```{r disp-idnle, echo=FALSE}
-include_graphics(img_paths$idnle, dpi=img_dpi)
+In order to enforce log-concavity we split up the intrinsic volumes variables
+according to even and odd indices, analogously to the case of sample data from the
+intrinsic volumes distribution. According to the parity of $d$ we arrive at
+the following graphical models.
+
+$d$ even:  
+```{r disp-idpe, echo=FALSE}
+include_graphics(img_paths$idpe, dpi=img_dpi)
 ```
 
-```{r disp-idnlo, echo=FALSE}
-include_graphics(img_paths$idnlo, dpi=img_dpi)
+$d$ odd:  
+```{r disp-idpo, echo=FALSE}
+include_graphics(img_paths$idpo, dpi=img_dpi)
 ```
 
+Again, the posterior distribution for $V$ can not be solved analytically,
+but we can sample the posterior distribution through an MCMC approach.
+The functions `estim_jags` and `estim_stan` create inputs for the samplers 
+[JAGS](http://mcmc-jags.sourceforge.net/) and [Stan](http://mc-stan.org/),
+respectively; these programs can be used in R via the packages
+`rjags` and `rstan`.
 
 **Example computations:**
 
-```{r indir-enf-par}
-# asdf
+We redo the computations from the case of intrinsic volumes data, now using the
+bivariate chi-bar-squared data; and we do these computations twice, first
+using JAGS, then using Stan.
+
+**JAGS | Small sample, noninformative prior:**  
+```{r indir-JAGS-enf-par-sm-ninf, warning=FALSE, fig.width=7}
+# obtain input data for JAGS model
+in_jags <- estim_jags(samp_bcb_sm, d, v_prior=v0_bcb_sm)
+
+# create JAGS model
+model_connection <- textConnection(in_jags$model)
+mod <- jags.model(model_connection ,
+                  data = in_jags$data ,
+                  n.chains = 1 ,
+                  n.adapt = 1000)
+close(model_connection)
+
+# sample posterior distribution, take every thousandth sample
+mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
+mod_csim <- as.mcmc(do.call(rbind, mod_sim))
+post_bcb_pa <- mod_csim[1e3*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**JAGS | Small sample, informative prior:**  
+```{r indir-JAGS-enf-par-sm-inf, warning=FALSE, fig.width=7, echo=FALSE, warning=FALSE, results=FALSE}
+# obtain input data for JAGS model
+in_jags <- estim_jags(samp_bcb_sm, d, v_prior=v0_bcb_sm, prior_sample_size=d)
+
+# create JAGS model
+model_connection <- textConnection(in_jags$model)
+mod <- jags.model(model_connection ,
+                  data = in_jags$data ,
+                  n.chains = 1 ,
+                  n.adapt = 1000)
+close(model_connection)
+
+# sample posterior distribution, take every thousandth sample
+mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
+mod_csim <- as.mcmc(do.call(rbind, mod_sim))
+post_bcb_pa <- mod_csim[1e3*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**JAGS | Large sample, noninformative prior:**  
+```{r indir-JAGS-enf-par-la-ninf, warning=FALSE, fig.width=7, echo=FALSE, warning=FALSE, results=FALSE}
+# obtain input data for JAGS model
+in_jags <- estim_jags(samp_bcb_la, d, v_prior=v0_bcb_la)
+
+# create JAGS model
+model_connection <- textConnection(in_jags$model)
+mod <- jags.model(model_connection ,
+                  data = in_jags$data ,
+                  n.chains = 1 ,
+                  n.adapt = 1000)
+close(model_connection)
+
+# sample posterior distribution, take every thousandth sample
+mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
+mod_csim <- as.mcmc(do.call(rbind, mod_sim))
+post_bcb_pa <- mod_csim[1000*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**JAGS | Large sample, informative prior:**  
+```{r indir-JAGS-enf-par-la-inf, warning=FALSE, fig.width=7, echo=FALSE, warning=FALSE, results=FALSE}
+# obtain input data for JAGS model
+in_jags <- estim_jags(samp_bcb_la, d, v_prior=v0_bcb_la, prior_sample_size=d)
+
+# create JAGS model
+model_connection <- textConnection(in_jags$model)
+mod <- jags.model(model_connection ,
+                  data = in_jags$data ,
+                  n.chains = 1 ,
+                  n.adapt = 1000)
+close(model_connection)
+
+# sample posterior distribution, take every thousandth sample
+mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
+mod_csim <- as.mcmc(do.call(rbind, mod_sim))
+post_bcb_pa <- mod_csim[1000*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Stan | Small sample, noninformative prior:**  
+```{r indir-Stan-enf-par-sm-ninf-comp1, warning=FALSE, fig.width=7}
+filename <- "ex_stan_model_bcb.stan"
+staninp <- estim_stan(samp_bcb_sm, d, dimC, linC,
+                      v_prior=v0_bcb_sm, filename=filename)
+```
+```{r include=FALSE}
+# this is so that some compiler warnings do not appear in the markdown
+# (those warnings are only shown when running the Stan model the first time)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1, iter = 2, cores = 1, refresh = 10 )
+```
+```{r indir-Stan-enf-par-sm-ninf-comp2, warning=FALSE, fig.width=7}
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+str(rstan::extract(stanfit))
+
+post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
+```
+```{r indir-Stan-enf-par-sm-ninf, fig.width=7, echo=FALSE}
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Stan | Small sample, informative prior:**  
+```{r indir-Stan-enf-par-sm-inf, warning=FALSE, fig.width=7, echo=FALSE}
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_sm, d, dimC, linC,prior_sample_size=d,
+                      v_prior=v0_bcb_sm)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Stan | Large sample, noninformative prior:**  
+```{r indir-Stan-enf-par-la-ninf, warning=FALSE, fig.width=7, echo=FALSE}
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_la, d, dimC, linC,
+                      v_prior=v0_bcb_la)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Stan | Large sample, informative prior:**  
+```{r indir-Stan-enf-par-la-inf, warning=FALSE, fig.width=7, echo=FALSE}
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_la, d, dimC, linC,prior_sample_size=d,
+                      v_prior=v0_bcb_la)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+# remove Stan input file
+file.remove(filename)
+
+post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
 ```
 
 
 ### Enforced log-concavity
 
+Finally, we enforce log-concavity again using the transformed parameters 
+$S_k=-T\log(V_k)$. The graphical models, according to the parity of $d$,
+thus look as follows.
+
+$d$ even:  
 ```{r disp-idle, echo=FALSE}
 include_graphics(img_paths$idle, dpi=img_dpi)
 ```
 
+$d$ odd:  
 ```{r disp-idlo, echo=FALSE}
 include_graphics(img_paths$idlo, dpi=img_dpi)
 ```
 
+The function `estim_stan` supports this enforced log-concavity
+(set the parameter `enforce_logconc=TRUE`).
 
 **Example computations:**
 
-```{r indir-enf-logc}
-# asdf
+We redo the computations one more time, this time using the Stan model
+that enforces log-concavity.
+
+**Small sample, noninformative prior:**  
+```{r indir-Stan-enf-logc-sm-ninf-comp1, warning=FALSE, fig.width=7}
+filename <- "ex_stan_model_bcb_logc.stan"
+staninp <- estim_stan(samp_bcb_sm, d, dimC, linC, enforce_logconc=TRUE,
+                      v_prior=v0_bcb_sm, filename=filename)
+```
+```{r include=FALSE}
+# this is so that some compiler warnings do not appear in the markdown
+# (those warnings are only shown when running the Stan model the first time)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1, iter = 2, cores = 1, refresh = 10 )
+```
+```{r indir-Stan-enf-logc-sm-ninf-comp2, warning=FALSE, fig.width=7}
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+str(rstan::extract(stanfit))
+
+post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+```
+```{r indir-Stan-enf-logc-sm-ninf, fig.width=7, echo=FALSE}
+tib_plot <- t(post_bcb_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Small sample, informative prior:**  
+```{r indir-Stan-enf-logc-sm-inf, warning=FALSE, fig.width=7, echo=FALSE}
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_sm, d, dimC, linC, enforce_logconc=TRUE,
+                      prior="informative", v_prior=v0_bcb_sm)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Large sample, noninformative prior:**  
+```{r indir-Stan-enf-logc-la-ninf, warning=FALSE, fig.width=7, echo=FALSE}
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_la, d, dimC, linC, enforce_logconc=TRUE,
+                      v_prior=v0_bcb_la)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+**Large sample, informative prior:**  
+```{r indir-Stan-enf-logc-la-inf, warning=FALSE, fig.width=7, echo=FALSE}
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_la, d, dimC, linC, enforce_logconc=TRUE,
+                      prior="informative", v_prior=v0_bcb_la)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+# remove Stan input file
+file.remove(filename)
+
+post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
 ```
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## The modified bivariate chi-bar-squared distribution {#mod_bivchibarsq}
-
-Recall from [this vignette](estim-conic-intrinsic-volumes-with-EM.html#setup) that we assumed to have sampled data of the following form: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of $(X,Y)$, which follow the chi-bar-squared distribution of some closed convex cone, which is not a linear subspace, and we assume that these copies took the sample values $(x_1,y_1),\ldots,(x_N,y_N)$. The latent variable $Z$ and the corresponding iid copies $Z_1,\ldots,Z_N$ are not completely latent, as the values $0$ and $d$ are visible in the data by the events $x_i=0$ and $y_i=0$, respectively. We thus defined the two proportions
-  \[ p = \frac{\left|\{i\mid y_i=0\}\right|}{N} ,\quad q = \frac{\left|\{i\mid x_i=0\}\right|}{N} , \]
-and dropped those sample values $(x_i,y_i)$ with $x_i=0$ or $y_i=0$. Without loss of generality, we used the notation $(x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})$ for the remaining sample points, $\bar N\leq N$.
-
-We can formalize these steps by considering the following mixed continuous-discrete distribution: for given weight vector $v=(v_0,\ldots,v_d)$, $v\geq0$, $\sum_{k=0}^d v_k=1$, consider the distribution
-  \[ f_v(x,y) = v_d\, \delta(-1,0) + v_0\, \delta(0,-1) + \sum_{k=1}^{d-1} v_k f_k(x) f_{d-k}(y) , \]
-where $\delta$ denotes the (bivariate) Dirac delta, and $f_k(x)$ denotes the density of the chi-squared distribution with $k$ degrees of freedom. The original sample data is then chosen from this distribution, while the sample points remaining after dropping the sample values with $x_i=0$ or $y_i=0$ can be interpreted as iid sample data from the continuous distribution
-  \[ \bar f_v(x,y) = \sum_{k=1}^{d-1} \frac{v_k}{1-v_0-v_d} f_k(x) f_{d-k}(y) , \]
-with corresponding conditional latent variables $\bar Z\in\{1,\ldots,d-1\}$ and corresponding copies $\bar Z_1,\ldots,\bar Z_{\bar N}$.
-
-<!-- The cumulative distribution function (cdf) is thus given by -->
-<!--   \[ F_v(x,y) = \begin{cases} -->
-<!--       v_d & \text{if } -1\leq x<0\leq y , -->
-<!--    \\ v_0 & \text{if } -1\leq y<0\leq x , -->
-<!--    \\ v_0 + v_d + \sum_{k=1}^{d-1} v_k F_k(x)F_{d-k}(y) & \text{if } (x,y)\geq0 , -->
-<!--    \\ 0 & \text{else} , -->
-<!--    \end{cases} \] -->
-<!-- where $F_k(x)$ denotes the cdf of the chi-squared distribution. We will assume this distribution in what follows below. -->
-
-## Bayesian approach
-
-In a full Bayesian approach we do not consider the intrinsic volumes as parameters but rather as random themselves. So we change notation and introduce the random variable $V=(V_0,\ldots,V_d)^T$ that takes values in the probability simplex
-  \[ \Delta^d = \big\{v\in\text{R}^{d+1}\mid 0\leq v_k\leq 1 \text{ for all }k, \|v\|_1=1\big\} , \]
-almost surely, where $\|v\|_1=|v_0|+\dots+|v_d|$ denotes the $\ell_1$-norm.
-
-The intrinsic volumes of cones which are not linear subspaces satisfy the additional equation $V_0+V_2+V_4+\dots=V_1+V_3+V_5+\dots=\frac{1}{2}$, which is why we also use the two random variables $V^e=2(V_0,V_2,V_4,\ldots)^T$ and $V^o=2(V_1,V_3,V_5,\ldots)^T$ both taking values in a probability simplex (of possibly different dimension) with the correlation
-  \[ V = \tfrac12 
-% \begin{pmatrix} 1 & 0 & 0 & \dots \\ 0 & 0 & 0 & \dots  \\ 0 & 1 & 0 & \dots \\ 0 & 0 & 0 & \dots \\ \vdots & \vdots & \vdots & \ddots \end{pmatrix}
-(e_0, e_2, e_4,\ldots) V^e  + \tfrac12
-% \begin{pmatrix} 0 & 0 & 0 & \dots \\ 1 & 0 & 0 & \dots  \\ 0 & 0 & 0 & \dots \\ 0 & 1 & 0 & \dots \\ \vdots & \vdots & \vdots & \ddots \end{pmatrix}
-(e_1, e_3, e_5,\ldots) V^o , \]
-where $e_i\in\text{R}^{d+1}$ denotes the $i$th canonical basis vector (indices starting at zero). Notationwise, we define $d^e=\lfloor \frac{d}{2}\rfloor$ and $d^o=\lceil \frac{d}{2}\rceil-1$ so that $V^e\in \Delta^{d^e}$ and $V^o\in \Delta^{d^o}$.
-
-In the following we will explain the issues first in terms of the random vector $V$ before introducing a refinement that takes the split in even and odd indices into account.
-
-## Prior distribution
-
-We use the Dirichlet distribution as a prior, $V\sim \text{Dirichlet}(a)$ with $a=(a_0,\ldots,a_d)$ and $a_k>0$ for all $k$. The density of $V$ is given by
-\begin{align*}
-   p(V=v) & = \frac{\Gamma(\|a\|_1)}{\Gamma(a_0)\dots\Gamma(a_d)}\, v_0^{a_0-1}\dots v_d^{a_d-1} \; \big(\propto v_0^{a_0-1}\dots v_d^{a_d-1}\big)
-\end{align*}
-for $v\in\Delta^d$, and zero else. The expectation of $V$ is given by
-  \[ \text{E}[V] = \frac{1}{\|a\|_1} (a_0,\ldots,a_d) , \]
-and the *prior sample size*, cf. [@GCSDVR14], is given by $\|a\|_1$. Note that the $k$th marginal distribution is concave iff $a_k\geq1$; if $a_k>1$ for all $k$, then the mode of the $k$th marginal distribution is given by
-  \[ \text{mode}(V_k) = \frac{a_k-1}{\|a-1\|_1} . \]
-There are two natural choices for the parameters of the prior distribution, one noninformative, the other (slightly) informative; both using the starting point of the EM algorithm $v^{(0)}$, see [this vignette](estim-conic-intrinsic-volumes-with-EM.html#start_EM):
-
-1. *noninformative:* $a_k = v^{(0)}_k$ for $k=0,\ldots,d$. In this case we have matched the first moment: $\text{E}[V]=v^{(0)}$. The marginal distributions are convex and widely spread; the prior sample size is $\|a\|_1=1$. Note that in this case we must have $v^{(0)}_k>0$ for all $k$, cp. the discussion in [this vignette](conic-intrinsic-volumes.html#intro_intrvol).
-2. *informative:* $a_k = 1 + v^{(0)}_k$ for $k=0,\ldots,d$. In this case we have matched the modes: $\text{mode}(V_k)=v^{(0)}_k$. The marginal distributions are concave; the prior sample size is $\|a\|_1=d+2$.
-
-We will discuss both cases, noninformative and informative, but eventually we will only [implement](#implementation) the informative case, as the noninformative case involves some inherent numerical difficulties.
-
-### Even and odd indices
-
-By the same reasoning we arrive at the following prior distributions for $V^e$ and $V^o$:
-  \[ V^e\sim \text{Dirichlet}(b) ,\quad V^o\sim \text{Dirichlet}(c) , \]
-with the constants $b=(b_0,b_2,b_4,\ldots)$ and $c=(c_1,c_3,c_5,\ldots)$ chosen either in the noninformative or in the informative way:
-
-1. *noninformative:* $b_j = 2v^{(0)}_j$, $c_k = 2v^{(0)}_k$, for $j$ even and $k$ odd,
-2. *informative:* $b_j = 1 + 2v^{(0)}_j$, $c_k = 1 + 2v^{(0)}_k$, for $j$ even and $k$ odd.
-
-## Posterior distribution
-
-The posterior distribution for $V$, or $V^e$ and $V^o$, respectively, is easily derived through Bayes' Theorem. What is a bit more complicated is the question how to sample from this distribution, which is crucial for obtaining, for example, credible regions or morginal credible intervals. For this we will describe how to extend the distribution on the probability simplex (or product of probability simplices in the even/odd index decomposition) to a distribution on the positive orthant, so that we can employ a standard Gibbs sampling procedure to sample from the posterior distribution. 
-
-As before we will first describe this for the random vector $V$ before describing the necessary adaptations for the even/odd index decomposition.
-
-### Samples of the latent variable {#sampl_latent}
-
-### Distribution on probability simplex {#distr_simplex}
-
-We derive the posterior distribution by using the latent variable $Z$. Note first that the posterior distribution of $V$ given direct samples of the latent variable is again Dirichlet distributed:
-\begin{align*}
-   p(V=v\mid \mathbf Z=\mathbf z) & = \frac{p(\mathbf Z=\mathbf z\mid V=v)\, p(V=v)}{p(\mathbf Z=\mathbf z)} \propto \prod_{k=0}^d v_k^{a_k+|\{i\colon z_i=k\}|-1}
-\\ & = \text{Dirichlet}\big(a_0+\big|\{i\colon z_i=0\}\big|,a_1+\big|\{i\colon z_i=1\}\big|,\ldots,a_d+\big|\{i\colon z_i=d\}\big|\big) .
-\end{align*}
-We do not have direct samples of the latent variables, except for those values for which $Z\in\{0,d\}$. For the remaining sample points, which we assume without loss of generality to have the indices $1,\ldots,\bar N$, we do not have the values of the latent variable, so we will have to consider all possible constellations for these.
-
-Recall that given the value of the latent variable, the distribution of the sample is independent of the intrinsic volumes. As in [this vignette](estim-conic-intrinsic-volumes-with-EM.html), we use bold letters to denote the vectors collecting the sample points, and we use the notation
-  \[ f_{ik} = f_k(x_i)f_{d-k}(y_i) \quad\text{for $1\leq i\leq \bar N$ and $0<k<d$} , \]
-where $f_k$ denotes the density of $\chi_k^2$. We obtain the density of the posterior distribution as follows:
-\begin{align*}
-   & p(V=v\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) = \sum_{\bar{\mathbf z}\in\{1,\ldots,d-1\}^{\bar N}} p(V=v, \mathbf Z=\mathbf z\mid \mathbf X=\mathbf x,\mathbf Y=\mathbf y)
-\\ & \qquad = \sum_{\bar{\mathbf z}\in\{1,\ldots,d-1\}^{\bar N}} \frac{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y\mid \mathbf Z=\mathbf z)\, p(\mathbf Z=\mathbf z\mid V=v)\, p(V=v)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)}
-\\ & \qquad = \frac{p(V=v)\; v_0^{qN} v_d^{pN}}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)} \sum_{\bar{\mathbf z}\in\{1,\ldots,d-1\}^{\bar N}} \prod_{i=1}^{\bar N} v_{z_i}\,f_{z_i}(x_i)\,f_{d-z_i}(y_i)
-\\ & \qquad = \frac{p(V=v)\;v_0^{qN} v_d^{pN}}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)} \; \prod_{i=1}^{\bar N} \sum_{k=1}^{d-1} v_k\,f_{ik}
-\\ & \qquad \propto v_0^{a_0+qN-1} v_d^{a_d+pN-1} \Big( \prod_{k=1}^{d-1} v_k^{a_k-1} \Big) \; \prod_{i=1}^{\bar N} \sum_{k=1}^{d-1} v_k\,f_{ik} .
-\end{align*}
-In order to avoid case distinctions corresponding to the first and last indices, we extend the notation for $f_{ik}$:
-\begin{align*}
-   \text{for } i\leq \bar N & : \qquad f_{i0} = f_{id} = 0 ,
-\\[1mm] \text{for } \bar N<i\leq N & : \qquad f_{ik} = \begin{cases}
-                 1 & \text{if $k=0$ and $x_i=0$}
-              \\ 1 & \text{if $k=d$ and $y_i=0$}
-              \\ 0 & \text{else} .
-              \end{cases}
-\end{align*}
-With this extended notation we can write the posterior distribution as follows:
-\begin{align*}
-   & p(V=v\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) \propto \Big(\prod_{k=0}^d v_k^{a_k-1} \Big) \; \prod_{i=1}^N \sum_{k=0}^d v_k\,f_{ik} .
-\end{align*}
-Note that this is only for notational convenience; in the [implementation](#implementation) of the resulting formulas we will of course break this down again.
-
-### Extended distribution on positive orthant
-
-In order to be able to employ a standard Gibbs sampling procedure to obtain samples from the posterior distribution, we extend the lower-dimensional distribution on the probability simplex to a full-dimensional distribution on the positive orthant. For this we define the random variable $W\in\text{R}^{d+1}$ via
-  \[ W = R\cdot V = \frac{R}{\sqrt{d+1}}\sqrt{d+1} V , \]
-where $R\sim \chi_{d+1}$ independent of $V$. By construction, renormalizing $W$ yields $V$,
-  \[ \frac{W}{\|W\|_1}=V , \]
-so any sampling of $W$ can easily be converted into a sampling of $V$.
-
-What is missing at this point is the density of $W$. This can be obtained by considering the parametrization of the positive orthant given by
-  \[ \Delta_d\times \text{R}_+\to\text{R}_+^{d+1} ,\quad (v,t)\mapsto t\sqrt{d+1} x , \]
-where we introduce the scaling factor $\sqrt{d+1}$ because the probability simplex only contains the scaled diagonal $\frac{1}{d+1}1_{d+1}$, which has length $\frac1{\sqrt{d+1}}$. The normal Jacobian in $w=(w_0,\ldots,w_d)$, that is, the absolute value of the determinant of the Jacobian in $w$, of the inverse map is given by $\|w\|_1^{-d}$; see [below](#proof_normal_jacobian) for a proof. Hence, the density of $W$ can be expressed in the form
-  \[ p(W=w) = \frac{p(R=\|w\|_1)}{\|w\|_1^d}\; p\Big(V=\frac{w}{\|w\|_1}\Big) . \]
-For the posterior distribution we thus obtain
-  \[ p(W=w\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) = \frac{p(W=w)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)} \prod_{i=1}^N \sum_{k=0}^d f_{ik} \frac{w_k}{\|w\|_1} . \]
-The prior distribution of the extended random variable is given by
-\begin{align*}
-   p(W=w) & = \frac{p(R=\|w\|_1)}{\|w\|_1^d}\, \frac{\Gamma(\|a\|_1)}{\Gamma(a_0)\dots\Gamma(a_d)}\, \frac{w_0^{a_0-1}\dots w_d^{a_d-1}}{\|w\|_1^{\|a\|_1-d-1}}
-\\ & = \frac{\frac{\Gamma(\|a\|_1)}{\Gamma(a_0)\dots\Gamma(a_d)}}{2^{(d-1)/2}\Gamma((d+1)/2)} \frac{w_0^{a_0-1}\dots w_d^{a_d-1}}{\|w\|_1^{\|a\|_1-d-1}\exp(\|w\|_1^2/2)} .
-\end{align*}
-Ignoring the normalizing constant, we thus have
-  \[ p(W=w\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) \propto \frac{1}{\exp(\|w\|_1^2/2)} \Big(\prod_{k=0}^d \Big(\frac{w_k}{\|w\|_1}\Big)^{a_k-1} \Big) \prod_{i=1}^N \sum_{k=0}^d f_{ik}\frac{w_k}{\|w\|_1} . \]
-
-### Change to logarithmic scale
-
-For the sampling it makes more sense, numerically, to consider the logarithm of the random variables. Taking into account the normal Jacobian that results from the change of variable, we obtain the posterior density of the random variable $\log W$ as follows:
-  \[ p(\log W=\log w\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) \propto \frac{\prod_{k=0}^d w_k}{\exp(\|w\|_1^2/2)} \Big(\prod_{k=0}^d \Big(\frac{w_k}{\|w\|_1}\Big)^{a_k-1} \Big) \prod_{i=1}^N \sum_{k=0}^d f_{ik}\frac{w_k}{\|w\|_1} . \]
-<!-- For the two choices of constants for the prior distribution we obtain -->
-<!-- \begin{align*} -->
-<!--    & \text{non-informative choice:} -->
-<!-- \\ & \qquad p(\log W=\log w\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) \propto \frac{w_0^{v^{(0)}_0+qN} w_d^{v^{(0)}_d+pN} \prod_{k=1}^{d-1} w_k^{v^{(0)}_k}}{\|w\|_1^{N-d}\exp(\|w\|_1^2/2)} \prod_{i=1}^{\bar N} \sum_{k=1}^{d-1} f_{ik}\, w_k , -->
-<!-- \\[2mm] & \text{informative choice:} -->
-<!-- \\ & \qquad p(\log W=\log w\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) \propto \frac{w_0^{v^{(0)}_0+qN} w_d^{v^{(0)}_d+pN} \prod_{k=1}^{d-1} w_k^{v^{(0)}_k}}{\|w\|_1^{N+1}\exp(\|w\|_1^2/2)} \prod_{i=1}^{\bar N} \sum_{k=1}^{d-1} f_{ik}\, w_k . -->
-<!-- \end{align*} -->
-
-### Even and odd indices
-
-As for the decomposition of the vectors into even and odd indices, we note that the posterior distribution on the probability simplex is trivially obtained from the observation $V=v\iff (V^e=v^e \text{ and } V^o=v^o)$, where $v=(v_0,v_1,\ldots,v_d)$, $v^e=2(v_0,v_2,v_4,\ldots)$, $v^o=2(v_1,v_3,v_5,\ldots)$, 
-\begin{align*}
-   & p(V^e=v^e, V^o=v^o\mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y) = \frac{p(V^e=v^e)\; p(V^o=v^o)}{p(\mathbf X=\mathbf x,\mathbf Y=\mathbf y)} \; \prod_{i=1}^N \sum_{k=0}^d v_k\,f_{ik} .
-\end{align*}
-Analogous to the above extension of $V$ to $W$, we extend $V^e$ and $V^o$ to $T$ and $U$, respectively,^[We use the letters $T$ and $U$ out of lack of better choices; using superscripts makes subsequent formulas unnecessarily complicated.]
-  \[ T = R^e\cdot V^e ,\quad U = R^o\cdot V^o , \]
-where $R^e\sim \chi_{d^e+1}$ and $R^o\sim \chi_{d^o+1}$ independent of each other and of $V^e$ and $V^o$. We use the index notation $T=(T_0,T_2,T_4,\ldots)\in\text{R}^{d^e+1}$ and $U=(U_1,U_3,U_5,\ldots)\in\text{R}^{d^o+1}$. As above, we obtain
-\begin{align*}
-   p(T=t, U=u) & = \frac{p(R^e=\|t\|_1)}{\|t\|_1^{d^e}}\; \frac{p(R^o=\|u\|_1)}{\|u\|_1^{d^o}}\; p\Big(V^e=\frac{t}{\|t\|_1}, V^o=\frac{u}{\|u\|_1}\Big) ,
-\end{align*}
-so the extended posterior distribution, directly converted to the distribution of the logarithms, is given by
-\begin{align*}
-   p(\log T=\log t, \log U=\log u & \mid \mathbf X=\mathbf x, \mathbf Y=\mathbf y)
-\\ & \propto \frac{t_0t_2t_4\dots}{\exp(\|t\|_1^2/2)} \Big( \frac{t_0}{\|t\|_1} \Big)^{b_0-1} \Big( \frac{t_2}{\|t\|_1} \Big)^{b_2-1} \Big( \frac{t_4}{\|t\|_1} \Big)^{b_4-1} \dots
-\\ & \qquad \cdot \frac{u_1u_3u_5\dots}{\exp(\|u\|_1^2/2)} \Big( \frac{u_1}{\|u\|_1} \Big)^{c_1-1} \Big( \frac{u_3}{\|u\|_1} \Big)^{c_3-1} \Big( \frac{u_5}{\|u\|_1} \Big)^{c_5-1} \dots 
-\\ & \qquad \cdot \prod_{i=1}^N \Big( \frac{\sum_{k\text{ even}}f_{ik}\,t_k}{2\|t\|_1} + \frac{\sum_{k\text{ odd}}f_{ik}\,u_k}{2\|u\|_1}\Big) .
-\end{align*}
-<!-- For the two choices of constants for the prior distribution we obtain -->
-<!-- \begin{align*} -->
-<!--    & \text{non-informative choice:} -->
-<!-- \\ & \qquad \frac{t_0^{qN + 2v^{(0)}_0}t_2^{2v^{(0)}_2}t_4^{2v^{(0)}_4}\dots}{\|t\|_1^{qN-d^e} \exp(\|t\|_1^2/2)}\, \frac{u_1^{2v^{(0)}_1}u_3^{2v^{(0)}_3}u_5^{2v^{(0)}_5}\dots}{\|u\|_1^{-d^o} \exp(\|u\|_1^2/2)} \cdot \begin{cases} -->
-<!--        t_d^{pN} \|t\|_1^{-pN} & \text{if $d$ even} -->
-<!--     \\[1mm] u_d^{pN} \|u\|_1^{-pN} & \text{if $d$ odd} -->
-<!--     \end{cases} -->
-<!-- \\ & \qquad \cdot \prod_{i=1}^{\bar N} \Big( \frac{\sum_{k\text{ even}}f_{ik}\,t_k}{2\|t\|_1} + \frac{\sum_{k\text{ odd}}f_{ik}\,u_k}{2\|u\|_1}\Big) , -->
-<!-- \\[3mm] & \text{informative choice:} -->
-<!-- \\ & \qquad \frac{t_0^{qN + 1+2v^{(0)}_0}t_2^{1+2v^{(0)}_2}t_4^{1+2v^{(0)}_4}\dots}{\|t\|_1^{qN+1} \exp(\|t\|_1^2/2)}\, \frac{u_1^{1+2v^{(0)}_1}u_3^{1+2v^{(0)}_3}u_5^{1+2v^{(0)}_5}\dots}{\|u\|_1 \exp(\|u\|_1^2/2)} \cdot \begin{cases} -->
-<!--        t_d^{pN} \|t\|_1^{-pN} & \text{if $d$ even} -->
-<!--     \\[1mm] u_d^{pN} \|u\|_1^{-pN} & \text{if $d$ odd} -->
-<!--     \end{cases} -->
-<!-- \\ & \qquad \cdot \prod_{i=1}^{\bar N} \Big( \frac{\sum_{k\text{ even}}f_{ik}\,t_k}{2\|t\|_1} + \frac{\sum_{k\text{ odd}}f_{ik}\,u_k}{2\|u\|_1}\Big) . -->
-<!-- \end{align*} -->
-
-## Gibbs sampling
-
-For the extended distribution we can employ a standard Gibbs sampling method, see for example [@GCSDVR14, Ch. 11] or [@HTF09, Sec. 8.6].
-
-The simple idea of this algorithm is to go from one sample point to the next by going over all coordinates (in a random order that is chosen before each updating round) and replace each, while holding the remaining coordinates fixed, with a sample from the corresponding conditional distribution.
-
-Assuming that the current sample is $w=(w_0,\ldots,w_d)$, we have, up to normalizing constant, the following conditional posterior distribution for the $k$th coordinate of $\log W$:
-\begin{align*}
-   p(\log W_k=r & \mid W_{-k}=w_{-k}, \mathbf X=\mathbf x, \mathbf Y=\mathbf y)
-\\ & \propto \frac{e^{a_kr} \prod_{i=1}^N \big(e^r f_{ik} + \sum_{j\neq k} f_{ij}\, w_j\big)}{(e^r+\|w_{-k}\|_1)^{\|a\|_1+N-d-1}\exp((e^r+\|w_{-k}\|_1)^2/2)} =: F(r) .
-\end{align*}
-We sample from $\log W_k$, in theory, through the following procedure:
-
-1. compute the integral $\int_{-\infty}^\infty F(r)\,dr$ to get the normalizing constant,
-2. sample $u\in(0,1)$ from the uniform distribution,
-3. find the sample $r_u$ by solving the equation $\int_{-\infty}^{r_u} F(r)\,dr=u\int_{-\infty}^\infty F(r)\,dr$ or, equivalently, $\int_{r_u}^\infty F(r)\,dr=(1-u)\int_{-\infty}^\infty F(r)\,dr$.
-
-### Cut-off points
-
-In order to make the above procedure feasible, we must find sensible cut-off points $r_-<r_+$ so that, broadly speaking, solving the equation $\int_{r_-}^{r_u} F(r)\,dr= u\int_{r_-}^{r_+} F(r)\,dr$ or $\int_{r_u}^{r_+} F(r)\,dr=(1-u)\int_{r_-}^{r_+} F(r)\,dr$ yields a point close enough to the solution of the original equations. More precisely, assuming that
-  \[ \int_{-\infty}^{r_-} F(r)\,dr \leq \varepsilon_- ,\quad \int_{r_+}^\infty F(r)\,dr \leq \varepsilon_+ , \]
-we have
-\begin{align*}
-   \int_{r_-}^{r_\ast} F(r)\,dr & \leq u \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_-
-%\\ &
-\;\Rightarrow\; \int_{-\infty}^{r_\ast} F(r)\,dr \leq u \int_{-\infty}^\infty F(r)\,dr 
-% &
-\;\Rightarrow\; r_\ast \leq r_u .
-% \\ \int_{r_\ast}^{r_+} F(r)\,dr & \leq (1-u) \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_+
-% \\ & \;\Rightarrow\; \int_{r_\ast}^\infty F(r)\,dr \leq (1-u) \int_{-\infty}^\infty F(r)\,dr & \;\Rightarrow\; r_\ast \geq r_u ,
-% \\ \int_{r_-}^{r_\ast} F(r)\,dr & \geq u \int_{r_-}^{r_+} F(r)\,dr + u(\varepsilon_-+\varepsilon_+)
-% \\ & \;\Rightarrow\; \int_{-\infty}^{r_\ast} F(r)\,dr \geq u \int_{-\infty}^\infty F(r)\,dr & \;\Rightarrow\; r_\ast \geq r_u ,
-% \\ \int_{r_\ast}^{r_+} F(r)\,dr & \geq (1-u) \int_{r_-}^{r_+} F(r)\,dr + (1-u)(\varepsilon_-+\varepsilon_+)
-% \\ & \;\Rightarrow\; \int_{r_\ast}^\infty F(r)\,dr \geq (1-u) \int_{-\infty}^\infty F(r)\,dr & \;\Rightarrow\; r_\ast \leq r_u .
-\end{align*}
-Similarly,
-\begin{align*}
-   \int_{r_\ast}^{r_+} F(r)\,dr \geq (1-u) \int_{r_-}^{r_+} F(r)\,dr + (1-u)(\varepsilon_-+\varepsilon_+) & \;\Rightarrow\; r_\ast \leq r_u ,
-\\ \int_{r_-}^{r_\ast} F(r)\,dr \geq u \int_{r_-}^{r_+} F(r)\,dr + u(\varepsilon_-+\varepsilon_+) & \;\Rightarrow\; r_\ast \geq r_u ,
-\\ \int_{r_\ast}^{r_+} F(r)\,dr \leq (1-u) \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_+ & \;\Rightarrow\; r_\ast \geq r_u .
-\end{align*}
-So by finding $r_1,r_2,r_3,r_4$ such that
-\begin{align*}
-   \int_{r_-}^{r_1} F(r)\,dr & = u \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_- ,
- \quad \int_{r_2}^{r_+} F(r)\,dr = (1-u) \int_{r_-}^{r_+} F(r)\,dr + (1-u)(\varepsilon_-+\varepsilon_+) ,
-\\ \int_{r_-}^{r_3} F(r)\,dr & = u \int_{r_-}^{r_+} F(r)\,dr + u(\varepsilon_-+\varepsilon_+) ,
- \quad \int_{r_4}^{r_+} F(r)\,dr = (1-u) \int_{r_-}^{r_+} F(r)\,dr - \varepsilon_+ ,
-\end{align*}
-we obtain
-  \[ r_u\in \big[ \max\{r_1,r_2\}, \min\{r_3,r_4\} \big] . \]
-It can be shown, see [below](#proof_cutoff) for a proof, that in the non-informative case we have the following valid formulas for $r_-$ and $r_+$:
-\begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|w_{-k}\|_1^2}{2} - d\log(1+\|w_{-k}\|_1) - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d+1}{2}, \log\varepsilon_+ - \frac{d-1}{2} \log 2 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|w_{-k}\|_1} \Bigg\} ,
-\end{align*}
-where $\Gamma(\cdot,\cdot)$ denotes the [incomplete gamma function](https://en.wikipedia.org/wiki/Incomplete_gamma_function).
-In the informative case we have the following valid cut-off points:
-\begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|w_{-k}\|_1^2}{2} + \log\|w_{-k}\|_1 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|w_{-k}\|_1} \Bigg\} .
-\end{align*}
-
-As for the question on how to choose $\varepsilon_-$ and $\varepsilon_+$ so that the corresponding upper and lower interval limits are sufficiently close, we can do this iteratively by starting with $\varepsilon_-=\varepsilon_+=1$ and successively halfing these values until a pre-specified threshold for the interval length has been met; the estimate for $r_u$ can then be chosen as the midpoint of that interval.
-
-### Even and odd indices
-
-For even $k$ we have
-\begin{align*}
-   p(\log T_k=r & \mid T_{-k}=t_{-k}, U=u, \mathbf X=\mathbf x, \mathbf Y=\mathbf y)
-\\ & \propto \frac{e^{b_kr} \prod_{i=1}^N \big( \big(e^r f_{ik} + \sum_{j\neq k \text{ even}} f_{ij}\, t_j\big)/(e^r+\|t_{-k}\|_1) + \sum_{j\text{ odd}} f_{ij}\, u_j/\|u\|_1 \big)}{(e^r+\|t_{-k}\|_1)^{\|b\|_1-d^e-1}\exp((e^r+\|t_{-k}\|_1)^2/2)} =: G(r) ,
-\end{align*}
-for odd $k$ we have
-\begin{align*}
-   p(\log U_k=r & \mid U_{-k}=u_{-k}, T=t, \mathbf X=\mathbf x, \mathbf Y=\mathbf y)
-\\ & \propto \frac{e^{c_kr} \prod_{i=1}^N \big( \sum_{j\text{ even}} f_{ij}\, t_j/\|t\|_1 + \big( e^r f_{ik} + \sum_{j\neq k \text{ odd}} f_{ij}\, u_j\big)/(e^r+\|u_{-k}\|_1) \big)}{(e^r+\|u_{-k}\|_1)^{\|c\|_1-d^o-1}\exp((e^r+\|u_{-k}\|_1)^2/2)} =: H(r) .
-\end{align*}
-As above, we need to specify cut-off points, for $k$ even,
-  \[ \int_{-\infty}^{r_-} G(r)\,dr \leq \varepsilon_- ,\quad \int_{r_+}^\infty G(r)\,dr \leq \varepsilon_+ . \]
-Similarly as above, it can be shown that in the non-informative case we have the following valid formulas for $r_-$ and $r_+$:
-\begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|t_{-k}\|_1^2}{2} - d^e\log(1+\|t_{-k}\|_1) - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d^e+1}{2}, \log\varepsilon_+ - \frac{d^e-1}{2} \log 2 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|t_{-k}\|_1} \Bigg\} .
-\end{align*}
-In the informative case we have the following valid cut-off points:
-\begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|t_{-k}\|_1^2}{2} + \log\|t_{-k}\|_1 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|t_{-k}\|_1} \Bigg\} .
-\end{align*}
-
-For $k$ odd we need to find cut-offs so that,
-  \[ \int_{-\infty}^{r_-} H(r)\,dr \leq \varepsilon_- ,\quad \int_{r_+}^\infty H(r)\,dr \leq \varepsilon_+ . \]
-In the non-informative case we have the following valid formulas for $r_-$ and $r_+$:
-\begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|u_{-k}\|_1^2}{2} - d^o\log(1+\|u_{-k}\|_1) - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d^o+1}{2}, \log\varepsilon_+ - \frac{d^o-1}{2} \log 2 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|u_{-k}\|_1} \Bigg\} .
-\end{align*}
-In the informative case we have the following valid cut-off points:
-\begin{align*}
-   r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|u_{-k}\|_1^2}{2} + \log\|u_{-k}\|_1 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|u_{-k}\|_1} \Bigg\} .
-\end{align*}
-
-## Implementation {#implementation}
-
-Judging from the formulas for the lower cut-off point $r_-$, it seems that the non-informative case does not allow an efficient implementation. For this reason we will **only implement the informative case**.
-
-As mentioned [above](#distr_simplex), the extension of the notation $f_{ik}$ to include the edge cases was solely for notational convenience; for the implementation this is of course broken down:
-\begin{align*}
-   F(r) & = \frac{e^{(1+v^{(0)}_k)r}}{(e^r+\|w_{-k}\|_1)^{N+1}\exp((e^r+\|w_{-k}\|_1)^2/2)}
-\\ & \qquad\qquad \cdot\begin{cases}
-      e^{rqN} w_d^{pN} \prod_{i=1}^{\bar N} \sum_{j=1}^{d-1} f_{ij}\, w_j & \text{if } k=0
-   \\ e^{rpN} w_0^{qN} \prod_{i=1}^{\bar N} \sum_{j=1}^{d-1} f_{ij}\, w_j & \text{if } k=d
-   \\ w_0^{qN} w_d^{pN} \prod_{i=1}^{\bar N} \big(e^r f_{ik} + \sum_{j\neq k} f_{ij}\, w_j\big) & \text{if } 0<k<d .
-   \end{cases}
-\end{align*}
-Noticing that these formulas include superfluous constant factors, we will in fact work with the modified function
-\begin{align*}
-   \tilde F(r) & = \begin{cases}
-      \displaystyle \frac{e^{(1+v^{(0)}_k+qN)r}}{(e^r+\|w_{-k}\|_1)^{N+1}\exp((e^r+\|w_{-k}\|_1)^2/2)} & \text{if } k=0
-   \\[1mm] \displaystyle \frac{e^{(1+v^{(0)}_k+pN)r}}{(e^r+\|w_{-k}\|_1)^{N+1}\exp((e^r+\|w_{-k}\|_1)^2/2)} & \text{if } k=d
-   \\[1mm] \displaystyle \frac{e^{(1+v^{(0)}_k)r}\prod_{i=1}^{\bar N} \big(e^r f_{ik} + \sum_{j\neq k} f_{ij}\, w_j\big)}{(e^r+\|w_{-k}\|_1)^{N+1}\exp((e^r+\|w_{-k}\|_1)^2/2)} & \text{if } 0<k<d .
-   \end{cases}
-\end{align*}
-Note that the cutoff points for $\tilde F(r)$ are readily derived from the cutoff points for $F(r)$:
-<!-- as, if $F(r)=c\,\tilde F(r)$, then $\int_{-\infty}^{r_-} \tilde F(r)\leq \varepsilon_-$ if $\int_{-\infty}^{r_-} F(r)\leq c\,\varepsilon_-$. So  -->
-we can compute $r_1,r_2,r_3,r_4$ with $F$ replaced by $\tilde F$ if we compute $r_-$ and $r_+$ with $\varepsilon_-$ and $\varepsilon_+$ replaced by $c\varepsilon_-$ and $c\varepsilon_+$. Concretely, we compute $r_-$ and $r_+$ as follows:
-\begin{align*}
-   \text{if } k\in\{0,d\}: &
-\\ r_- & = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|w_{-k}\|_1^2}{2} + \log\|w_{-k}\|_1 \Big\}}{1+v^{(0)}_k} ,
-\\ r_+ & = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2}\Big) \Big)}{\log \|w_{-k}\|_1} \Bigg\} .
-\end{align*}
-
-asdf
-
-Numerically, the function will be evaluated in $\exp(\log(\cdot))$ form. Note that
-\begin{align*}
-   \log \tilde F(r) & =  a_kr - (\|a\|_1+N-d-1)\log(e^r+\|w_{-k}\|_1) - \frac{(e^r+\|w_{-k}\|_1)^2}{2}
-\\ & \qquad\qquad + \begin{cases}
-      \displaystyle qNr & \text{if } k=0
-   \\[1mm] \displaystyle pNr & \text{if } k=d
-   \\[1mm] \displaystyle \sum_{i=1}^{\bar N} \log\big(e^r f_{ik} + \sum_{j\neq k} f_{ij}\, w_j\big) & \text{if } 0<k<d .
-   \end{cases}
-\end{align*}
-
-The decomposition into even and odd indices makes the situation a bit more complicated:
-\begin{align*}
-   G(r) & = \frac{e^{b_kr} \prod_{i=1}^{\bar N} \big( \big(e^r f_{ik} + \sum_{j\neq k \text{ even}} f_{ij}\, t_j\big)/(e^r+\|t_{-k}\|_1) + \sum_{j\text{ odd}} f_{ij}\, u_j/\|u\|_1 \big)}{(e^r+\|t_{-k}\|_1)^{\|b\|_1-d^e-1}\exp((e^r+\|t_{-k}\|_1)^2/2)}
-\\[1mm] & \qquad\qquad \cdot \begin{cases}
-       \displaystyle \frac{e^{rpN}\, t_d^{qN}}{(e^r+\|t_{-0}\|_1)^{N-\bar N}} & \text{if $k=0$, $d$ even}
-    \\[1mm] \displaystyle \frac{e^{rpN}\, u_d^{qN}}{(e^r+\|t_{-0}\|_1)^{pN}\, \|u\|_1^{qN}} & \text{if $k=0$, $d$ odd}
-    \\[1mm] \displaystyle \frac{t_0^{pN}\, t_d^{qN}}{(e^r+\|t_{-0}\|_1)^{N-\bar N}} & \text{if $0<k<d$, $d$ even}
-    \\[1mm] \displaystyle \frac{t_0^{pN}\, u_d^{qN}}{(e^r+\|t_{-0}\|_1)^{pN}\, \|u\|_1^{qN}} & \text{if $0<k<d$, $d$ odd}
-    \\[1mm] \displaystyle \frac{t_0^{pN}\, e^{rqN}}{(e^r+\|t_{-0}\|_1)^{N-\bar N}} & \text{if $k=d$ even}
-    \\[1mm] \displaystyle \frac{t_0^{pN}\, e^{rqN}}{(e^r+\|t_{-0}\|_1)^{pN}\, \|u\|_1^{qN}} & \text{if $k=d$ odd} .
-    \end{cases}
-\end{align*}
-Similar case distinction hold for $H$, and correspondingly for the cutoff points that have to be computed to realize the sampling of the conditional distributions.
-
-### Example
-
-TBD
-
-## Appendix A: proof of the parameter change formula {#proof_normal_jacobian}
-
-Let $B\in\text{R}^{(d+1)\times d}$ such that its columns form an orthogonal basis of the hyperplane defined by the main diagonal $1_{d+1}=(1,\ldots,1)\in\text{R}^{d+1}$, that is,
-  \[ B^TB=I_d ,\quad B^T1_{d+1}=0 ,\quad \text{or equivalently,}\quad \big(B , \tfrac{1}{\sqrt{d+1}}1_{d+1}\big)\in O(d+1) . \]
-We denote the transformed probability simplex by $\tilde\Delta^d=B^T\Delta^d\subset\text{R}^d$, so that
-  \[ \Delta^d = \tfrac{1}{d+1}1_{d+1} + B\tilde\Delta^d , \]
-and consider the parametrization
-  \[ \psi\colon\tilde\Delta^d\times \text{R}_+\to \text{R}_+^{d+1} ,\quad \psi(\mu,t) = t\sqrt{d+1}(\tfrac{1}{d+1}1_{d+1} + B\mu) . \]
-The inverse of this parametrization is given by
-  \[ \psi^{-1}(w) = \Big( \frac{1}{w_0+\dots+w_d}B^Tw ,\; \frac{w_0+\dots+w_d}{\sqrt{d+1}}\Big) , \]
-and its Jacobian matrix is given by
-  \[ D\psi^{-1}(w) = \begin{pmatrix} B^T \frac{1}{(w_0+\dots+w_d)^2}\big( (w_0+\dots+w_d) I_{d+1} - w1_{d+1}^T\big) \\ \frac{1}{\sqrt{d+1}}1_{d+1}^T \end{pmatrix} . \]
-We compute the normal determinant of the Jacobian matrix as follows:
-\begin{align*}
-   \big|\det D\psi^{-1}(w)\big| & = \left|\det \big( D\psi^{-1}(w) \big(B , \tfrac{1}{\sqrt{d+1}}1_{d+1}\big)\big) \right|
-\\ & = \left|\det \begin{pmatrix}
-B^T \frac{1}{(w_0+\dots+w_d)^2}\big( (w_0+\dots+w_d) I_{d+1} - w1_{d+1}^T\big) B & *
-\\ 0 & 1
-\end{pmatrix} \right|
-\\ & = \left|\det \big( \tfrac{1}{(w_0+\dots+w_d)^2}\big( (w_0+\dots+w_d) I_d \big) \big) \right|
-\\ & = (w_0+\dots+w_d)^{-d} .
-\end{align*}
-
-## Appendix B: proof of the validity of the cut-off points {#proof_cutoff}
-
-For the upper bound of the left tail we assume $r_-\leq0$, so that in the non-informative case
-\begin{align*}
-   \int_{-\infty}^{r_-} F(r)\,dr & = \int_{-\infty}^{r_-} \frac{(e^r+\|w_{-k}\|_1)^d\, e^{r v^{(0)}_k}}{\exp((e^r+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{e^r f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{e^r+\|w_{-k}\|_1} \,dr
-\\ & \leq \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \int_{-\infty}^{r_-} \frac{(1+\|w_{-k}\|_1)^d\, e^{r v^{(0)}_k}}{\exp(\|w_{-k}\|_1^2/2)} \,dr
-\\ & = \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \frac{(1+\|w_{-k}\|_1)^d}{\exp(\|w_{-k}\|_1^2/2)} \frac{e^{v^{(0)}_k r_-}}{v^{(0)}_k} = \varepsilon_- .
-\end{align*}
-Solving for $r_-$ yields
-\begin{align*}
-   r_- = \frac{\max\Big\{0,\; \log \varepsilon_- + \log v^{(0)}_k + \frac{\|w_{-k}\|_1^2}{2} - d\log(1+\|w_{-k}\|_1) - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{v^{(0)}_k} .
-\end{align*}
-Similarly, we obtain in the informative case
-<!-- \begin{align*} -->
-<!--    \int_{-\infty}^{r_-} F(r)\,dr & = \int_{-\infty}^{r_-} \frac{e^{r(1+v^{(0)}_k)}}{(e^r+\|w_{-k}\|_1)\,\exp((e^r+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{e^r f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{e^r+\|w_{-k}\|_1} \,dr -->
-<!-- \\ & \leq \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \int_{-\infty}^{r_-} \frac{e^{r(1+v^{(0)}_k)}}{\|w_{-k}\|_1\, \exp(\|w_{-k}\|_1^2/2)} \,dr -->
-<!-- \\ & = \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \frac{1}{\|w_{-k}\|_1\, \exp(\|w_{-k}\|_1^2/2)} \frac{e^{r_-}}{1+v^{(0)}_k} = \varepsilon_- . -->
-<!-- \end{align*} -->
-<!-- Solving for $r_-$ yields -->
-\begin{align*}
-   r_- = \frac{\max\Big\{0,\; \log \varepsilon_- + \log(1+v^{(0)}_k) + \frac{\|w_{-k}\|_1^2}{2} + \log\|w_{-k}\|_1 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\} \Big\}}{1+v^{(0)}_k} .
-\end{align*}
-
-For the upper bound of the right tail we denote $s=e^r,s_+=e^{r_+}$, so that
-\begin{align*}
-   \int_{r_+}^\infty F(r)\,dr & = \int_{s_+}^\infty \frac{F(\log s)}{s}\,ds
-% \\ &
-= \int_{s_+}^\infty \frac{(s+\|w_{-k}\|_1)^{d+1-\|a\|_1}\, s^{a_k-1}}{\exp((s+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{s f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{s+\|w_{-k}\|_1} \,ds .
-\end{align*}
-In the non-informative case we obtain, assuming $r_+\geq0$,
-\begin{align*}
-   \int_{r_+}^\infty F(r)\,dr & = \int_{s_+}^\infty \frac{(s+\|w_{-k}\|_1)^d}{s^{1-v^{(0)}_k}\, \exp((s+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{s f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{s+\|w_{-k}\|_1} \,ds
-\\ & \leq \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \int_{s_+ +\|w_{-k}\|_1}^\infty s^d\, e^{-s^2/2} \,ds
-\\ & = \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) 2^{(d-1)/2} \Gamma\Big( \frac{d+1}{2}, \frac{(s_+ +\|w_{-k}\|_1)^2}{2}\Big) = \varepsilon_+ ,
-\end{align*}
-where $\Gamma(\cdot,\cdot)$ denotes the [incomplete gamma function](https://en.wikipedia.org/wiki/Incomplete_gamma_function). Solving for $r_+=\log s_+$ yields
-\begin{align*}
-    r_+ = \min\Bigg\{ 0, \frac{\frac{1}{2} \log\Big( 2\log\Gamma^{-1}\Big( \frac{d+1}{2}, \log\varepsilon_+ - \frac{d-1}{2} \log 2 - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big) }{\log \|w_{-k}\|_1} \Bigg\} .
-\end{align*}
-Similarly, we obtain in the informative case
-<!-- \begin{align*} -->
-<!--    \int_{r_+}^\infty F(r)\,dr & = \int_{s_+}^\infty \frac{s^{v^{(0)}_k}}{(s+\|w_{-k}\|_1)\, \exp((s+\|w_{-k}\|_1)^2/2)} \prod_{i=1}^N \frac{s f_{ik} + \sum_{j\neq k} w_j\,f_{ij}}{s+\|w_{-k}\|_1} \,ds -->
-<!-- \\ & \leq \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \int_{s_+ +\|w_{-k}\|_1}^\infty e^{-s^2/2} \,ds -->
-<!-- \\ & = \Big( \prod_{i=1}^N \max\{f_{ij}\mid 0\leq j\leq d\} \Big) \frac{1}{\sqrt{2}} \Gamma\Big( \frac{1}{2}, \frac{(s_+ +\|w_{-k}\|_1)^2}{2}\Big) = \varepsilon_+ , -->
-<!-- \end{align*} -->
-<!-- where $\Gamma(\cdot,\cdot)$ denotes the [incomplete gamma function](https://en.wikipedia.org/wiki/Incomplete_gamma_function). Solving for $r_+=\log s_+$ yields -->
-\begin{align*}
-    r_+ = \min\Bigg\{ 0, \frac{\frac{1}{2}\log\Big( 2\log\Gamma^{-1}\Big( \frac{1}{2},\; \log\varepsilon_+ + \frac{\log 2}{2} - \sum_{i=1}^{\bar N} \log\max\{f_{ij}\mid 0\leq j\leq d\}\Big) \Big)}{\log \|w_{-k}\|_1} \Bigg\} .
-\end{align*}
-
-
 ## References
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

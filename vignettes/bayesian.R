@@ -11,14 +11,18 @@ library(tidyverse)
 library(knitr)
 library(png)
 library(rstan)
+library(rjags)
+options(mc.cores = parallel::detectCores())
 
 ## ----load-imgs, include=FALSE--------------------------------------------
-img_paths <- list( dl="bayes_diagrams/bayes_direct_logconc.png",
-                   dnl="bayes_diagrams/bayes_direct_nologconc.png",
+img_paths <- list( d="bayes_diagrams/bayes_direct.png",
+                   dp="bayes_diagrams/bayes_direct_par.png",
+                   dl="bayes_diagrams/bayes_direct_logconc.png",
+                   id="bayes_diagrams/bayes_indirect.png",
+                   idpe="bayes_diagrams/bayes_indirect_par_even.png",
+                   idpo="bayes_diagrams/bayes_indirect_par_odd.png",
                    idle="bayes_diagrams/bayes_indirect_logconc_even.png",
-                   idlo="bayes_diagrams/bayes_indirect_logconc_odd.png",
-                   idnle="bayes_diagrams/bayes_indirect_nologconc_even.png",
-                   idnlo="bayes_diagrams/bayes_indirect_nologconc_odd.png" )
+                   idlo="bayes_diagrams/bayes_indirect_logconc_odd.png" )
 img_dpi <- 450
 
 ## ----define-cone---------------------------------------------------------
@@ -34,9 +38,9 @@ A_red <- out$A_reduced
 
 ## ----coll-samples--------------------------------------------------------
 samp_iv_sm <- polyh_rivols_gen(1e2, A_red, reduce=FALSE)$multsamp
-samp_iv_la <- polyh_rivols_gen(1e4, A_red, reduce=FALSE)$multsamp
+samp_iv_la <- polyh_rivols_gen(2e3, A_red, reduce=FALSE)$multsamp
 samp_bcb_sm <- polyh_rbichibarsq_gen(1e2, A_red, reduce=FALSE)
-samp_bcb_la <- polyh_rbichibarsq_gen(1e4, A_red, reduce=FALSE)
+samp_bcb_la <- polyh_rbichibarsq_gen(2e3, A_red, reduce=FALSE)
 
 ## ----start-V-------------------------------------------------------------
 v0_iv_sm <- init_ivols( dimC, sum(0:dimC * samp_iv_sm/sum(samp_iv_sm)), init_mode=1 )
@@ -122,8 +126,11 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
     geom_line() + theme_bw() +
     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
 
-## ----disp-dnl, echo=FALSE------------------------------------------------
-include_graphics(img_paths$dnl, dpi=img_dpi)
+## ----disp-d, echo=FALSE--------------------------------------------------
+include_graphics(img_paths$d, dpi=img_dpi)
+
+## ----disp-dp, echo=FALSE-------------------------------------------------
+include_graphics(img_paths$dp, dpi=img_dpi)
 
 ## ----dir-enf-par-sm-noninf-comp------------------------------------------
 post_iv <- polyh_bayes(samp_iv_sm,dimC,linC,v_prior=v0_iv_sm,prior_sample_size=1)
@@ -167,17 +174,267 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
 ## ----disp-dl, echo=FALSE-------------------------------------------------
 include_graphics(img_paths$dl, dpi=img_dpi)
 
-## ----dir-enf-logc--------------------------------------------------------
-# asdf
+## ----dir-enf-logc-comp, warning=FALSE------------------------------------
+filename <- "ex_stan_model_iv.stan"
+staninp <- polyh_stan(samp_iv_sm, dimC, linC,
+                      v_prior=v0_iv_sm, prior="noninformative", filename=filename)
 
-## ----disp-idnle, echo=FALSE----------------------------------------------
-include_graphics(img_paths$idnle, dpi=img_dpi)
+## ----include=FALSE-------------------------------------------------------
+# this is so that some compiler warnings do not appear in the markdown
+# (those warnings are only shown when running the Stan model the first time)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1, iter = 2, cores = 1, refresh = 10 )
 
-## ----disp-idnlo, echo=FALSE----------------------------------------------
-include_graphics(img_paths$idnlo, dpi=img_dpi)
+## ----dir-enf-logc-comp2, fig.width=7, warning=FALSE----------------------
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
 
-## ----indir-enf-par-------------------------------------------------------
-# asdf
+str(rstan::extract(stanfit))
+
+post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+## ----dir-enf-logc-sm-noninf, fig.width=7, echo=FALSE---------------------
+tib_plot <- t(post_iv_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----dir-enf-logc-sm-inf, fig.width=7, echo=FALSE, warning=FALSE---------
+# obtain Stan input (model already defined)
+staninp <- polyh_stan(samp_iv_sm, dimC, linC,
+                      v_prior=v0_iv_sm, prior="informative")
+# run Stan model
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_iv_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----dir-enf-logc-la-noninf, fig.width=7, echo=FALSE, warning=FALSE------
+# obtain Stan input (model already defined)
+staninp <- polyh_stan(samp_iv_la, dimC, linC,
+                      v_prior=v0_iv_la, prior="noninformative")
+# run Stan model
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_iv_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----dir-enf-logc-la-inf, fig.width=7, echo=FALSE, warning=FALSE---------
+# obtain Stan input (model already defined)
+staninp <- polyh_stan(samp_iv_la, dimC, linC,
+                      v_prior=v0_iv_la, prior="informative")
+# run Stan model
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+# remove Stan input file
+file.remove(filename)
+
+post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_iv_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----disp-id, echo=FALSE-------------------------------------------------
+include_graphics(img_paths$id, dpi=img_dpi)
+
+## ----disp-idpe, echo=FALSE-----------------------------------------------
+include_graphics(img_paths$idpe, dpi=img_dpi)
+
+## ----disp-idpo, echo=FALSE-----------------------------------------------
+include_graphics(img_paths$idpo, dpi=img_dpi)
+
+## ----indir-JAGS-enf-par-sm-ninf, warning=FALSE, fig.width=7--------------
+# obtain input data for JAGS model
+in_jags <- estim_jags(samp_bcb_sm, d, v_prior=v0_bcb_sm)
+
+# create JAGS model
+model_connection <- textConnection(in_jags$model)
+mod <- jags.model(model_connection ,
+                  data = in_jags$data ,
+                  n.chains = 1 ,
+                  n.adapt = 1000)
+close(model_connection)
+
+# sample posterior distribution, take every thousandth sample
+mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
+mod_csim <- as.mcmc(do.call(rbind, mod_sim))
+post_bcb_pa <- mod_csim[1e3*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-JAGS-enf-par-sm-inf, warning=FALSE, fig.width=7, echo=FALSE, warning=FALSE, results=FALSE----
+# obtain input data for JAGS model
+in_jags <- estim_jags(samp_bcb_sm, d, v_prior=v0_bcb_sm, prior_sample_size=d)
+
+# create JAGS model
+model_connection <- textConnection(in_jags$model)
+mod <- jags.model(model_connection ,
+                  data = in_jags$data ,
+                  n.chains = 1 ,
+                  n.adapt = 1000)
+close(model_connection)
+
+# sample posterior distribution, take every thousandth sample
+mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
+mod_csim <- as.mcmc(do.call(rbind, mod_sim))
+post_bcb_pa <- mod_csim[1e3*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-JAGS-enf-par-la-ninf, warning=FALSE, fig.width=7, echo=FALSE, warning=FALSE, results=FALSE----
+# obtain input data for JAGS model
+in_jags <- estim_jags(samp_bcb_la, d, v_prior=v0_bcb_la)
+
+# create JAGS model
+model_connection <- textConnection(in_jags$model)
+mod <- jags.model(model_connection ,
+                  data = in_jags$data ,
+                  n.chains = 1 ,
+                  n.adapt = 1000)
+close(model_connection)
+
+# sample posterior distribution, take every thousandth sample
+mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
+mod_csim <- as.mcmc(do.call(rbind, mod_sim))
+post_bcb_pa <- mod_csim[1000*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-JAGS-enf-par-la-inf, warning=FALSE, fig.width=7, echo=FALSE, warning=FALSE, results=FALSE----
+# obtain input data for JAGS model
+in_jags <- estim_jags(samp_bcb_la, d, v_prior=v0_bcb_la, prior_sample_size=d)
+
+# create JAGS model
+model_connection <- textConnection(in_jags$model)
+mod <- jags.model(model_connection ,
+                  data = in_jags$data ,
+                  n.chains = 1 ,
+                  n.adapt = 1000)
+close(model_connection)
+
+# sample posterior distribution, take every thousandth sample
+mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
+mod_csim <- as.mcmc(do.call(rbind, mod_sim))
+post_bcb_pa <- mod_csim[1000*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-Stan-enf-par-sm-ninf-comp1, warning=FALSE, fig.width=7--------
+filename <- "ex_stan_model_bcb.stan"
+staninp <- estim_stan(samp_bcb_sm, d, dimC, linC,
+                      v_prior=v0_bcb_sm, filename=filename)
+
+## ----include=FALSE-------------------------------------------------------
+# this is so that some compiler warnings do not appear in the markdown
+# (those warnings are only shown when running the Stan model the first time)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1, iter = 2, cores = 1, refresh = 10 )
+
+## ----indir-Stan-enf-par-sm-ninf-comp2, warning=FALSE, fig.width=7--------
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+str(rstan::extract(stanfit))
+
+post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
+
+## ----indir-Stan-enf-par-sm-ninf, fig.width=7, echo=FALSE-----------------
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-Stan-enf-par-sm-inf, warning=FALSE, fig.width=7, echo=FALSE----
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_sm, d, dimC, linC,prior_sample_size=d,
+                      v_prior=v0_bcb_sm)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-Stan-enf-par-la-ninf, warning=FALSE, fig.width=7, echo=FALSE----
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_la, d, dimC, linC,
+                      v_prior=v0_bcb_la)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-Stan-enf-par-la-inf, warning=FALSE, fig.width=7, echo=FALSE----
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_la, d, dimC, linC,prior_sample_size=d,
+                      v_prior=v0_bcb_la)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+# remove Stan input file
+file.remove(filename)
+
+post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_pa) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
 
 ## ----disp-idle, echo=FALSE-----------------------------------------------
 include_graphics(img_paths$idle, dpi=img_dpi)
@@ -185,6 +442,80 @@ include_graphics(img_paths$idle, dpi=img_dpi)
 ## ----disp-idlo, echo=FALSE-----------------------------------------------
 include_graphics(img_paths$idlo, dpi=img_dpi)
 
-## ----indir-enf-logc------------------------------------------------------
-# asdf
+## ----indir-Stan-enf-logc-sm-ninf-comp1, warning=FALSE, fig.width=7-------
+filename <- "ex_stan_model_bcb_logc.stan"
+staninp <- estim_stan(samp_bcb_sm, d, dimC, linC, enforce_logconc=TRUE,
+                      v_prior=v0_bcb_sm, filename=filename)
+
+## ----include=FALSE-------------------------------------------------------
+# this is so that some compiler warnings do not appear in the markdown
+# (those warnings are only shown when running the Stan model the first time)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1, iter = 2, cores = 1, refresh = 10 )
+
+## ----indir-Stan-enf-logc-sm-ninf-comp2, warning=FALSE, fig.width=7-------
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+str(rstan::extract(stanfit))
+
+post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+## ----indir-Stan-enf-logc-sm-ninf, fig.width=7, echo=FALSE----------------
+tib_plot <- t(post_bcb_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-Stan-enf-logc-sm-inf, warning=FALSE, fig.width=7, echo=FALSE----
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_sm, d, dimC, linC, enforce_logconc=TRUE,
+                      prior="informative", v_prior=v0_bcb_sm)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-Stan-enf-logc-la-ninf, warning=FALSE, fig.width=7, echo=FALSE----
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_la, d, dimC, linC, enforce_logconc=TRUE,
+                      v_prior=v0_bcb_la)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+
+post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+
+## ----indir-Stan-enf-logc-la-inf, warning=FALSE, fig.width=7, echo=FALSE----
+# obtain Stan input (model already defined)
+staninp <- estim_stan(samp_bcb_la, d, dimC, linC, enforce_logconc=TRUE,
+                      prior="informative", v_prior=v0_bcb_la)
+stanfit <- stan( file = filename, data = staninp$data, chains = 1,
+                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
+# remove Stan input file
+file.remove(filename)
+
+post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
+
+tib_plot <- t(post_bcb_logc) %>%
+    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
+    gather(key,value,2:(N+1))
+ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
+    geom_line() + theme_bw() +
+    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
 
