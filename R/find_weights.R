@@ -26,7 +26,8 @@
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{estim_em}}
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{loglike_ivols}},
+#' \code{\link[conivol]{estim_em}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -66,10 +67,10 @@ prepare_em <- function(d, m_samp) {
 #' @param data output of \code{prepare_em(d, m_samp)}.
 #' @param mode specifies whether the first and last values should be taken into account:
 #'             \describe{
-#'               \item{\code{init_mode==0}:}{take all into account}
-#'               \item{\code{init_mode==1}:}{leave out the estimate of the dth intrinsic volume}
-#'               \item{\code{init_mode==2}:}{leave out the estimate of the 0th intrinsic volume}
-#'               \item{\code{init_mode==3}:}{leave out both estimates of the 0th and dth intrinsic volume}
+#'               \item{\code{mode==0}:}{take all into account}
+#'               \item{\code{mode==1}:}{leave out the estimate of the dth intrinsic volume}
+#'               \item{\code{mode==2}:}{leave out the estimate of the 0th intrinsic volume}
+#'               \item{\code{mode==3}:}{leave out both estimates of the 0th and dth intrinsic volume}
 #'             }
 #'
 #' @return The output of \code{loglike_ivols} is the value of the normalized
@@ -151,7 +152,7 @@ loglike_ivols <- function(v, data, mode=0){
 #'
 #' @section See also:
 #' \code{\link[conivol]{rbichibarsq}}, \code{\link[conivol]{circ_rbichibarsq}},
-#' \code{\link[conivol]{rbichibarsq_polyh}}
+#' \code{\link[conivol]{rbichibarsq_polyh}}, \code{\link[conivol]{loglike_ivols}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
@@ -176,16 +177,16 @@ init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
         v <- sapply( 0:d, function(k){pnorm((k+0.5-delta)/sqrt(var)) - pnorm((k-0.5-delta)/sqrt(var))})
         return(v/sum(v))
     } else if (init_mode==2) {
-        alpha <- asin(sqrt(delta/d))
+        alpha <- asin(min(1,sqrt(delta/d)))
         return(conivol::circ_ivols(d,alpha))
     } else if (init_mode==3) {
-        alpha <- asin(sqrt(2*var/(d-2)))/2
+        alpha <- asin(min(1,sqrt(2*var/(d-2))))/2
         if ((alpha<pi/4 && delta>d/2) || (alpha>pi/4 && delta<d/2))
         alpha <- pi/2-alpha;
         return(conivol::circ_ivols(d,alpha))
     } else if (init_mode==4) {
-        alpha1 <- asin(sqrt(delta/d))
-        alpha2 <- asin(sqrt(2*var/(d-2)))/2
+        alpha1 <- asin(min(1,sqrt(delta/d)))
+        alpha2 <- asin(min(1,sqrt(2*var/(d-2))))/2
         if ((alpha2<pi/4 && delta>d/2) || (alpha2>pi/4 && delta<d/2))
             alpha2 <- pi/2-alpha2;
         v1 <- conivol::circ_ivols(d,alpha1)
@@ -309,8 +310,13 @@ init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #'
 #' \code{estim_em} produces EM-type iterates from a two-column
 #' matrix whose rows form iid samples from a bivariate chi-bar-squared
-#' distribution, which may or may not (depending on the starting point) converge
+#' distribution.
+#'
+#' The sequence of iterates may or may not converge
 #' to the maximum likelihood estimate of the mixing weights of the distribution.
+#' Log-concavity of the intrinsic volumes is enforced by projecting the logarithms
+#' onto the cone of log-concave sequences; this can be turned off by setting
+#' \code{no_of_lcc_projections=0}.
 #'
 #' @param d the dimension of the bivariate chi-bar squared distribution.
 #' @param m_samp two-column matrix whose rows from iid samples from a bivariate
@@ -399,7 +405,6 @@ estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           extrapolate=0, selfdual=FALSE, data=NULL) {
     if (!requireNamespace("Rmosek", quietly = TRUE))
         stop( paste0("\n Could not find package 'Rmosek'.",
-            "\n If MOSEK is not available, try using 'estim_gd' and 'estim_newton' instead of 'estim_em'.",
             "\n See the help entries for more information.") )
     if (!requireNamespace("Matrix", quietly = TRUE))
         stop("\n Could not find package 'Matrix'.")
@@ -587,7 +592,7 @@ estim_em <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' #@export #(gradient descent doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+.estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                           lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))
@@ -732,7 +737,7 @@ estim_gd <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
 #'
 #' #@export  #(Newton's method doesn't seem to be working well, so unless this is fixed, it should be not exported)
 #'
-estim_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
+.estim_newton <- function(d, m_samp, N=20, v_init=NULL, init_mode=0,
                               lambda=0, step_len=1, extrapolate=0, selfdual=FALSE, data=NULL) {
     # find the values of the chi-squared densities at the sample points
     if (is.null(data))

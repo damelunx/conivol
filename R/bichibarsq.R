@@ -3,7 +3,7 @@
 #' Density, distribution function, and random generation for the bivariate
 #' chi-bar-squared distribution with mixing weights (conic intrinsic volumes) \code{v}.
 #'
-#' @name Bichibarsquare
+#' @name bichibarsquare
 #'
 #' @section See also:
 #' \code{\link[conivol]{dchibarsq}}, \code{\link[conivol]{pchibarsq}}, \code{\link[conivol]{rchibarsq}},
@@ -13,7 +13,7 @@
 NULL
 
 
-#' @describeIn Bichibarsquare Evaluates the density of the bivariate chi-bar-squared distribution.
+#' @describeIn bichibarsquare Evaluates the density of the bivariate chi-bar-squared distribution.
 #'
 #' @param x two-entry vectors or two-column matrices.
 #' @param v vector of mixing weights (conic intrinsic volumes).
@@ -98,7 +98,7 @@ dbichibarsq <- function(x, v) {
             }
         }
 
-        L <- c(I,J,K)
+        L <- -c(I,J,K)
         if ( length(L)>0 )
             out[L] <- colSums( sapply( x[L,1], function(t) dchisq(t,0:d) )
                                * sapply( x[L,2], function(t) dchisq(t,rev(0:d)) )
@@ -113,7 +113,7 @@ dbichibarsq <- function(x, v) {
 }
 
 
-#' @describeIn Bichibarsquare Evaluates the cdf of the bivariate chi-bar-squared distribution.
+#' @describeIn bichibarsquare Evaluates the cdf of the bivariate chi-bar-squared distribution.
 #'
 #' @return The output of \code{pbichibarsq(x, v)} is either a number, if \code{x}
 #'         is a vector of length \code{2}, or a vector of length \code{dim(x)[1]}
@@ -157,7 +157,7 @@ pbichibarsq <- function(x, v) {
 }
 
 
-#' @describeIn Bichibarsquare Samples from the bivariate chi-bar-squared distribution.
+#' @describeIn bichibarsquare Samples from the bivariate chi-bar-squared distribution.
 #'
 #' @param n number of observations.
 #'

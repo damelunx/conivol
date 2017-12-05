@@ -36,16 +36,18 @@ circ_ivols <- function(d, alpha, product = FALSE) {
         if (d[i]<=1 || alpha[i]<0 || alpha[i]>pi/2)
             v <- NA
         else if (alpha[i]==0)
-            v <- c(0.5, 0.5, rep(0,d[i]-2))
+            v <- c(0.5, 0.5, rep(0,d[i]-1))
         else if (alpha[i]==pi/2)
-            v <- c(rep(0,d[i]-2), 0.5, 0.5)
+            v <- c(rep(0,d[i]-1), 0.5, 0.5)
         else {
             v <- rep(0,d[i]+1)
-            v[1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
-                             log( integrate(function(x){sin(x)^(d[i]-2)},0,pi/2-alpha[i])$value ) )
+            # v[1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
+            #                  log( integrate(function(x){sin(x)^(d[i]-2)},0,pi/2-alpha[i])$value ) )
+            v[1] <- 1/2 * pbeta(cos(alpha[i])^2, (d[i]-1)/2, 1/2)
 
-            v[d[i]+1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
-                                  log( integrate(function(x){sin(x)^(d[i]-2)},0,alpha[i])$value ) )
+            # v[d[i]+1] <- exp( lgamma(d[i]/2)-lgamma((d[i]+1)/2)-lgamma(1/2)+log(d[i]-1)-log(2)+
+            #                       log( integrate(function(x){sin(x)^(d[i]-2)},0,alpha[i])$value ) )
+            v[d[i]+1] <- 1/2 * pbeta(sin(alpha[i])^2, (d[i]-1)/2, 1/2)
 
             k <- 1:(d[i]-1)
             v[2:d[i]] <- exp( lgamma(d[i]/2)-lgamma((k+1)/2)-lgamma((d[i]-k+1)/2)+
@@ -71,15 +73,17 @@ circ_ivols <- function(d, alpha, product = FALSE) {
 #' @param A matrix
 #'
 #' @return The output of \code{ellips_semiax(A)}, \code{A in Gl_d}, is a positive
-#' vector \code{a in R^(d-1)} such that the cone \code{A*L}, where \code{L=\{x in R^d | x_d >= ||x||\}},
+#' vector \code{a in R^(d-1)} such that the cone \code{A*L}, where
+#' \code{L=\{x in R^d | sqrt(2)*x_d >= ||x||\}},
 #' is isometric to the cone \code{\{x in R^d | x_d >= sum_(j=1)^(d-1) x_j^2/a_j^2\}}.
 #'
+#' @section See also:
+#' \code{\link[conivol]{ellips_rbichibarsq}}
+#'
+#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @note See \href{../doc/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
 #'       for further info.
-#'
-#' @section See also:
-#' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
 #' A <- matrix(c(2,3,5,7,11,13,17,19,23),3,3)
@@ -110,7 +114,7 @@ ellips_semiax <- function(A) {
     Aext <- cbind( A, matrix(0,d,2), diag(-1,d) )
 
     mos_inp <- list(sense = "min")
-    mos_inp$c     <- c( -z, 1, rep(0,d+1) )
+    mos_inp$c     <- c( rep(0,d), 1, 0, -z )
     mos_inp$A     <- Matrix::Matrix( Aext, sparse=TRUE )
     mos_inp$bc    <- rbind(blc = rep(0,d),
                            buc = rep(0,d))
@@ -127,7 +131,7 @@ ellips_semiax <- function(A) {
 
 .update_mosek_input_ellips <- function(mos_inp,z) {
     d <- length(z)
-    mos_inp$c[1:d] <- -z
+    mos_inp$c[(d+3):(2*d+2)] <- -z
     return(mos_inp)
 }
 
@@ -152,14 +156,14 @@ ellips_semiax <- function(A) {
 #'   \item \code{samples}: an \code{n} by \code{2} matrix whose rows form
 #'         iid samples from the bivariate chi-bar-squared distribution with
 #'         weights given by the intrinsic volumes of the ellipsoidal cone \code{A*L},
-#'         where \code{L=\{x in R^d | x_d >= ||x||\}}.
+#'         where \code{L=\{x in R^d | sqrt(2)*x_d >= ||x||\}}.
 #' }
-#'         If \code{A} is a positive vector or \code{reduce==FALSE} then the output is only an
-#'         \code{n} by \code{2} matrix whose rows form
-#'         iid samples from the bivariate chi-bar-squared distribution with
-#'         weights given by the intrinsic volumes of the ellipsoidal cone \code{A*L},
-#'         or \code{diag(c(A,1))*L}, depending on whether \code{A} is an invertible
-#'         matrix or a positive vector.
+#' If \code{A} is a positive vector or \code{reduce==FALSE} then the output is only an
+#' \code{n} by \code{2} matrix whose rows form
+#' iid samples from the bivariate chi-bar-squared distribution with
+#' weights given by the intrinsic volumes of the ellipsoidal cone \code{A*L},
+#' or \code{diag(c(A,1))*L}, depending on whether \code{A} is an invertible
+#' matrix or a positive vector.
 #'
 #' @section See also:
 #' \code{\link[conivol]{ellips_semiax}}
@@ -213,7 +217,7 @@ ellips_rbichibarsq <- function(n,A, semiax = TRUE) {
     for (i in 1:n) {
         z <- rnorm(d)
         mos_inp <- conivol:::.update_mosek_input_ellips(mos_inp,z)
-        nrmprojsq <- sum(Rmosek::mosek(mos_inp,opts)$sol$itr$xx[(d+3):(2*d+2)]^2)
+        nrmprojsq <- 2*Rmosek::mosek(mos_inp,opts)$sol$itr$xx[d+1]
         out[i,1] <- nrmprojsq
         out[i,2] <- sum(z^2)-nrmprojsq
     }
@@ -229,6 +233,7 @@ ellips_rbichibarsq <- function(n,A, semiax = TRUE) {
 #'
 #' \code{weyl_matrix} computes a matrix representation of the (polars of)
 #' Weyl chambers of finite reflection groups of type A, BC, and D.
+#'
 #' The dimensions and types are given
 #' in the vectors \code{d} and \code{cone_type} (vectors must be of same lengths,
 #' entries of \code{conetype} must be 'A', 'BC', 'D', 'Ap', 'BCp', or 'Dp').
@@ -243,9 +248,11 @@ ellips_rbichibarsq <- function(n,A, semiax = TRUE) {
 #'             available types are as follows:
 #'             \describe{
 #'               \item{\code{"A"}:}{chamber of type A}
+#'               \item{\code{"A_red"}:}{chamber of type A, reduced form}
 #'               \item{\code{"BC"}:}{chamber of type BC}
 #'               \item{\code{"D"}:}{chamber of type D}
 #'               \item{\code{"Ap"}:}{polar of chamber of type A}
+#'               \item{\code{"Ap_red"}:}{polar of chamber of type A, reduced form}
 #'               \item{\code{"BCp"}:}{polar of chamber of type BC}
 #'               \item{\code{"Dp"}:}{polar of chamber of type D}
 #'             }
@@ -266,6 +273,18 @@ ellips_rbichibarsq <- function(n,A, semiax = TRUE) {
 #' weyl_matrix(c(5,5), c("BC","Ap"))
 #' weyl_matrix(c(5,5), c("BC","Ap"), product = TRUE)
 #'
+#' # testing the reduced cones
+#' d <- 6
+#' A <- weyl_matrix(d, "A")
+#' A_red <- weyl_matrix(d, "A_red")
+#' t(A) %*% A
+#' round(t(A_red) %*% A_red, digits=14)
+#'
+#' Ap <- weyl_matrix(d, "Ap")
+#' Ap_red <- weyl_matrix(d, "Ap_red")
+#' t(Ap[,-c(1,2)]) %*% Ap[,-c(1,2)]
+#' t(Ap_red) %*% Ap_red
+#'
 #' @export
 #'
 weyl_matrix <- function(d, cone_type, product = FALSE) {
@@ -273,9 +292,9 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
         stop("\n Could not find package 'Matrix'.")
     if (length(d)!=length(cone_type))
         stop("Inputs d and cone_type must be of same length.")
-    if (!all(cone_type %in% c("A","BC","D","Ap","BCp","Dp")))
-        stop("Input cone_type must hav values 'A', 'BC', 'D', 'Ap', 'BCp', or 'Dp'.")
-    if (!all(d[which(cone_type %in% c("D","Dp"))] > 1))
+    if (!all(cone_type %in% c("A","A_red","BC","D","Ap","Ap_red","BCp","Dp")))
+        stop("Input cone_type must hav values 'A', 'A_red', 'BC', 'D', 'Ap', 'Ap_red', 'BCp', or 'Dp'.")
+    if (!all(d[which(cone_type %in% c("A","A_red","Ap","Ap_red", "D","Dp"))] > 1))
         stop("Chambers of type 'D' and 'Dp' must be of dimension >1.")
 
     M <- list()
@@ -283,6 +302,11 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
         if (cone_type[i]=="A") {
             A <- rbind(0,diag(rep(-1,d[i])))
             diag(A) <- 1
+        } else if (cone_type[i]=="A_red") {
+            A <- rbind(0,diag(rep(-1,d[i])))
+            diag(A) <- 1
+            Q <- svd(A)$u
+            A <- t(Q) %*% A
         } else if (cone_type[i]=="BC") {
             A <- diag(rep(-1,d[i]))
             diag(A[,-1]) <- 1
@@ -291,22 +315,36 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
             diag(A[,-1]) <- 1
             A[2,1] <- -1
         } else if (cone_type[i]=="Ap") {
-            A <- matrix(0,d[i]+1,d[i]+1)
-            A[lower.tri(A)] <- 1
+            # A <- matrix(0,d[i]+1,d[i]+1)
+            # A[lower.tri(A,diag=TRUE)] <- 1
+            # A <- cbind(rep(-1,d[i]+1),A)
+
+            A <- matrix(0,d[i]+1,d[i])
+            I <- lower.tri(A)
+            A[I] <- matrix(rep(1:d[i],d[i]+1),d[i]+1,d[i],byrow=TRUE)[I]
+            I <- upper.tri(A,diag=TRUE)
+            A[I] <- matrix(rep(-(d[i]:1),d[i]+1),d[i]+1,d[i],byrow=TRUE)[I]
+            A <- cbind(rep(1,d[i]+1),A)
+            A <- cbind(rep(-1,d[i]+1),A)
+        } else if (cone_type[i]=="Ap_red") {
+            A <- matrix(0,d[i]+1,d[i])
+            I <- lower.tri(A)
+            A[I] <- matrix(rep(1:d[i],d[i]+1),d[i]+1,d[i],byrow=TRUE)[I]
+            I <- upper.tri(A,diag=TRUE)
+            A[I] <- matrix(rep(-(d[i]:1),d[i]+1),d[i]+1,d[i],byrow=TRUE)[I]
+            Q <- svd(A)$u
+            A <- t(Q) %*% A
         } else if (cone_type[i]=="BCp") {
             A <- matrix(0,d[i],d[i])
             A[lower.tri(A,TRUE)] <- 1
         } else if (cone_type[i]=="Dp") {
+            # A <- matrix(0,d[i],d[i])
+            # A[lower.tri(A,TRUE)] <- 1
+            # A[ ,c(1,2)] <- 1/2
+            # A[1,2] <- -1/2
             A <- matrix(0,d[i],d[i])
             A[lower.tri(A,TRUE)] <- 1
-            A[ ,c(1,2)] <- 1/2
-            A[1,2] <- -1/2
-        }
-        if (cone_type[i] %in% c("A","Ap")) {
-            tmp <- rbind(0,diag(rep(-1,d[i])))
-            diag(tmp) <- 1
-            Q <- svd(tmp)$u
-            A <- t(Q) %*% A
+            A[1,2] <- -1
         }
         M[[i]] <- A
     }
@@ -322,6 +360,7 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
 #'
 #' \code{weyl_ivols} computes the conic intrinsic volumes of (polars of)
 #' Weyl chambers of finite reflection groups of type A, BC, D.
+#'
 #' The dimensions and types are given
 #' in the vectors \code{d} and \code{cone_type} (vectors must be of same lengths,
 #' entries of \code{conetype} must be 'A', 'BC', 'D', 'Ap', 'BCp', or 'Dp').
@@ -336,9 +375,11 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
 #'             available types are as follows:
 #'             \describe{
 #'               \item{\code{"A"}:}{chamber of type A}
+#'               \item{\code{"A_red"}:}{chamber of type A, reduced form}
 #'               \item{\code{"BC"}:}{chamber of type BC}
 #'               \item{\code{"D"}:}{chamber of type D}
 #'               \item{\code{"Ap"}:}{polar of chamber of type A}
+#'               \item{\code{"Ap_red"}:}{polar of chamber of type A, reduced form}
 #'               \item{\code{"BCp"}:}{polar of chamber of type BC}
 #'               \item{\code{"Dp"}:}{polar of chamber of type D}
 #'             }
@@ -359,6 +400,14 @@ weyl_matrix <- function(d, cone_type, product = FALSE) {
 #' weyl_ivols(c(5,5), c("BC","Ap"))
 #' weyl_ivols(c(5,5), c("BC","Ap"), product = TRUE)
 #'
+#' # testing the reduced cones
+#' d <- 6
+#' weyl_ivols(d, "A")
+#' weyl_ivols(d, "A_red")
+#'
+#' weyl_ivols(d, "Ap")
+#' weyl_ivols(d, "Ap_red")
+#'
 #' @export
 #'
 weyl_ivols <- function(d, cone_type, product = FALSE) {
@@ -366,21 +415,23 @@ weyl_ivols <- function(d, cone_type, product = FALSE) {
         stop("\n Could not find package 'polynom'.")
     if (length(d)!=length(cone_type))
         stop("Inputs d and cone_type must be of same length.")
-    if (!all(cone_type %in% c("A","BC","D","Ap","BCp","Dp")))
-        stop("Input cone_type must hav values 'A', 'BC', 'D', 'Ap', 'BCp', or 'Dp'.")
+    if (!all(cone_type %in% c("A","A_red","BC","D","Ap","Ap_red","BCp","Dp")))
+        stop("Input cone_type must hav values 'A', 'A_red', 'BC', 'D', 'Ap', 'Ap_red', 'BCp', or 'Dp'.")
     if (!all(d[which(cone_type %in% c("D","Dp"))] > 1))
         stop("Chambers of type 'D' and 'Dp' must be of dimension >1.")
 
     V <- list()
     for (i in 1:length(d)) {
-        if (cone_type[i] %in% c("A","Ap")) {
+        if (cone_type[i] %in% c("A","A_red","Ap","Ap_red")) {
             v <- as.vector(polynom::poly.calc( -(1:d[i]) ))
+            if (cone_type[i] %in% c("A","Ap"))
+                v <- c(0,v)
         } else if (cone_type[i] %in% c("BC","BCp")) {
             v <- as.vector(polynom::poly.calc( -(2*(1:d[i])-1) ))
         } else if (cone_type[i] %in% c("D","Dp")) {
-            v <- as.vector(polynom::poly.calc( -c( d-1, 2*(1:d[i])-3 ) ))
+            v <- as.vector(polynom::poly.calc( -c( d[i]-1, 2*(1:(d[i]-1))-1 ) ))
         }
-        if (cone_type[i] %in% c("Ap","BCp","Dp"))
+        if (cone_type[i] %in% c("Ap","Ap_red","BCp","Dp"))
             v <- rev(v)
         V[[i]] <- v/sum(v)
     }

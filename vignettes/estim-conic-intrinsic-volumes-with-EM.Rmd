@@ -1,5 +1,5 @@
 ---
-title: "Estimating conic intrinsic volumes via EM algorithm"
+title: "Estimating conic intrinsic volumes from bivariate chi-bar-squared data"
 author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -7,510 +7,471 @@ output: rmarkdown::html_vignette
 # header-includes:
 #   - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
 vignette: >
-  %\VignetteIndexEntry{Estimating conic intrinsic volumes via EM algorithm}
+  %\VignetteIndexEntry{Estimating conic intrinsic volumes from bivariate chi-bar-squared data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: references.bib
+link-citations: true
 ---
 
-This vignette describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples from the associated bivariate chi-bar-squared distribution. A general knowledge of the theory of conic intrinsic volumes is assumed, see [this vignette](conic-intrinsic-volumes.html) for a short introduction. In a [third vignette](goodness-of-fit.html) we will have another look at the statistical implications and discuss the goodness of fit.
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "estim-conic-intrinsic-volumes-with-EM_figures/"
+)
+```
+
+```{r load-pkgs, include=FALSE}
+library(conivol)
+library(tidyverse)
+```
+
+This note describes an approach to reconstruct the intrinsic
+volumes of a closed convex cone from samples of the associated bivariate
+chi-bar-squared distribution. The approach is based on the
+[expectation-maximization algorithm](https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm)
+and implemented in `estim_em`. We assume familiarity with the first of the two
+other vignettes:
+
+**Other vignettes:**
+
+* [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](conic-intrinsic-volumes.html):
+    introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions,
+    as well as the computations involving polyhedral cones,
+* [Bayesian estimates for conic intrinsic volumes](bayesian.html):
+    describes the Bayesian approach for reconstructing intrinsic volumes
+    from sampling data, which can either be samples from the intrinsic
+    volumes distribution (in the case of polyhedral cones), or from the
+    bivariate chi-bar-squared distribution, and which can be with or without
+    enforcing log-concavity of the intrinsic volumes.
 
 ## The setup {#setup}
 
 We use the following notation:
 
-* $C\subseteq\text{R}^d$ denotes a closed convex cone, $C^\circ$ the polar cone, and $\Pi_C\colon\text{R}^d\to C$ denotes the orthogonal projection map,
-$$\Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\}.$$
-We will assume in the following that both $C$ and $C^\circ$ have nonempty interior, $\text{int}(C)\neq\emptyset$ and $\text{int}(C^\circ)\neq\emptyset$, or equivalently, $C^\circ$ and $C$ both do not contain a nonzero linear subspace, or equivalently, $\text{lin}(C)=0$ and $\text{dim}(C)=d$ (see [here](conic-intrinsic-volumes.html#dim_lin) for a definition of these terms). These conditions are easily established using the canonical orthogonal decomposition of a cone, so there is no serious restriction in assuming this.  
-  In particular, we assume that $C$ is not a linear subspace so that the intrinsic volumes with even and with odd indices each add up to $\frac12$.
-  
-* $v = v(C) = (v_0(C),\ldots,v_d(C))$ denotes the vector of intrinsic volumes. Under the (primal and polar) nonempty interior assumption we have $v_k>0$ for all $k=0,\ldots,d$.
-
+* $C\subseteq\text{R}^d$ denotes a closed convex cone,
+$C^\circ=\{y\in\text{R}^d\mid \forall x\in C: x^Ty\leq 0\}$ the polar cone,
+and $\Pi_C\colon\text{R}^d\to C$ denotes the orthogonal projection map,
+  \[ \Pi_C(z) = \text{argmin}\{\|x-z\|\mid x\in C\} . \]
+We will assume in the following that $C$ (and thus $C^\circ$) is not a linear
+subspace so that the intrinsic volumes with even and with odd indices each
+add up to $\frac12$.
+* $v = v(C) = (v_0(C),\ldots,v_d(C))$ denotes the vector of intrinsic volumes.
 * We work with the two main random variables
-$$ X=\|\Pi_C(g)\|^2 ,\quad Y=\|\Pi_{C^\circ}(g)\|^2, $$
-  where $g\sim N(0,I_d)$. So $X$ and $Y$ are chi-bar-squared distributed with reference cones $C$ and $C^\circ$, respectively, and the pair $(X,Y)$ is distributed according to the bivariate chi-bar-squared distribution with reference cone $C$.
-  
-* For later use in the EM algorithm we also define the latent variable $Z\in\{0,1,\ldots,d\}$, $\text{Prob}\{Z=k\}=v_k$.
+  \[ X=\|\Pi_C(g)\|^2 ,\quad Y=\|\Pi_{C^\circ}(g)\|^2, \]
+where $g\sim N(0,I_d)$. So $X$ and $Y$ are chi-bar-squared distributed with
+reference cones $C$ and $C^\circ$, respectively, and the pair $(X,Y)$ is distributed
+according to the bivariate chi-bar-squared distribution with reference cone $C$.
+* For later use in the EM algorithm we also define the latent variable
+$Z\in\{0,1,\ldots,d\}$, $\text{Prob}\{Z=k\}=v_k$.
 
-Concretely, if $C$ is a [polyhedral cone](conic-intrinsic-volumes.html#polyh_cones) then we define $Z$ as the dimension of the face of $C$ such that $\Pi_C(g)$ lies in its relative interior. This is well-defined, as $C$ decomposes into a disjoint union of the relative interiors of its faces. We may assume without loss of generality that the underlying cone is polyhedral, as any closed convex cone can be arbitrarily well approximated by polyhedral cones.
+Concretely, if $C$ is a [polyhedral cone](conic-intrinsic-volumes.html#polyh_cones)
+then we define $Z$ as the dimension of the face of $C$ such that $\Pi_C(g)$ lies
+in its relative interior. This is well-defined, as $C$ decomposes into a disjoint
+union of the relative interiors of its faces. For theoretical purposes we may assume
+without loss of generality that the underlying cone is polyhedral,
+as any closed convex cone can be arbitrarily well approximated by polyhedral cones.
 
-Conditioning $X$ and $Y$ on $Z$ yields independent random variables $X\mid Z$ and $Y\mid Z$, which are $\chi^2$-distributed with $Z$ and $d-Z$ degrees of freedom, respectively. Here and in the following we use the convention that $\chi_0^2$ denotes the Dirac measure supported in $0$.
+Conditioning $X$ and $Y$ on $Z$ yields independent random variables $X\mid Z$ and
+$Y\mid Z$, which are $\chi^2$-distributed with $Z$ and $d-Z$ degrees of freedom,
+respectively. Here and in the following we use the convention that $\chi_0^2$
+denotes the Dirac measure supported in $0$.
 
-We assume to have sampled data: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of $(X,Y)$ and we assume that they took the sample values $(x_1,y_1),\ldots,(x_N,y_N)$. The general goal is to reconstruct the vector of intrinsic volumes $v=(v_0,\ldots,v_d)$ from this data.
+We assume to have sampled data: $(X_1,Y_1),\ldots,(X_N,Y_N)$ denote iid copies of
+$(X,Y)$ and we assume that they took the sample values $(x_1,y_1),\ldots,(x_N,y_N)$.
+The general goal is to reconstruct the vector of intrinsic volumes $v=(v_0,\ldots,v_d)$
+from this data.
 
-### Remark on the edge cases {#rem_edge}
+### The modified bivariate chi-bar-squared distribution {#mod_bivchibarsq}
 
-The latent variable $Z$ is not entirely "latent", or hidden. Indeed, we have the following equivalences
-$$ Z=d\iff g\in \text{int}(C) \iff Y=0 ,\qquad Z=0\iff g\in \text{int}(C^\circ) \iff X=0 , $$
-which hold almost surely (with probability one). Moreover, if $Y=0$, then the value of $X$ is just a draw from the $\chi_d^2$ distribution, and similarly for $X=0$. What this shows is that those sample data $(x_i,y_i)$ with $x_i=0$ or $y_i=0$ should be regarded as noise, and hence should be discarded.
+The latent variable $Z$ is not entirely "latent", or hidden. Indeed, we have the
+following equivalences
+  \[ Z=d\iff g\in \text{int}(C) \stackrel{\text{a.s.}}{\iff} Y=0 ,\qquad
+    Z=0\iff g\in \text{int}(C^\circ) \stackrel{\text{a.s.}}{\iff} X=0 , \]
+where a.s. stands for almost surely (with probability one). Moreover, if $Y=0$, then the
+value of $X$ is just a draw from the $\chi_d^2$ distribution, and similarly for
+$X=0$. What this shows is that those sample data $(x_i,y_i)$ with $x_i=0$ or
+$y_i=0$ should be regarded as noise, and hence should be discarded.
 
-Formally, by doing this we are replacing the bivariate chi-bar-squared distribution by a slightly modified distribution. From a practical perspective this is not a big problem, and indeed we will continue with the presentation of the EM algorithm without worrying about this fact too much. But when analyzing the goodness of fit one has to be careful, which is why this modification will be described in more detail [here](goodness-of-fit.html#mod_bivchibarsq).
+In order to formalize this step we define the following mixed continuous-discrete
+distribution: for given weight vector $v=(v_0,\ldots,v_d)$, $v\geq0$,
+$\sum_{k=0}^d v_k=1$, define the distribution
+  \[ f_v(x,y) = v_d\, \delta(-1,0) + v_0\, \delta(0,-1) +
+    \sum_{k=1}^{d-1} v_k f_k(x) f_{d-k}(y) , \]
+where $\delta$ denotes the (bivariate) Dirac delta, and $f_k(x)$ denotes the
+density of the chi-squared distribution. Note that for positive $x,y$ this
+distribution coincides with the distribution of the bivariate chi-bar-squared
+distribution with weight vector $v$.
+The corresponding cumulative distribution
+function (cdf) is given by
+  \[ F_v(x,y) = \begin{cases}
+      v_d & \text{if } -1\leq x<0\leq y ,
+   \\ v_0 & \text{if } -1\leq y<0\leq x ,
+   \\ v_0 + v_d + \sum_{k=1}^{d-1} v_k F_k(x)F_{d-k}(y) & \text{if } (x,y)\geq0 ,
+   \\ 0 & \text{else} ,
+   \end{cases} \]
+where $F_k(x)$ denotes the cdf of the chi-squared distribution.
+
+The step of "discarding" the sample points $(x_i,y_i)$ for which $x_i=0$ or
+$y_i=0$ then amounts to applying the map the sends $(x,0)$ to $(-1,0)$,
+that sends $(0,y)$ to $(0,-1)$, and that keeps points with positive components
+unchanged. The sample of the bivariate chi-bar-squared distribution then becomes
+a sample of the modified bivariate chi-bar-squared distribution.
+
+To save notation we assume that the sample points are indexed such that
+$(x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})$ lie in the positive quadrant, $\bar N\leq N$,
+and the remaining points lie on the axes. Furthermore, we define the two proportions
+  \[ p = \frac{\left|\{i\mid y_i=0\}\right|}{N} ,\quad
+    q = \frac{\left|\{i\mid x_i=0\}\right|}{N} . \]
 
 ## Choosing a starting point {#start_EM}
 
-We need to find a starting point for the iterative algorithms to reconstruct $v$. This can of course be the uniform distribution on $\{0,\ldots,d\}$, but we may as well use a more elaborated first guess. The mean and variance of $v$, more precisely, of the latent variable $Z$, can be conveniently estimated from the sample data, as
-$$ \delta = \delta(C) = \sum_{k=0}^d k v_k(C) = \text{E}[X] = d-\text{E}[Y] , $$
-and
-$$ \text{var} = \text{var}(C) = \sum_{k=0}^d (k-\delta)^2 v_k(C) = \text{E}[X^2]-(\delta+1)^2+1 = \text{E}[Y^2]-(d-\delta+1)^2+1 . $$
-The sample data of $X$ and $Y$ thus yield two natural estimates for both $\delta$ and $\text{var}$, which we combine as follows:
+As a starting point for the iterative algorithms to reconstruct $v$
+we can choose the uniform distribution on $\{0,\ldots,d\}$,
+$v^{(0)}= (1,\ldots,1)/(d+1)$,
+but we may as well use a more elaborated first guess.
+The mean and variance of $v$, more precisely,
+of the latent variable $Z$, can be conveniently estimated from the sample data, as
+\begin{align*}
+   \delta & = \delta(C) = \sum_{k=0}^d k v_k(C) = \text{E}[X] = d-\text{E}[Y] ,
+\\ \text{var} & = \text{var}(C) = \sum_{k=0}^d (k-\delta)^2 v_k(C)
+\\ & = \text{E}[X^2]-(\delta+1)^2+1 = \text{E}[Y^2]-(d-\delta+1)^2+1 .
+\end{align*}
+See the [vignette on intrinsic volumes](../doc/estim-conic-intrinsic-volumes-with-EM.html#bivchibars_cone)
+for the context of this connection.
 
-$$ \left.\begin{array}{c}
+The sample data of $X$ and $Y$ thus yield two natural estimates for both $\delta$
+and $\text{var}$, which we combine as follows:
+
+  \[ \left.\begin{array}{c}
    \displaystyle\hat\delta_{\text{prim}} = \frac{1}{N}\sum_{i=1}^N x_i
 \\ \displaystyle\hat\delta_{\text{pol}} = d-\frac{1}{N}\sum_{i=1}^N y_i
-   \end{array} \right\} \quad\hat\delta := \frac{\hat\delta_{\text{prim}}+\hat\delta_{\text{pol}}}{2} , $$
+   \end{array} \right\} \quad\hat\delta := \frac{\hat\delta_{\text{prim}}+\hat\delta_{\text{pol}}}{2} , \]
 
-$$ \left.\begin{array}{c}
+  \[ \left.\begin{array}{c}
    \displaystyle\widehat{\text{var}}_{\text{prim}} = \frac{1}{N}\sum_{i=1}^N x_i^2 - (\hat\delta+1)^2+1
 \\ \displaystyle\widehat{\text{var}}_{\text{pol}} = \frac{1}{N}\sum_{i=1}^N y_i^2 - (d-\hat\delta+1)^2+1
-   \end{array} \right\} \quad \widehat{\text{var}} = \sqrt{ \widehat{\text{var}}_{\text{prim}} \widehat{\text{var}}_{\text{pol}} } . $$
-These formulas are implemented in `estimate_statdim_var`.
+   \end{array} \right\} \quad \widehat{\text{var}} = \sqrt{ \widehat{\text{var}}_{\text{prim}} \widehat{\text{var}}_{\text{pol}} } . \]
+These formulas are implemented in `estim_statdim_var`.
 
-We propose the following ways to choose a starting point for the iterative algorithms to find the intrinsic volumes:
+We propose the following ways to choose a starting point for the iterative algorithms
+to find the intrinsic volumes:
 
 0. *uniform distribution:* $v^{(0)}=\frac{1}{d+1}(1,\ldots,1)$.
-1. *normal distribution:* match a normal distribution to the first and second moments of $Z$ and discretize:
-$$ v^{(0)}_k = \frac{\text{Prob}\{k-0.5\leq \nu\leq k+0.5\}}{\text{Prob}\{-0.5\leq \nu\leq d+0.5\}} $$
+1. *normal distribution:* match a normal distribution to the first and second
+    moments of $Z$ and discretize:
+  \[ v^{(0)}_k = \frac{\text{Prob}\{k-0.5\leq \nu\leq k+0.5\}}{\text{Prob}\{-0.5\leq \nu\leq d+0.5\}} \]
 where $\nu\sim N(\hat\delta,\widehat{\text{var}})$.
-2. *circular cones*: $d$-dimensional cones of angle $\alpha$ have an approximate statistical dimension of $d\sin^2\alpha$ and an approximate variance of $(d/2-1)\sin^2(2\alpha)$. We can thus choose $\alpha$ to match either the statistical dimension, or the variance, or take an average of both fits:
-    (a) *match first moment*: take $\alpha=\text{arcsin}\sqrt{\hat\delta/d}$ and take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circular cone with an angle of $\alpha$.
-    (b) *match second moment*: if $\hat\delta<d/2$ then take $\beta=\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$ else take $\beta=\frac{\pi}{2}-\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$ and take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circular cone with an angle of $\beta$.
-    (c) *average both fits*: take $v^{(0)}$ as the geometric mean of the intrinsic volumes obtained in (a) and (b).
+2. *circular cones*: $d$-dimensional cones of angle $\alpha$ have an approximate
+statistical dimension of $d\sin^2\alpha$ and an approximate variance of
+$(d/2-1)\sin^2(2\alpha)$. We can thus choose $\alpha$ to match either the
+statistical dimension, or the variance, or take an average of both fits:
+    (a) *match first moment*: take $\alpha=\text{arcsin}\sqrt{\hat\delta/d}$ and
+    take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circular cone
+    with an angle of $\alpha$.
+    (b) *match second moment*: if $\hat\delta<d/2$ then take $\beta=\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$ else take $\beta=\frac{\pi}{2}-\frac{1}{2}\text{arcsin}\sqrt{\frac{2\widehat{\text{var}}}{d-2}}$
+    and take $v^{(0)}$ to be the intrinsic volumes of a $d$-dimensional circular
+    cone with an angle of $\beta$.
+    (c) *average both fits*: take $v^{(0)}$ as the geometric mean of the intrinsic
+    volumes obtained in (a) and (b).
 
 These formulas are implemented in `init_v`.
+
+**Example computations:** We analyze a randomly chosen ellipsoidal cone:
+
+```{r ellips-def}
+d <-12
+set.seed(1234)
+A <- matrix(rnorm(d^2),d,d)
+ellips_semiax(A)
+```
+
+Sample from the corresponding bivariate chi-bar-squared distribution, and use
+this to estimate statistical dimension and variance and find initial estimates
+of intrinsic volumes:
+
+```{r ellips-samp, fig.width = 7}
+N <- 1e5
+E <- ellips_rbichibarsq(N,A)
+str(E)
+
+# scatter plot of the sample
+ggplot(as_tibble(E$samples), aes(V1,V2)) + geom_point(alpha=.02) +
+    theme_bw() +
+    theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+mom <- estim_statdim_var(d, E$samples); mom
+v_est <- list( mode0 = init_ivols(d, 0),
+               mode1 = init_ivols(d, 1, mom$delta, mom$var),
+               mode2 = init_ivols(d, 2, mom$delta),
+               mode3 = init_ivols(d, 3, mom$delta, mom$var),
+               mode4 = init_ivols(d, 4, mom$delta, mom$var) )
+tib_plot <- as_tibble(v_est) %>%
+    add_column(k=0:d,.before=1) %>% gather(mode,v,2:6)
+ggplot(tib_plot,aes(x=k,y=v,color=mode)) +
+    geom_line() + theme_bw()
+```
 
 
 ## The likelihood function
 
-The likelihood function is straightforward to derive, but, as mentioned [above](#rem_edge), one has to be careful about the "edge cases", i.e., the cases where $g\in C\cup C^\circ$. We discard those sample values $(x_i,y_i)$ with $x_i=0$ or $y_i=0$, while keeping the "non-noisy part" of this discarded data, which is of course the *proportion* of points with $Y=0$ and $X=0$,
-$$ p = \frac{\left|\{i\mid y_i=0\}\right|}{N} ,\quad q = \frac{\left|\{i\mid x_i=0\}\right|}{N} . $$
-Note that $p$ and $q$ are point estimates for $v_d(C)$ and $v_0(C)$, respectively. The data on which we base our estimation thus has the following form:
+We derive the likelihood function of the modified bivariate chi-bar-squared
+distribution, as explained [above](#mod_bivchibarsq).
+Recall that the proportions $p$ and $q$ are defined via
+$p=\frac{\left|\{i\mid y_i=0\}\right|}{N}$ and
+$q=\frac{\left|\{i\mid x_i=0\}\right|}{N}$, and are point estimates
+for $v_d(C)$ and $v_0(C)$, respectively.
+The data on which we base our estimation thus has the following form:
 
 * *general data*: dimension $d$ and sample size $N$
-* *estimate of $v_d$*: $p = |\{i\mid y_i=0\}|/N$
-* *estimate of $v_0$*: $q = |\{i\mid x_i=0\}|/N$
-* *remaining samples*: without loss of generality we may use the notation $(x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})$ for the remaining sample points, $\bar N\leq N$, or shortly $\mathbf{x},\mathbf{y}$ for the sample vectors.
-
-In fact, it turns out that the sample data enters the computation only through the density values
-$$ f_{ik} := f_k(x_i)f_{d-k}(y_i) ,\quad k=1,\ldots,d-1,\; i=1,\ldots,\bar N , $$
-where $f_k(x)$ denotes the density of the chi-squared distribution,
-$$ f_k(x)=\frac{1}{2^{k/2}\Gamma(k/2)}x^{k/2-1}e^{-x/2} . $$
-The function `prepare_data` evaluates the sample data in this regard; calling this function outside the EM algorithm allows to skip this step on multiple evaluations of the EM algorithm or related functions.
+* *estimates of $v_d$ and $v_0$*: $p$ and $q$
+* *remaining samples*: without loss of generality we use the notation
+$(x_1,y_1),\ldots,(x_{\bar N},y_{\bar N})$ for the remaining sample points,
+$\bar N\leq N$, or shortly $\mathbf{x},\mathbf{y}$ for the sample vectors.
 
 We obtain the following formula for the likelihood of the given data:
-$$ L(v\mid \mathbf{x},\mathbf{y}) = v_0^{|\{i\mid x_i=0\}|} v_d^{|\{i\mid y_i=0\}|} \prod_{i=1}^{\bar N}\sum_{k=1}^{d-1} v_k f_{ik} . $$
-This likelihood function does not take the latent variable $Z$ into account, which is crucial for the EM algorithm. Assuming that we have sample values $\mathbf{z}=(z_1,\ldots,z_{\bar N})$ for the latent variables, we arrive at the likelihood function
-$$ L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) = v_0^{|\{i\mid x_i=0\}|} v_d^{|\{i\mid y_i=0\}|} \prod_{i=1}^{\bar N}\prod_{k=1}^{d-1} (v_k f_{ik})^{(z_i=k)} , $$
-where $(z_i=k)=1$ if $z_i=k$ and zero else.
+  \[ L(v\mid \mathbf{x},\mathbf{y}) = v_d^{Np} v_0^{Nq}
+  \prod_{i=1}^{\bar N}\sum_{k=1}^{d-1} v_k f_{ik} , \]
+where $f_{ik}$ denote the density values
+  \[ f_{ik} := f_k(x_i)f_{d-k}(y_i) ,\quad k=1,\ldots,d-1,\; i=1,\ldots,\bar N , \]
+with $f_k(x)$ denoting the density of the chi-squared distribution,
+  \[ f_k(x)=\frac{1}{2^{k/2}\Gamma(k/2)}x^{k/2-1}e^{-x/2} . \]
+The function `prepare_em` evaluates the sample data in this regard; calling
+this function outside the EM algorithm allows to skip this step on multiple
+evaluations of the EM algorithm or related functions.
 
+The above likelihood function does not take the latent variable $Z$ into account,
+which is crucial for the EM algorithm. Assuming that we have sample values
+$\mathbf{z}=(z_1,\ldots,z_{\bar N})$ for the latent variables, we arrive at the
+likelihood function
+\begin{align*}
+   L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) & = v_d^{Np} v_0^{Nq}
+    \prod_{i=1}^{\bar N} v_{z_i} f_{iz_i}
+\\ & = v_d^{Np} v_0^{Nq}
+    \prod_{i=1}^{\bar N}\prod_{k=1}^{d-1} (v_k f_{ik})^{(z_i=k)} ,
+\end{align*}
+where $(z_i=k)=1$ if $z_i=k$ and zero else.
 For numerical reasons we work with the rescaled log-likelihood functions
 
 \begin{align*}
-\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \log\Big(\sum_{k=1}^{d-1} v_k f_{ik}\Big) ,
-\\ \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1} (z_i=k) \big( \log v_k + \log f_{ik} \big) .
+   \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y}) & = p \log v_d + q \log v_0
+    + \frac{1}{N}\sum_{i=1}^{\bar N} \log\Big(\sum_{k=1}^{d-1} v_k f_{ik}\Big) ,
+\\ \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) & = p \log v_d
+    + q \log v_0 + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1} (z_i=k)
+    \big( \log v_k + \log f_{ik} \big) .
 \end{align*}
-The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y})$ is implemented in `comp_loglike`.
+The rescaled log-likelihood function $\frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y})$
+is implemented in `loglike_ivols`.
+
+**Example computations:** We continue analyzing the above defined ellipsoidal cone.
+First, we prepare the data for multiple executions of the log-likelihood function
+and of the EM algorithm.
+
+```{r ellips-prep-data}
+out_prep <- prepare_em(d, E$samples)
+```
+
+Now evaluate the log-likelihood function in the simple estimate of the intrinsic
+volumes based on the moments.
+
+```{r ellips-loglike}
+loglike_ivols( v_est$mode0 , out_prep )
+loglike_ivols( v_est$mode1 , out_prep )
+loglike_ivols( v_est$mode2 , out_prep )
+loglike_ivols( v_est$mode3 , out_prep )
+loglike_ivols( v_est$mode4 , out_prep )
+```
 
 ### Log-concavity
 
-The log-concavity inequalities are the inequalities $v_k^2\geq v_{k-1}v_{k+1}$ for $k=1,\ldots,d-1$, or equivalently,
-$$ 2\log v_k - \log v_{k-1} - \log v_{k+1} \geq 0 . $$
-At this moment, the validity of these inequalities is an open conjecture for general closed convex cones. But for subclasses, like products of circular cones, they are known to hold, and there is some evidence that they hold in general. See [here](conic-intrinsic-volumes.htmnl#inequs) for a discussion.  
-Assuming log-concavity of the conic intrinsic volumes greatly helps the EM algorithm to converge to a sensible estimate.
+The log-concavity inequalities are the inequalities $v_k^2\geq v_{k-1}v_{k+1}$
+for $k=1,\ldots,d-1$, or equivalently,
+  \[ 2\log v_k - \log v_{k-1} - \log v_{k+1} \geq 0 . \]
+At this moment, the validity of these inequalities for
+general closed convex cones is an open conjecture.
+But for subclasses, like products of circular cones,
+they are known to hold, and there is some evidence that they hold in general.
+See the vignette on [conic intrinsic volumes](conic-intrinsic-volumes.html#inequs)
+for a discussion.
+Assuming log-concavity of the conic intrinsic volumes greatly helps the EM
+algorithm to converge to a sensible estimate.
 
 There are two natural ways in which log-concavity may be enforced:
 
 1. soft enforcement through a penalty term in the log-likelihood functions:
-$$ F_\lambda(v) := \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y}) + \sum_{k=1}^{d-1} \lambda_k (2\log v_k - \log v_{k-1} - \log v_{k+1})$$
-   and
-$$ G_\lambda(v,\mathbf{z}) := \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y},\mathbf{z}) + \sum_{k=1}^{d-1} \lambda_k (2\log v_k - \log v_{k-1} - \log v_{k+1}) , $$
-   where $\lambda_1,\ldots,\lambda_{d-1}\geq0$ and $\lambda_0:=\lambda_d:=0$ (setting all $\lambda_k$ to zero yields the original log-likelihood functions).  
-It should be noted that these "penalty terms" may cancel out, effectively rendering them useless. A true log-concavity penalty would have a form like $\min\{0,2\log v_k - \log v_{k-1} - \log v_{k+1}\}$; we use the simple (albeit potentially useless) penalty as it allows for easy implementation in the EM step.
-2. projecting the logarithms of the iterates onto the polyhedral set
-$$ \big\{ u\in\text{R}^{d+1}\mid 2 u_k - u_{k-1} - u_{k+1} \geq c_k \big\} . $$
-   for some $c_1,\ldots,c_{d-1} (\geq0)$ (setting all $c_k$ to $-\infty$ eliminates this restriction).
+  \begin{align*}
+     F_\lambda(v) & := \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y})
+    + \sum_{k=1}^{d-1} \lambda_k (2\log v_k - \log v_{k-1} - \log v_{k+1}) ,
+  \\ G_\lambda(v,\mathbf{z}) & := \frac{1}{N} \log L(v\mid \mathbf{x},\mathbf{y},\mathbf{z})
+    + \sum_{k=1}^{d-1} \lambda_k (2\log v_k - \log v_{k-1} - \log v_{k+1}) ,
+  \end{align*}
+    where $\lambda_1,\ldots,\lambda_{d-1}\geq0$ and $\lambda_0:=\lambda_d:=0$
+    (setting all $\lambda_k$ to zero yields the original log-likelihood functions).
+    It should be noted that these "penalty terms" may cancel out, effectively
+    rendering them useless. A true log-concavity penalty would have a form like
+    $\min\{0,2\log v_k - \log v_{k-1} - \log v_{k+1}\}$; we use the simple
+    (albeit potentially useless) penalty as it allows for easy implementation
+    in the EM step.
+2. projecting the logarithms of the iterates, $u_k=\log v_k$, $k=0,\ldots,d$,
+    onto the polyhedral set
+  \[ \big\{ u\in\text{R}^{d+1}\mid 2 u_k - u_{k-1} - u_{k+1} \geq c_k \big\} . \]
+    for some $c_1,\ldots,c_{d-1} (\geq0)$ (setting all $c_k$ to $-\infty$
+    eliminates this restriction).
 
-Both of these methods are supported in `find_ivols_EM`.
+Both of these methods are supported in `estim_em`.
 
 ## Expectation maximization (EM) algorithm
 
-The expectation maximization (EM) algorithm works by maximizing the conditional expectation with respect to the latent variable of the maximum likelihood method, given the current iterate for the parameter that is to be found.
+The expectation maximization (EM) algorithm works by maximizing the conditional
+expectation of the maximum likelihood method -- expectation with respect
+to the latent variable -- given the current iterate for the parameter that is to be found.
 
-In the situation at hand, we seek to maximize the function
+For the situation at hand we obtain the conditional probabilities
+for the latent variable as follows:
+  \[ p(Z_i=k\mid X_i=x_i, Y_i=y_i) = \frac{p(Z_i=k)p(X_i=x_i,Y_i=y_i\mid Z_i=k)}
+    {p(X_i=x_i,Y_i=y_i)} = \frac{v_kf_{ik}}{\sum_{j=1}^{d-1}v_jf_{ij}} . \]
+Hence, denoting the current estimate of $v$ by $v^{(t)}$,
+the next iterate of the EM algorithm is found by maximizing the expression
 \begin{align*}
-   & \underset{\mathbf{Z}\mid \mathbf{x},\mathbf{y},v^{(t)}}{\text{E}} \big[\tfrac{1}{N}\log L(v\mid\mathbf{x},\mathbf{y},\mathbf{Z})\big]
-\\ & = q \log v_0 + p \log v_d + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1} \frac{v_k^{(t)}f_{ik}}{\sum_{j=1}^{d-1} v_j^{(t)}f_{ij}} \big( \log v_k + \log f_k(x_i) + \log f_{d-k}(y_i) \big)
+   & \underset{\mathbf{Z}\mid \mathbf{x},\mathbf{y},v^{(t)}}{\text{E}}
+    \big[\tfrac{1}{N}\log L(v\mid\mathbf{x},\mathbf{y},\mathbf{Z})\big]
+\\ & = p \log v_d + q \log v_0 + \frac{1}{N}\sum_{i=1}^{\bar N} \sum_{k=1}^{d-1}
+    \frac{v_k^{(t)}f_{ik}}{\sum_{j=1}^{d-1} v_j^{(t)}f_{ij}} \big( \log v_k +
+    \log f_{ik} \big)
 \end{align*}
-as a function in $v$. Apparently, the final summands can be dropped as they only contribute as constants. Furthermore, replacing the log-likelihood function by $G_\lambda(v,\mathbf{z})$ to take the log-concavity inequalities into account, we see that the next iterate $v^{(t+1)}$ is found by solving the optimization problem
-$$ \text{maximize}\quad (q-\lambda_1) \log v_0 + (p-\lambda_{d+1}) \log v_d + \sum_{k=1}^{d-1} \frac{1}{N}\sum_{i=1}^{\bar N} \Bigg( \frac{v_k^{(t)}f_{ik}}{\sum_{j=1}^{d-1} v_j^{(t)}f_{ij}} + 2\lambda_k-\lambda_{k-1}-\lambda_{k+1}\Bigg) \log v_k $$
-subject to $v_0,\ldots,v_d\geq0$, $v_0+v_2+\dots=v_1+v_3+\dots=\frac12$. As long as the coefficients of $\log v_k$ are nonnegative, this is a convex problem and, as a *separable convex program*, can be easily solved by MOSEK.
+as a function in $v$. Apparently, the final summand can be dropped as it only
+contributes a constant. Furthermore, replacing the log-likelihood function by
+the log-concavity penalized version
+$G_\lambda(v,\mathbf{z})$,
+we see that the next iterate $v^{(t+1)}$ is found by maximizing the function
+  \[ (p-\lambda_{d-1}) \log v_d + (q-\lambda_1) \log v_0 + 
+    \sum_{k=1}^{d-1} \Bigg( \frac{1}{N}\sum_{i=1}^{\bar N}
+    \frac{v_k^{(t)}f_{ik}}{\sum_{j=1}^{d-1} v_j^{(t)}f_{ij}} + 2\lambda_k
+    -\lambda_{k-1}-\lambda_{k+1}\Bigg) \log v_k \]
+subject to $v_0,\ldots,v_d\geq0$, $v_0+v_2+\dots=v_1+v_3+\dots=\frac12$. As long
+as the coefficients of $\log v_k$ are nonnegative, this is a convex problem and,
+as a *separable convex program*^[For more details see the MOSEK documentation for
+[SCopt interface](http://docs.mosek.com/8.1/rmosek/tutorial-scopt-shared.html).],
+can be easily solved by MOSEK.^[The implementation of this step in `estim_em`
+is such that
+MOSEK is called with the user-defined values for $\lambda$. These values
+will be reduced if
+MOSEK returns an error because of nonconvexity; they might
+eventually be dropped entirely
+(in which case the program becomes convex and is solved by MOSEK).
+It thus could happen that although the penalty terms $\lambda$ have been set to
+positive values,
+they are being ignored by (parts of) the algorithm.]
+
+The log-concavity inequalities $2\log v_k-\log v_{k-1}-\log v_{k+1}\geq c_k\;(\geq0)$
+could be modelled as constraints in the above separable optimization problem. But
+including these will violate the convexity assumptions right away, so the current
+implementation of the algorithm does not proceed in this way. Instead, after
+computing the iterate in the normal way, the algorithm will project the vector of
+the logarithms $u_k=\log v_k$, $k=0,\ldots,d$, onto the polyhedral set
+$\{ u\in\text{R}^{d+1}\mid 2 u_k - u_{k-1} - u_{k+1} \geq c_k \}$ and then rescale
+the resulting vector so that
+$v_0^{(t+1)}+v_2^{(t+1)}+\dots=v_1^{(t+1)}+v_3^{(t+1)}+\dots=\frac12$.
+
+**Example computations:** We reconstruct the intrinsic volumes from the sample
+data. For this we run the EM algorithm with the different starting points for
+200 iterations, and display the every twenty-fifth iteration.
+
+```{r ellips-em, fig.width = 7}
+em0 <- estim_em( d, E$samples, N=200, v_init=v_est$mode0, data=out_prep )
+em1 <- estim_em( d, E$samples, N=200, v_init=v_est$mode1, data=out_prep )
+em2 <- estim_em( d, E$samples, N=200, v_init=v_est$mode2, data=out_prep )
+em3 <- estim_em( d, E$samples, N=200, v_init=v_est$mode3, data=out_prep )
+em4 <- estim_em( d, E$samples, N=200, v_init=v_est$mode4, data=out_prep )
+
+# prepare plots
+tib_plot0 <- as_tibble( t(em0$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+tib_plot1 <- as_tibble( t(em1$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+tib_plot2 <- as_tibble( t(em2$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+tib_plot3 <- as_tibble( t(em3$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+tib_plot4 <- as_tibble( t(em4$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
+
+tib_plot0$step <- factor(tib_plot0$step, levels = paste0("s_",25*(0:8)))
+tib_plot1$step <- factor(tib_plot1$step, levels = paste0("s_",25*(0:8)))
+tib_plot2$step <- factor(tib_plot2$step, levels = paste0("s_",25*(0:8)))
+tib_plot3$step <- factor(tib_plot3$step, levels = paste0("s_",25*(0:8)))
+tib_plot4$step <- factor(tib_plot4$step, levels = paste0("s_",25*(0:8)))
+
+# plot mode 0
+ggplot(tib_plot0,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+# plot mode 1
+ggplot(tib_plot1,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+# plot mode 2
+ggplot(tib_plot2,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+# plot mode 3
+ggplot(tib_plot3,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+# plot mode 4
+ggplot(tib_plot4,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+```
+
+Comparing the 200th iterates of the different runs shows that they have pretty
+much converged to the same estimate.
+```{r ellips-em-comp, fig.width = 7}
+# prepare plot
+tib_plot_comp <- tibble(  mode0=em0$iterates[201, ],
+                          mode1=em1$iterates[201, ],
+                          mode2=em2$iterates[201, ],
+                          mode3=em3$iterates[201, ],
+                          mode4=em4$iterates[201, ] ) %>%
+    add_column(k=0:d,.before=1) %>% gather(mode,value,2:6)
+
+# plot 200th iterate of different runs
+ggplot(tib_plot_comp,aes(x=k,y=value,color=mode)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+```
 
-As a side note, the implementation of this method in `find_ivols_EM` is such that MOSEK is called with the user-defined values for $\lambda$, but then reduced if the program turns out to be nonconvex so that MOSEK will return an error, and eventually dropped (in which case the program becomes convex and is solved by MOSEK). It thus could happen that although the penalty terms $\lambda$ have positive values, they are being ignored by the algorithm.
+To assess the influence of log-concavity we also have a look at the iterates
+of the EM algorithm without enforced log-concavity.
+```{r ellips-em-no-logconc, fig.width = 7}
+em_no_logconc <- estim_em( d, E$samples, N=200, v_init=v_est$mode0, data=out_prep,
+                           no_of_lcc_projections=0 )
 
-The log-concavity inequalities $2\log v_k-\log v_{k-1}-\log v_{k+1}\geq c_k\;(\geq0)$ could be modelled as constraints in the above separable optimization problem. But including these will violate the convexity assumptions right away, so the current implementation of the algorithm does not proceed in this way. Instead, after computing the iterate in the normal way, the algorithm will project the vector of the logarithms onto the polyhedral set $\{ u\in\text{R}^{d+1}\mid 2 u_k - u_{k-1} - u_{k+1} \geq c_k \}$ and then rescale the resulting vector so that $v_0^{(t+1)}+v_2^{(t+1)}+\dots=v_1^{(t+1)}+v_3^{(t+1)}+\dots=\frac12$.
+# prepare plot
+tib_plot_no_logconc <- as_tibble( t(em_no_logconc$iterates[1+25*(0:8), ]) ) %>%
+    `colnames<-`(paste0("s_",25*(0:8))) %>%
+    add_column(k=0:d,.before=1) %>% gather(step,value,2:10)
 
-## A moderate-sized example
+tib_plot_no_logconc$step <- factor(tib_plot_no_logconc$step, levels = paste0("s_",25*(0:8)))
 
-(TBD) (Martin's example)
-[@Aetal13]
+ggplot(tib_plot_no_logconc,aes(x=k,y=value,color=step)) +
+    geom_line() + theme_bw() +
+    theme(axis.title.x=element_blank(), axis.title.y=element_blank())
+```
 
-## Appendix A: SOCP formulation of projection maps and MOSEK implementation
+It is worth noting that as the algorithm progresses the log-concavity gets
+increasingly violated leading to bad estimates of the intrinsic volumes.
+So assuming log-concavity seems crucial for obtaining reasonable estimates
+of the intrinsic volumes.
 
-The problem of finding the projection of a point $z\in\text{R}^d$ onto a polyhedral cone $\{Au\mid u\geq0\}$, $A\in\text{R}^{d\times n}$, also known as *nonnegative least squares*, can be formulated as a second order cone program (SOCP):
 
-\begin{align*}
-   & \underset{u\geq0}{\text{argmin}}\, \|Au-z\|_2
-\\ \iff & \text{minimize } \tfrac12 \|Au\|^2 - z^T A u \quad\text{subject to}\quad u\geq0
-\\ \iff & \text{minimize } (-A^Tz)^Tu + r \quad\text{subject to}\quad u\geq0, Au=w, s=1, \|w\|^2\leq 2rs .
-\end{align*}
-This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint (see the [Rmosek userguide](http://rmosek.r-forge.r-project.org/)).
 
-This is the approach taken in the function `polyh_rbichibarsq`.
-
-The projection of a point $z\in\text{R}^n$ onto the polar cone, and more generally, the projection onto the polyhedral set $\{y\mid A^Ty\leq c\}$, $A\in\text{R}^{d\times n}$, can be formulated as SOCP in a similar way:
-
-\begin{align*}
-   & \underset{A^Ty\leq c}{\text{argmin}}\, \|y-z\|_2
-\\ \iff & \text{minimize } \tfrac12\|y\|^2 - z^Ty \quad\text{subject to}\quad A^Ty\leq c
-\\ \iff & \text{minimize } (-z)^Ty+r \quad\text{subject to}\quad u\geq 0, A^Ty+u=c, s=1, \|y\|^2\leq 2rs
-\end{align*}
-This last formulation is solved with MOSEK, using the rotated quadratic cone constraint, to enforce the log-concavity constraints in the EM algorithm.
-
-The problem of finding the projection of a point $z\in\text{R}^d$ onto an ellipsoidal cone given as the (full-dimensional) linear image of the Lorentz cone, $A\mathcal{L}^d$, $A\in\text{Gl}_d$, can also be formulated as an (SOCP):
-
-\begin{align*}
-   & \underset{x\in A\mathcal{L}^d}{\text{argmin}}\, \|x-z\|_2
-\\ \iff & \text{minimize } \tfrac12 \|x\|^2 - z^T x \quad\text{subject to}\quad x=Ay, y\in\mathcal{L}^d
-\\ \iff & \text{minimize } (-z)^Tx + r \quad\text{subject to}\quad x=Ay, y\in\mathcal{L}^d, s=1, \|x\|^2\leq 2rs .
-\end{align*}
-This last formulation can be solved by MOSEK, using the rotated quadratic cone constraint.
-
-
-### Appendix B: Gradient and Hessian
-
-Gradient descent and Newton's method both seem to be inappropriate for the task of reconstructing the intrinsic volumes from sample data as described above. However, analyzing the gradient and the Hessian might still be instructive to decide whether the maximum likelihood estimate has been reached.
-
-We compute the gradient and Hessian in the affine-linear subspace
-$$ V:=\big\{v\in\text{R}^{d+1}\mid v_0 + v_2 + \dots = v_1 + v_3 + \dots = \tfrac12\big\} . $$
-For this we change coordinates in the following way: let $k_0,k_1\in\{1,\ldots,d-1\}$, $k_0$ even, $k_1$ odd, and parametrize the neighborhood of the vector $v$ through
-$$ v + \sum_{k\text{ even}} a_k (e_k-e_{k_0}) + \sum_{k\text{ odd}} a_k (e_k-e_{k_1}) . $$
-Changing coordinates in $F_\lambda$ by defining
-$$ \tilde F_\lambda(a) := F_\lambda \Big( v + \sum_{k\text{ even}} a_k (e_k-e_{k_0}) + \sum_{k\text{ odd}} a_k (e_k-e_{k_1})\Big) , $$
-one obtains the following gradient in zero:
-
-\begin{align*}
-  \nabla \tilde F_\lambda(0) & = -\frac{1}{N} \sum_{i=1}^{\bar N} \frac{ f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i}{ \sum_{k=1}^{d-1} v_kf_{ik} } + \text{diag}(v)^{-1} \begin{pmatrix} q-\lambda_1 \\ 2\lambda-\lambda_{-1}-\lambda_{+1} \\ p-\lambda_{d-1} \end{pmatrix}
-\\[2mm] & \quad - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}{v_{k_0}} \mathbf1_{\text{even}} - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}} \mathbf1_{\text{odd}} ,
-\end{align*}
-where
-
-* $f_i = (0,f_{i1},\ldots,f_{i,d-1},0)^T$,
-* $\mathbf1_{\text{even}} = (1, 0, 1, 0, 1, \ldots)^T$, $\mathbf1_{\text{odd}} = (0, 1, 0, 1, 0, 1, \ldots)^T$,
-* $\lambda=(\lambda_1,\ldots,\lambda_{d-1})^T$, $\lambda_{-1}=(1,\lambda_1,\ldots,\lambda_{d-2})^T$, $\lambda_{+1}=(\lambda_2,\ldots,\lambda_{d-1},1)^T$
-
-Note that $\tilde F_\lambda$ is constant in $a_{k_0}$ and $a_{k_1}$, and the gradient is correspondingly zero in these points; the gradient of $F_\lambda$ projected to the affine subspace $V$ is thus (up to rescaling) given by
-
-$$ \bar\nabla F_\lambda(v)_k = \begin{cases}
-                          \nabla\tilde F_\lambda(0)_k & \text{if } k\not\in\{k_0.k_1\}
-                       \\ -\sum_{j\text{ even}} \nabla\tilde F_\lambda(0)_j & \text{if } k=k_0
-                       \\ -\sum_{j\text{ odd}} \nabla\tilde F_\lambda(0)_j & \text{if } k=k_1
-                       \end{cases} $$
-The Hessian of $\tilde F_\lambda$ in zero is given by
-
-\begin{align*}
-  H\tilde F_\lambda(0) & = -\frac{1}{N} \sum_{i=1}^{\bar N} \frac{ \big(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i \big) \big(f_{ik_0}\mathbf1_{\text{even}} + f_{ik_1}\mathbf1_{\text{odd}} - f_i \big)^T}{ \big(\sum_{k=1}^{d-1} v_kf_{ik}\big)^2 }
-\\ & \qquad - \text{diag}(v)^{-2}\text{diag} \begin{pmatrix} q-\lambda_1 \\ 2\lambda_j-\lambda_{j-1}-\lambda_{j+1} \\ p-\lambda_{d-1} \end{pmatrix} - \frac{2\lambda_{k_0}-\lambda_{k_0-1}-\lambda_{k_0+1}}{v_{k_0}^2} \mathbf1_{\text{even}}\mathbf1_{\text{even}}^T
-\\ & \qquad - \frac{2\lambda_{k_1}-\lambda_{k_1-1}-\lambda_{k_1+1}}{v_{k_1}^2} \mathbf1_{\text{odd}}\mathbf1_{\text{odd}}^T
-\end{align*}
-
-
-## References
-
-
-
-
-
-
-
-
-<!-- ## Finding a good example with circular cones -->
-<!-- ```{r results='hide', message=FALSE, warning=FALSE, echo=FALSE} -->
-
-<!-- ### loading some packages -->
-<!-- library(conivol) -->
-<!-- library(tidyverse) -->
-<!-- library(Rmosek) -->
-<!-- ``` -->
-
-<!-- Ok, so the main function is of course `bichibarsq_find_weights`. Note that a simple way of estimating the intrinsic volumes is to estimate the statistical dimension and the variance, and then fit (and discretize) a normal distribution. This works very well for some cones (for example the nonnegative orthant), so we should find an example where this simple strategy does not work well. Another strategy is to find the circular cone that fits the statistical dimension. We should also avoid examples where this strategy gives a too good starting point. -->
-
-<!-- Let's try a product of two cones such that the statistical dimension is comparably large: -->
-<!--   $$C=\text{Circ}_{d_1}(\alpha_1)\times \text{Circ}_{d_2}(\alpha_2)$$ -->
-<!-- with $d_1=5, d_2=8, \alpha_1=\text{arcsin}(\sqrt{0.9}), \alpha_2=\text{arcsin}(\sqrt{0.8})$: -->
-<!-- ```{r} -->
-<!-- D <- c(5,8) -->
-<!-- alpha <- c( asin(sqrt(0.9)) , asin(sqrt(0.8))) -->
-<!-- v <- circ_ivol(D, alpha, product = TRUE) -->
-<!-- ``` -->
-<!-- We compute the statistical dimension and variance and fit-and-discretize a normal distribution: -->
-<!-- ```{r} -->
-<!-- d <- sum(D) -->
-<!-- delta <- sum(v*(0:d)) -->
-<!-- var <- sum(v*(0:d)^2) - delta^2 -->
-<!-- vn <- sapply( 0:d,  -->
-<!--      function(k){ pnorm((k+0.5-delta)/sqrt(var)) - pnorm((k-0.5-delta)/sqrt(var)) }) -->
-<!-- vn <- vn/sum(vn) -->
-<!-- ``` -->
-<!-- We find the circular cone, which matches the statistical dimension: -->
-<!-- ```{r} -->
-<!-- search_alpha <- pi/2*(1:999)/1000 -->
-<!-- ivols <- circ_ivol(rep(d,length(search_alpha)),search_alpha) -->
-<!-- i_fit <- which.min( ( sapply(ivols, function(v){sum(v*(0:d))}) - delta )^2 ) -->
-<!-- alpha_fit <- search_alpha[i_fit] -->
-<!-- vc <- circ_ivol(d, alpha_fit) -->
-<!-- ``` -->
-<!-- Let's have a look at the corresponding plots (normal and log): -->
-
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-<!-- tib_plot     <- gather(tibble(k=0:d,exact=v,     est_norm=vn,     est_circ=vc),    type,value,2:4) -->
-<!-- tib_plot_log <- gather(tibble(k=0:d,exact=log(v),est_norm=log(vn),est_circ=log(vc)),type,value,2:4) -->
-
-<!-- ggplot(tib_plot, aes(x=k, y=value, color=type)) + -->
-<!--     geom_line() + -->
-<!--     scale_colour_manual(values=c("red","blue","black")) + -->
-<!--     theme(legend.position="bottom", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) -->
-
-<!-- ggplot(tib_plot_log, aes(x=k, y=value, color=type)) + -->
-<!--     geom_line() + -->
-<!--     scale_colour_manual(values=c("red","blue","black")) + -->
-<!--     theme(legend.position="bottom", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) -->
-<!-- ``` -->
-
-<!-- Ok, that example seems reasonable. We will choose this example for the next computations. -->
-
-<!-- ## Estimating the conic weights from projection data -->
-
-<!-- First, let's sample from the bivariate chi-bar-squared distribution. Internally, this will be done by sampling with the exact values of the intrinsic volumes, because the conic intrinsic volumes of products of circular cones are easy to calculate and because this seems to be the fastest way to sample from this distribution. But the idea is of course that these samples can be obtained by computing the squared norms of the projections of random Gaussian vectors onto the cone and its polar. -->
-<!-- ```{r, fig.align='center', fig.width=7, fig.height=6, eval=TRUE} -->
-<!-- n <- 10^5 -->
-<!-- set.seed(1234) -->
-<!-- m_samp <- rbichibarsq_circ(n,D,alpha) -->
-<!-- ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) + -->
-<!--     theme(axis.title.x=element_blank(),axis.title.y=element_blank()) -->
-<!-- ``` -->
-<!-- We compute the first thousand iterates of the EM algorithm, using three different starting points: uniform, discretized normal (from estimated statistical dimension and variance), circular cone (fitting the estimated statistical dimension).  -->
-<!-- ```{r, eval=FALSE} -->
-<!-- EM_iterates_mode0 <- bichibarsq_find_weights( m_samp, d, N=1000, mode=0) -->
-<!-- EM_iterates_mode1 <- bichibarsq_find_weights( m_samp, d, N=1000, mode=1) -->
-<!-- EM_iterates_mode2 <- bichibarsq_find_weights( m_samp, d, N=1000, mode=2) -->
-<!-- ``` -->
-<!-- Each computation (of thousand iterates) takes about ten minutes, so the resulting data has been included in the package. See the corresponding descriptions via `?EM_iterates_mode0`, etc.   -->
-
-<!-- Here are the first few iterates (normal and log-plots); the true values are plotted in black: -->
-
-<!-- 0. uniform distribution as starting point -->
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-<!-- tib_iter <- as_tibble( t(EM_iterates_mode0$iterates[1:8, ]) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2]) -->
-<!-- tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE)) -->
-<!-- ggplot(tib_plot,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-
-<!-- tib_iter_log <- as_tibble( t(log(EM_iterates_mode0$iterates[1:8, ])) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2]) -->
-<!-- tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE))) -->
-<!-- ggplot(tib_plot_log,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-<!-- ``` -->
-
-<!-- 1. discretized normal distribution as starting point -->
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-<!-- tib_iter <- as_tibble( t(EM_iterates_mode1$iterates[1:8, ]) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2]) -->
-<!-- tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE)) -->
-<!-- ggplot(tib_plot,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-
-<!-- tib_iter_log <- as_tibble( t(log(EM_iterates_mode1$iterates[1:8, ])) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2]) -->
-<!-- tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE))) -->
-<!-- ggplot(tib_plot_log,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-<!-- ``` -->
-
-<!-- 2. circular cone with same statistical dimension as starting point -->
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-<!-- tib_iter <- as_tibble( t(EM_iterates_mode2$iterates[1:8, ]) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2]) -->
-<!-- tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE)) -->
-<!-- ggplot(tib_plot,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-
-<!-- tib_iter_log <- as_tibble( t(log(EM_iterates_mode2$iterates[1:8, ])) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2]) -->
-<!-- tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE))) -->
-<!-- ggplot(tib_plot_log,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-<!-- ``` -->
-
-<!-- Well, that looks promising. Let's have a look at the iterates further out, say, in steps of thousands: -->
-
-<!-- 0. uniform distribution as starting point -->
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-<!-- tib_iter <- as_tibble( t(EM_iterates_mode0$iterates[c(10,20,100,500,1000,2000,4000,10000), ]) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2]) -->
-<!-- tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE)) -->
-<!-- ggplot(tib_plot,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-
-<!-- tib_iter_log <- as_tibble( t(log(EM_iterates_mode0$iterates[c(10,20,100,500,1000,2000,4000,10000), ])) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2]) -->
-<!-- tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE))) -->
-<!-- ggplot(tib_plot_log,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-<!-- ``` -->
-
-<!-- 1. discretized normal distribution as starting point -->
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-<!-- tib_iter <- as_tibble( t(EM_iterates_mode1$iterates[c(10,20,100,500,1000,2000,4000,10000), ]) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2]) -->
-<!-- tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE)) -->
-<!-- ggplot(tib_plot,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-
-<!-- tib_iter_log <- as_tibble( t(log(EM_iterates_mode1$iterates[c(10,20,100,500,1000,2000,4000,10000), ])) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2]) -->
-<!-- tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE))) -->
-<!-- ggplot(tib_plot_log,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-<!-- ``` -->
-
-<!-- 2. circular cone with same statistical dimension as starting point -->
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-<!-- tib_iter <- as_tibble( t(EM_iterates_mode2$iterates[c(10,20,100,500,1000,2000,4000,10000), ]) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot <- gather(tib_iter,step,value,2:dim(tib_iter)[2]) -->
-<!-- tib_exact <- tibble( k=0:d, exact=circ_ivol(D,alpha,TRUE)) -->
-<!-- ggplot(tib_plot,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-
-<!-- tib_iter_log <- as_tibble( t(log(EM_iterates_mode2$iterates[c(10,20,100,500,1000,2000,4000,10000), ])) ) %>% -->
-<!--                 add_column(k=0:d,.before=1) -->
-<!-- tib_plot_log <- gather(tib_iter_log,step,value,2:dim(tib_iter_log)[2]) -->
-<!-- tib_exact_log <- tibble( k=0:d, exact=log(circ_ivol(D,alpha,TRUE))) -->
-<!-- ggplot(tib_plot_log,aes(x=k,y=value,color=step)) + -->
-<!--     geom_line() + -->
-<!--     geom_line(data=tib_exact_log,aes(x=k,y=exact),colour="black") +  -->
-<!--     theme(legend.position="none", -->
-<!--           axis.title.x=element_blank(), -->
-<!--           axis.title.y=element_blank()) + -->
-<!--     scale_colour_brewer() -->
-<!-- ``` -->
-
-<!-- <!-- -->
-<!-- Let's have a look at the normalized (logarithmic) progression, that is, we normalize each intrinsic volume by the true value (without those one would of course take the last iterate); leaving out the first ten iterates: -->
-
-<!-- 0. uniform distribution as starting point -->
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-<!-- #N_plot <- 100 -->
-<!-- tib_prog <- as_tibble( sweep( EM_iterates_mode0$iterates[101:1001, ], MARGIN=2, circ_ivol(D,alpha,TRUE), "/") ) %>% -->
-<!--                 add_column(iterate=100:1000, .before=1) -->
-<!-- tib_prog_plot <- gather(tib_prog, vol, value, 2:dim(tib_prog)[2]) -->
-<!-- ggplot(tib_prog_plot, aes(x=iterate, y=value, color=vol)) + -->
-<!--     geom_line() + -->
-<!--     scale_colour_brewer(palette = "Set3") -->
-<!-- ``` -->
-
-<!-- 1. discretized normal distribution as starting point -->
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-
-<!-- ``` -->
-
-<!-- 2. circular cone with same statistical dimension as starting point -->
-<!-- ```{r, echo=FALSE, fig.align='center', fig.width=7, eval=TRUE} -->
-
-<!-- ``` -->
-
-<!-- -->
-
-
-
-
-
-
-
-
-
-
-
+<!-- ## References -->
 
 
 

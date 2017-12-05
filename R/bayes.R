@@ -4,13 +4,16 @@
 #' for sampling from the posterior distribution,
 #' given samples of the bivariate chi-bar-squared distribution.
 #'
+#' For the JAGS models enforcing log-concavity is not supported; use the
+#' analogous Stan model instead, provided by \code{\link[conivol]{estim_stan}}.
+#'
 #' @param samples N-by-2 matrix representing independent samples from the
 #'                bivariate chi-bar-squared distribution of a convex cone
 #' @param d the dimension of the ambient space
 #' @param dimC the dimension of the cone
 #' @param linC the lineality of the cone
-#' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
+#' @param prior_sample_size the sample size for the prior estimate (1 by default -> noninformative)
 #' @param filename filename for output (NA by default, in which case the return is a string)
 #' @param overwrite logical; determines whether the output should overwrite an existing file
 #'
@@ -62,7 +65,7 @@
 #' v0 <- init_ivols(d,init_mode=1,delta=est$delta,var=est$var)
 #'
 #' # obtain input data for JAGS model; use v0 as prior
-#' in_jags <- estim_jags(m_samp, d, prior="informative", v_prior=v0)
+#' in_jags <- estim_jags(m_samp, d, v_prior=v0)
 #'
 #' # create JAGS model
 #' model_connection <- textConnection(in_jags$model)
@@ -98,11 +101,17 @@
 #'
 #' @export
 #'
-estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_prior=NA, filename=NA, overwrite=FALSE) {
+estim_jags <- function(samples, d, dimC=d, linC=0,
+                       v_prior=NA, prior_sample_size=1,
+                       filename=NA, overwrite=FALSE) {
 
     I_pol  <- which(samples[ ,1]==0)
     I_prim <- which(samples[ ,2]==0)
-    samples_bulk <- samples[ -c(I_pol,I_prim) , ]
+    if (length(I_pol)==0 && length(I_prim)==0)
+        samples_bulk <- samples
+    else
+        samples_bulk <- samples[ -c(I_pol,I_prim) , ]
+    N <- dim(samples)[1]
     N_pol  <- length(I_pol)
     N_prim <- length(I_prim)
     N_bulk <- N-N_pol-N_prim
@@ -118,18 +127,13 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
         v_prior_adj <- v_prior
     }
 
-    Dir_prior_0 <- 2*v_prior_adj[I_0]
-    Dir_prior_1 <- 2*v_prior_adj[I_1]
-
-    if (prior=="informative"){
-        Dir_prior_0 <- 1+Dir_prior_0
-        Dir_prior_1 <- 1+Dir_prior_1
-    }
+    Dir_prior_0 <- 2*prior_sample_size*v_prior_adj[I_0]
+    Dir_prior_1 <- 2*prior_sample_size*v_prior_adj[I_1]
 
     data_list <- list(
         d           = d ,
-        dimC         = dimC ,
-        linC         = linC ,
+        dimC        = dimC ,
+        linC        = linC ,
         d_0         = floor((dimC-linC)/2) ,
         d_1         = ceiling((dimC-linC)/2)-1 ,
         N           = N ,
@@ -328,13 +332,15 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
 
 
 
-
-
 #' Stan model creation for Bayesian posterior given samples of bivariate chi-bar-squared distribution
 #'
 #' \code{estim_stan} generates inputs for Stan (data list and model string or external file)
 #' for sampling from the posterior distribution,
 #' given samples of the bivariate chi-bar-squared distribution.
+#'
+#' If \code{enforce_logconc==TRUE} then the prior distribution is taken on the
+#' log-concavity parameters (second iterated differences of the logarithms of the intrinsic volumes),
+#' which enforces log-concavity of the intrinsic volumes.
 #'
 #' @param samples N-by-2 matrix representing independent samples from the
 #'                bivariate chi-bar-squared distribution of a convex cone
@@ -342,8 +348,9 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
 #' @param dimC the dimension of the cone
 #' @param linC the lineality of the cone
 #' @param enforce_logconc logical; determines whether a model that enforces log-concavity shall be used
-#' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
+#' @param prior_sample_size the sample size for the prior estimate (1 by default -> noninformative)
+#' @param prior either "noninformative" (default) or "informative" (only used if enforce_logconc==TRUE)
 #' @param filename filename for output (NA by default, in which case the return is a string)
 #' @param overwrite logical; determines whether the output should overwrite an existing file
 #'
@@ -417,12 +424,17 @@ estim_jags <- function(samples, d, dimC=d, linC=0, prior="noninformative", v_pri
 #'
 #' @export
 #'
-estim_stan <- function(samples, d, dimC=d, linC=0, enforce_logconc=FALSE, prior="noninformative",
-                       v_prior=NA, filename=NA, overwrite=FALSE) {
+estim_stan <- function(samples, d, dimC=d, linC=0, enforce_logconc=FALSE,
+                       v_prior=NA, prior_sample_size=1, prior="noninformative",
+                       filename=NA, overwrite=FALSE) {
 
     I_pol  <- which(samples[ ,1]==0)
     I_prim <- which(samples[ ,2]==0)
-    samples_bulk <- samples[ -c(I_pol,I_prim) , ]
+    if (length(I_pol)==0 && length(I_prim)==0)
+        samples_bulk <- samples
+    else
+        samples_bulk <- samples[ -c(I_pol,I_prim) , ]
+    N <- dim(samples)[1]
     N_pol  <- length(I_pol)
     N_prim <- length(I_prim)
     N_bulk <- N-N_pol-N_prim
@@ -446,23 +458,18 @@ estim_stan <- function(samples, d, dimC=d, linC=0, enforce_logconc=FALSE, prior=
 // See 'https://github.com/damelunx/conivol' for more information.
 \n"
 
-        if (prior=="informative")
-            prior_weight <- 1
-        else
-            prior_weight <- 0
-
         if (dimC==d && linC==0) {
             data_list <- list(
-                d            = d ,
-                d_0          = d_0 ,
-                d_1          = d_1 ,
-                N_0          = N_pol ,
-                N_bulk       = N_bulk ,
-                N_d          = N_prim ,
-                X            = samples_bulk[ ,1] ,
-                Y            = samples_bulk[ ,2] ,
-                v_nonz_prior = v_nonz_prior ,
-                prior_weight = prior_weight
+                d                 = d ,
+                d_0               = d_0 ,
+                d_1               = d_1 ,
+                N_0               = N_pol ,
+                N_bulk            = N_bulk ,
+                N_d               = N_prim ,
+                X                 = samples_bulk[ ,1] ,
+                Y                 = samples_bulk[ ,2] ,
+                v_nonz_prior      = v_nonz_prior ,
+                prior_sample_size = prior_sample_size
             )
             model_string <- paste0(modelinfo,
 "data {
@@ -475,7 +482,7 @@ estim_stan <- function(samples, d, dimC=d, linC=0, enforce_logconc=FALSE, prior=
     vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
     vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
     vector <lower=0>[d+1] v_nonz_prior ;                     // prior estimate of nonzero intrinsic volumes
-    real <lower=0> prior_weight ;                            // added weight for Dirichlet priors (0=noninformative, 1=informative)
+    real <lower=0> prior_sample_size ;                       // multiplicative weight for Dirichlet priors (1=noninformative)
 }
 
 transformed data {
@@ -488,9 +495,9 @@ transformed data {
     sample_multinom[2] = N_bulk ;
     sample_multinom[3] = N_d ;
     for (i in 0:d_0)
-        alpha[i+1] = v_nonz_prior[2*i+1] + prior_weight ;
+        alpha[i+1] = prior_sample_size * v_nonz_prior[2*i+1] ;
     for (i in 0:d_1)
-        beta[i+1]  = v_nonz_prior[2*i+2] + prior_weight ;
+        beta[i+1]  = prior_sample_size * v_nonz_prior[2*i+2] ;
 
     for (i in 1:N_bulk) {
         for (k in 1:(d-1)) {
@@ -538,16 +545,16 @@ generated quantities {
 }")
         } else if (dimC==d && linC>0) {
             data_list <- list(
-                d            = d ,
-                d_0          = d_0 ,
-                d_1          = d_1 ,
-                linC         = linC ,
-                N_bulk       = N_bulk ,
-                N_d          = N_prim ,
-                X            = samples_bulk[ ,1] ,
-                Y            = samples_bulk[ ,2] ,
-                v_nonz_prior = v_nonz_prior ,
-                prior_weight = prior_weight
+                d                 = d ,
+                d_0               = d_0 ,
+                d_1               = d_1 ,
+                linC              = linC ,
+                N_bulk            = N_bulk ,
+                N_d               = N_prim ,
+                X                 = samples_bulk[ ,1] ,
+                Y                 = samples_bulk[ ,2] ,
+                v_nonz_prior      = v_nonz_prior ,
+                prior_sample_size = prior_sample_size
             )
             model_string <- paste0(modelinfo,
 "data {
@@ -560,7 +567,7 @@ generated quantities {
     vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
     vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
     vector <lower=0>[d-linC+1] v_nonz_prior ;                // prior estimate of nonzero intrinsic volumes
-    real <lower=0> prior_weight ;                            // added weight for Dirichlet priors (0=noninformative, 1=informative)
+    real <lower=0> prior_sample_size ;                       // multiplicative weight for Dirichlet priors (1=noninformative)
 }
 
 transformed data {
@@ -572,9 +579,9 @@ transformed data {
     sample_multinom[1] = N_bulk ;
     sample_multinom[2] = N_d ;
     for (i in 0:d_0)
-        alpha[i+1] = v_nonz_prior[2*i+1] + prior_weight ;
+        alpha[i+1] = prior_sample_size * v_nonz_prior[2*i+1] ;
     for (i in 0:d_1)
-        beta[i+1]  = v_nonz_prior[2*i+2] + prior_weight ;
+        beta[i+1]  = prior_sample_size * v_nonz_prior[2*i+2] ;
     for (i in 1:N_bulk) {
         for (k in linC:(d-1)) {
             log_dens_XY[i][k-linC+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
@@ -621,16 +628,16 @@ generated quantities {
 }")
         } else if (dimC<d && linC==0) {
             data_list <- list(
-                d            = d ,
-                d_0          = d_0 ,
-                d_1          = d_1 ,
-                dimC         = dimC ,
-                N_0          = N_pol ,
-                N_bulk       = N_bulk ,
-                X            = samples_bulk[ ,1] ,
-                Y            = samples_bulk[ ,2] ,
-                v_nonz_prior = v_nonz_prior ,
-                prior_weight = prior_weight
+                d                 = d ,
+                d_0               = d_0 ,
+                d_1               = d_1 ,
+                dimC              = dimC ,
+                N_0               = N_pol ,
+                N_bulk            = N_bulk ,
+                X                 = samples_bulk[ ,1] ,
+                Y                 = samples_bulk[ ,2] ,
+                v_nonz_prior      = v_nonz_prior ,
+                prior_sample_size = prior_sample_size
             )
             model_string <- paste0(modelinfo,
 "data {
@@ -643,7 +650,7 @@ generated quantities {
     vector <lower=0>[N_bulk] X;                              // squared length of projection on primal
     vector <lower=0>[N_bulk] Y;                              // squared length of projection on polar
     vector <lower=0>[dimC+1] v_nonz_prior ;                  // prior estimate of nonzero intrinsic volumes
-    real <lower=0> prior_weight ;                            // added weight for Dirichlet priors (0=noninformative, 1=informative)
+    real <lower=0> prior_sample_size ;                       // multiplicative weight for Dirichlet priors (1=noninformative)
 }
 
 transformed data {
@@ -655,9 +662,9 @@ transformed data {
     sample_multinom[1] = N_0 ;
     sample_multinom[2] = N_bulk ;
     for (i in 0:d_0)
-        alpha[i+1] = v_nonz_prior[2*i+1] + prior_weight ;
+        alpha[i+1] = prior_sample_size * v_nonz_prior[2*i+1] ;
     for (i in 0:d_1)
-        beta[i+1]  = v_nonz_prior[2*i+2] + prior_weight ;
+        beta[i+1]  = prior_sample_size * v_nonz_prior[2*i+2] ;
     for (i in 1:N_bulk) {
         for (k in 1:dimC) {
             log_dens_XY[i][k] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
@@ -704,16 +711,16 @@ generated quantities {
 }")
         } else if (dimC<d && linC>0) {
             data_list <- list(
-                d            = d ,
-                d_0          = d_0 ,
-                d_1          = d_1 ,
-                dimC         = dimC ,
-                linC         = linC ,
-                N            = N_bulk ,
-                X            = samples_bulk[ ,1] ,
-                Y            = samples_bulk[ ,2] ,
-                v_nonz_prior = v_nonz_prior ,
-                prior_weight = prior_weight
+                d                 = d ,
+                d_0               = d_0 ,
+                d_1               = d_1 ,
+                dimC              = dimC ,
+                linC              = linC ,
+                N                 = N_bulk ,
+                X                 = samples_bulk[ ,1] ,
+                Y                 = samples_bulk[ ,2] ,
+                v_nonz_prior      = v_nonz_prior ,
+                prior_sample_size = prior_sample_size
             )
             model_string <- paste0(modelinfo,
 "data {
@@ -726,7 +733,7 @@ generated quantities {
     vector <lower=0>[N] X;                                   // squared length of projection on primal
     vector <lower=0>[N] Y;                                   // squared length of projection on polar
     vector <lower=0>[dimC-linC+1] v_nonz_prior ;             // prior estimate of nonzero intrinsic volumes
-    real <lower=0> prior_weight ;                            // added weight for Dirichlet priors (0=noninformative, 1=informative)
+    real <lower=0> prior_sample_size ;                       // multiplicative weight for Dirichlet priors (1=noninformative)
 }
 
 transformed data {
@@ -735,9 +742,9 @@ transformed data {
     row_vector[dimC-linC+1] log_dens_XY[N] ;
 
     for (i in 0:d_0)
-        alpha[i+1] = v_nonz_prior[2*i+1] + prior_weight ;
+        alpha[i+1] = prior_sample_size * v_nonz_prior[2*i+1] ;
     for (i in 0:d_1)
-        beta[i+1]  = v_nonz_prior[2*i+2] + prior_weight ;
+        beta[i+1]  = prior_sample_size * v_nonz_prior[2*i+2] ;
     for (i in 1:N) {
         for (k in linC:dimC) {
             log_dens_XY[i][k-linC+1] = chi_square_lpdf(X[i]|k) + chi_square_lpdf(Y[i]|(d-k)) ;
@@ -786,12 +793,12 @@ generated quantities {
 // Model is created with the R-method 'estim_stan' from the 'conivol' package.
 // See 'https://github.com/damelunx/conivol' for more information.
 \n"
-        if (prior=="informative"){
-            alpha <- v_nonz_prior / 2
-            beta  <- rep(1/2,dimC-linC+1)
+        if (prior=="noninformative"){
+            alpha <- rep(2,dimC-linC+1)
+            beta  <- 2 / v_nonz_prior
         } else {
-            alpha <- rep(1,dimC-linC+1)
-            beta  <- 1 / v_nonz_prior
+            alpha <- v_nonz_prior
+            beta  <- rep(1,dimC-linC+1)
         }
 
         T <- matrix( rep(0,(dimC-linC+1)^2), dimC-linC+1, dimC-linC+1 )
@@ -864,7 +871,7 @@ transformed parameters {
     row_vector[d-1] logV_bulk ;
 
     u = T \\ t ;
-    V = exp(u)/sum(exp(u)) ;
+    V = exp(-u)/sum(exp(-u)) ;
     V_extreme[1] = V[1] ;
     V_extreme[2] = sum(V[2:d]) ;
     V_extreme[3] = V[d+1] ;
@@ -939,7 +946,7 @@ transformed parameters {
 
     u = T \\ t ;
     V[1:linC] = 0 ;
-    V[(linC+1):(d+1)] = exp(u)/sum(exp(u)) ;
+    V[(linC+1):(d+1)] = exp(-u)/sum(exp(-u)) ;
     V_extreme[1] = sum(V[(linC+1):d]) ;
     V_extreme[2] = V[d+1] ;
     logV_bulk = to_row_vector( log(V[(linC+1):d]) ) ;
@@ -1013,7 +1020,7 @@ transformed parameters {
 
     u = T \\ t ;
     V[(dimC+2):(d+1)] = 0 ;
-    V[1:(dimC+1)] = exp(u)/sum(exp(u)) ;
+    V[1:(dimC+1)] = exp(-u)/sum(exp(-u)) ;
     V_extreme[1] = V[1] ;
     V_extreme[2] = sum(V[2:(dimC+1)]) ;
     logV_bulk = to_row_vector( log(V[2:(dimC+1)]) ) ;
@@ -1085,7 +1092,7 @@ transformed parameters {
     u = T \\ t ;
     V[1:linC] = 0 ;
     V[(dimC+2):(d+1)] = 0 ;
-    V[(linC+1):(dimC+1)] = exp(u)/sum(exp(u)) ;
+    V[(linC+1):(dimC+1)] = exp(-u)/sum(exp(-u)) ;
     logV_bulk = to_row_vector( log(V[(linC+1):(dimC+1)]) ) ;
 }
 

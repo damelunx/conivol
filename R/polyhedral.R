@@ -54,19 +54,21 @@
 }
 
 
-
-#' Find a reduced form of a polyhedral cone given by generators
+#' Find a reduced form of a polyhedral cone
 #'
-#' \code{polyh_reduce} takes as input a \code{n} by \code{m} matrix \code{A}
-#' and returns a reduced form described by orthogonal bases for lineality space
-#' and linear span, as well as a matrix generating the reduced cone.
-#' See below for more details.
+#' \code{polyh_reduce_gen} and \code{polyh_reduce_ineq} take as inputs a \code{n}
+#' by \code{m} matrix \code{A}
+#' and return reduced forms described by orthogonal bases for lineality space
+#' and linear span, as well as matrices generating the reduced cones.
 #'
-#' @param A matrix
+#' @name polyh_reduce
+#'
+#' @param A matrix (specifying either generators or inequalities of the cone)
 #' @param solver either "nnls" or "mosek"
 #' @param tol tolerance (single precision machine epsilon by default)
 #'
-#' @return The output of \code{polyh_reduce(A)} is a list containing the following elements:
+#' @return The outputs of \code{polyh_reduce_gen(A)} and \code{polyh_reduce_ineq(A)}
+#'         are lists containing the following elements:
 #' \itemize{
 #'   \item \code{dimC}: the dimension of the linear span of \code{C},
 #'   \item \code{linC}: the lineality of the cone \code{C},
@@ -79,10 +81,9 @@
 #' }
 #'
 #' @section See also:
-#'
 #' Package: \code{\link[conivol]{conivol}}
 #'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#' @note See \href{../doc/conic-intrinsic-volumes.html}{this vignette}
 #'       for further info.
 #'
 #' @examples
@@ -90,15 +91,30 @@
 #' A <- A[,sample(ncol(A))]
 #' print(A)
 #'
-#' A_red <- polyh_reduce(A)$A_reduced
-#' print(A_red)
+#' # using the 'generators' interpretation
+#' A_red_gen <- polyh_reduce_gen(A)$A_reduced
+#' print(A_red_gen)
 #'
-#' A_red <- polyh_reduce(A, solver="mosek")$A_reduced
-#' print(A_red)
+#' A_red_gen <- polyh_reduce_gen(A, solver="mosek")$A_reduced
+#' print(A_red_gen)
+#'
+#' # using the 'inequalities' interpretation
+#' A_red_ineq <- polyh_reduce_ineq(A)$A_reduced
+#' print(A_red_ineq)
+#'
+#' A_red_ineq <- polyh_reduce_ineq(A, solver="mosek")$A_reduced
+#' print(A_red_ineq)
+#'
+NULL
+
+#' @describeIn polyh_reduce Interprets \code{A} as generator matrix of the cone,
+#'                         that is, the cone is given by \code{{Ax|x>=0}}; the
+#'                         matrix \code{A_reduced} defines the reduced cone
+#'                         in the same way.
 #'
 #' @export
 #'
-polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
+polyh_reduce_gen <- function(A, solver="nnls", tol=1e-7) {
     if (solver=="nnls") {
         if (!requireNamespace("nnls", quietly = TRUE))
             stop("\n Could not find package 'nnls'.")
@@ -114,6 +130,17 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
         stop("\n Input is not a matrix.")
 
     d <- dim(A)[1]
+    if (d==1) {
+        if ( any(A>0) & any(A<0) )
+            return( list( dimC=1, linC=1, QL=1, QC=NA, A_reduced=0) )
+        else if (all(A>0))
+            return( list( dimC=1, linC=0, QL=NA, QC=1, A_reduced=1) )
+        else if (all(A<0))
+            return( list( dimC=1, linC=0, QL=NA, QC=-1, A_reduced=1) )
+        else
+            return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0) )
+    }
+
     dimC <- qr(A)$rank
     if (dimC==0)
         return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0) )
@@ -134,12 +161,12 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
     A_L <- A[,is_in_L]
     linC <- qr(A_L)$rank
     if (linC==0)
-        QL = NA
+        QL <- NA
     else {
         if (linC==1)
-            QL = matrix( A_L[,1]/sqrt(sum(A_L[,1]^2)) )
+            QL <- matrix( A_L[,1]/sqrt(sum(A_L[,1]^2)) )
         else
-            QL = svd(A_L)$u[ , 1:linC]
+            QL <- svd(A_L)$u[ , 1:linC]
 
         if (dimC==linC)
             return( list( dimC=dimC, linC=linC, QL=QL, QC=NA, A_reduced=cbind(QL,-QL)) )
@@ -158,6 +185,10 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
 
     # remove redundancies
     d <- dim(A)[1]
+    if (d==1) {
+        if (all(A>0)) return( list( dimC=dimC, linC=linC, QL=QL, QC=QC,  A_reduced=1) )
+        else          return( list( dimC=dimC, linC=linC, QL=QL, QC=-QC, A_reduced=1) )
+    }
     nn <- dim(A)[2]
     is_relevant <- vector("logical", nn)
     if (solver=="nnls") {
@@ -175,16 +206,41 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
 }
 
 
-
-#' Sample from bivariate chi-bar-squared distribution of a polyhedral cone given by generators
+#' @describeIn polyh_reduce Interprets \code{A} as inequality matrix of the cone,
+#'                         that is, the cone is given by \code{{y|A^Ty<=0}}; the
+#'                         matrix \code{A_reduced} defines the reduced cone
+#'                         in the same way.
 #'
-#' \code{polyh_rbichibarsq_gen} generates an \code{n} by \code{2} matrix
-#' such that the rows form iid samples from the bivariate chi-bar-squared
-#' distribution of the polyhedral cone given by generators, that is, in the
-#' form \code{{Ax|x>=0}}. If \code{reduce==TRUE}, which is the default, then a
+#' @export
+#'
+polyh_reduce_ineq <- function(A, solver="nnls", tol=1e-7) {
+    d <- dim(A)[1]
+    out <- polyh_reduce_gen(A, solver=solver, tol=tol)
+    dimCpol <- out$dimC
+    linCpol <- out$linC
+
+    out$dimC <- d-linCpol
+    out$linC <- d-dimCpol
+    return(out)
+}
+
+
+#' Sample from bivariate chi-bar-squared distribution of a polyhedral cone
+#'
+#' \code{polyh_rbichibarsq_gen} and \code{polyh_rbichibarsq_ineq} generate
+#' \code{n} by \code{2} matrices such that the rows form iid samples
+#' from a bivariate chi-bar-squared distribution.
+#'
+#' The bivariate chi-bar-squared distribution correponds to
+#' the polyhedral cone \code{C} given by the matrix \code{A},
+#' either through its columns spanning the cone, \code{C={Ax|x>=0}},
+#' or through its rows giving the inequalities of the cone, \code{C={y|A^Ty<=0}}.
+#' If \code{reduce==TRUE} (default), then a
 #' reduced form of the cone will be computed and the bivariate chi-bar-squared
 #' distribution will correspond to the reduced form, and the output will contain
-#' further elements (in form of a list), see below.
+#' further elements (in form of a list).
+#'
+#' @name polyh_rbichibarsq
 #'
 #' @param n number of samples
 #' @param A matrix
@@ -194,8 +250,9 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
 #' @param tol tolerance used in the reduction step
 #'            (single precision machine epsilon by default)
 #'
-#' @return The output of \code{polyh_rbichibarsq_gen(n,A)}, with the default value
-#'         \code{reduce==TRUE}, is a list containing the following elements:
+#' @return The outputs of \code{polyh_rbichibarsq_gen(n,A)} and
+#'         \code{polyh_rbichibarsq_ineq(n,A)}, with the default value
+#'         \code{reduce==TRUE}, are lists containing the following elements:
 #' \itemize{
 #'   \item \code{dimC}: the dimension of the linear span of \code{C},
 #'   \item \code{linC}: the lineality of the cone \code{C},
@@ -207,33 +264,53 @@ polyh_reduce <- function(A, solver="nnls", tol=1e-7) {
 #'   \item \code{A_reduced}: a matrix defining the reduced cone,
 #'   \item \code{samples}: an \code{n} by \code{2} matrix whose rows form
 #'         iid samples from the bivariate chi-bar-squared distribution with
-#'         weights given by the intrinsic volumes of the reduced cone \code{{A_reduced x|x>=0}};
+#'         weights given by the intrinsic volumes of the reduced cone
+#'         (either \code{{A_reduced x|x>=0}} or \code{{y|A_reduced^Ty<=0}});
 #'         set to \code{NA} if \code{C} is a linear space.
 #' }
 #'         If \code{reduce==FALSE} then the output is only an
 #'         \code{n} by \code{2} matrix such that its rows form
 #'         iid samples from the bivariate chi-bar-squared distribution with
-#'         weights given by the intrinsic volumes of the cone \code{{Ax|x>=0}}.
+#'         weights given by the intrinsic volumes of the cone,
+#'         either \code{{Ax|x>=0}} or \code{{y|A^Ty<=0}}
 #'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#' @note See \href{../doc/conic-intrinsic-volumes.html}{this vignette}
 #'       for further info.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_rbichibarsq_ineq}}, \code{\link[conivol]{rbichibarsq}},
-#' \code{\link[conivol]{circ_rbichibarsq}}
+#' \code{\link[conivol]{rbichibarsq}}
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
+#' # using the 'generators' interpretation
 #' set.seed(1234)
-#' out <- polyh_rbichibarsq_gen(20, matrix(1:12,4,3))
-#' print(out)
+#' out_gen <- polyh_rbichibarsq_gen(20, matrix(1:12,4,3))
+#' print(out_gen)
 #'
 #' set.seed(1234)
-#' sampmos <- polyh_rbichibarsq_gen(20, out$A_reduced, solver="mosek", reduce=FALSE)
-#' print(sampmos)
+#' sampmos_gen <- polyh_rbichibarsq_gen(20, out_gen$A_reduced, solver="mosek", reduce=FALSE)
+#' print(sampmos_gen)
 #'
-#' sum( (out$samples - sampmos)^2 )
+#' sum( (out_gen$samples - sampmos_gen)^2 )
+#'
+#' # using the 'inequalities' interpretation
+#' set.seed(1234)
+#' out_ineq <- polyh_rbichibarsq_ineq(20, matrix(1:12,4,3))
+#' print(out_ineq)
+#'
+#' set.seed(1234)
+#' sampmos_ineq <- polyh_rbichibarsq_ineq(20, out_ineq$A_reduced, solver="mosek", reduce=FALSE)
+#' print(sampmos_ineq)
+#'
+#' sum( (out_ineq$samples - sampmos_ineq)^2 )
+#'
+NULL
+
+#' @describeIn polyh_rbichibarsq Interprets \code{A} as generator matrix of the cone,
+#'                         that is, the cone is given by \code{{Ax|x>=0}}; the
+#'                         matrix \code{A_reduced} defines the reduced cone
+#'                         in the same way.
 #'
 #' @export
 #'
@@ -253,7 +330,7 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
         stop("\n Input is not a matrix.")
 
     if (reduce) {
-        red <- polyh_reduce(A, solver=solver, tol=tol)
+        red <- polyh_reduce_gen(A, solver=solver, tol=tol)
         dimC <- red$dimC
         if (dimC==0)
             return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
@@ -283,75 +360,18 @@ polyh_rbichibarsq_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
             out[i, ] <- c(p,sum(y^2)-p)
         }
     }
-
+    # to avoid complications due to rounding errors resulting in negative values:
+    out <- pmax(out,0)
     if (!reduce)
         return(out)
     else
         return( list( dimC=dimC, linC=linC, QL=QL, QC=QC, A_reduced=A, samples=out) )
 }
 
-
-
-
-#' Sample from bivariate chi-bar-squared distribution of a polyhedral cone given by inequalities
-#'
-#' \code{polyh_rbichibarsq_ineq} generates an \code{n} by \code{2} matrix
-#' such that the rows form iid samples from the bivariate chi-bar-squared
-#' distribution of the polyhedral cone given by inequalities, that is, in the
-#' form \code{{y|A^Ty<=0}}. If \code{reduce==TRUE}, which is the default, then a
-#' reduced form of the cone will be computed and the bivariate chi-bar-squared
-#' distribution will correspond to the reduced form, and the output will contain
-#' further elements (in form of a list), see below.
-#'
-#' @param n number of samples
-#' @param A matrix
-#' @param solver either "nnls" or "mosek"
-#' @param reduce logical; if \code{TRUE}, the cone defined by \code{A} will be
-#'               decomposed orthogonally w.r.t. its lineality space
-#' @param tol tolerance used in the reduction step
-#'            (single precision machine epsilon by default)
-#'
-#' @return The output of \code{polyh_rbichibarsq_ineq(n,A)}, with the default value
-#'         \code{reduce==TRUE}, is a list containing the following elements:
-#' \itemize{
-#'   \item \code{dimC}: the dimension of the linear span of \code{C},
-#'   \item \code{linC}: the lineality of the cone \code{C},
-#'   \item \code{QL}: an orthogonal basis of the orthogonal complement of the
-#'                    linear span of \code{C},
-#'                    set to \code{NA} if \code{dim(C)==d},
-#'   \item \code{QC}: an orthogonal basis of the projection of \code{C} onto
-#'                    the orthogonal complement of the lineality space of \code{C},
-#'                    set to \code{NA} if \code{C} is a linear space,
-#'   \item \code{A_reduced}: a matrix defining the reduced cone,
-#'   \item \code{samples}: an \code{n} by \code{2} matrix whose rows form
-#'         iid samples from the bivariate chi-bar-squared distribution with
-#'         weights given by the intrinsic volumes of the reduced cone \code{{y|A_reduced^T y<=0}}.
-#' }
-#'         If \code{reduce==FALSE} then the output is only an
-#'         \code{n} by \code{2} matrix such that its rows form
-#'         iid samples from the bivariate chi-bar-squared distribution with
-#'         weights given by the intrinsic volumes of the cone \code{{y|A^Ty<=0}},
-#'         set to \code{NA} if \code{C} is a linear space.
-#'
-#' @section See also:
-#' \code{\link[conivol]{polyh_rbichibarsq_gen}}, \code{\link[conivol]{rbichibarsq}},
-#' \code{\link[conivol]{circ_rbichibarsq}}
-#'
-#' Package: \code{\link[conivol]{conivol}}
-#'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
-#'       for further info.
-#'
-#' @examples
-#' set.seed(1234)
-#' out <- polyh_rbichibarsq_ineq(20, matrix(1:12,4,3))
-#' print(out)
-#'
-#' set.seed(1234)
-#' sampmos <- polyh_rbichibarsq_ineq(20, out$A_reduced, solver="mosek", reduce=FALSE)
-#' print(sampmos)
-#'
-#' sum( (out$samples - sampmos)^2 )
+#' @describeIn polyh_rbichibarsq Interprets \code{A} as inequality matrix of the cone,
+#'                         that is, the cone is given by \code{{y|A^Ty<=0}}; the
+#'                         matrix \code{A_reduced} defines the reduced cone
+#'                         in the same way.
 #'
 #' @export
 #'
@@ -372,16 +392,26 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 
 
 
-#' Sample from intrinsic volumes distribution of a polyhedral cone given by generators
+
+
+
+#' Sample from intrinsic volumes distribution of a polyhedral cone
 #'
-#' \code{polyh_rivols_gen} generates a vector of iid samples from the intrinsic
-#' volumes distribution, that is, the distribution on \code{{0,1,...,d}} with the
+#' \code{polyh_rivols_gen} and \code{polyh_rivols_ineq} generate iid samples
+#' from the intrinsic volumes distribution of polyhedral cones.
+#'
+#' The samples are from the intrinsic volumes distribution, which is the
+#' distribution on \code{{0,1,...,d}} with the
 #' probability for \code{k} given by \code{v_k(C)}, where \code{C} is the
-#' polyhedral cone by the generator matrix \code{A}, that is, \code{C={Ax|x>=0}}.
-#' If \code{reduce==TRUE}, which is the default, then a
-#' reduced form of the cone will be computed and returned, see below;
+#' polyhedral cone given by the matrix \code{A},
+#' either through its columns spanning the cone, \code{C={Ax|x>=0}},
+#' or through its rows giving the inequalities of the cone, \code{C={y|A^Ty<=0}}.
+#' If \code{reduce==TRUE} (default), then a
+#' reduced form of the cone will be computed and returned;
 #' however, the intrinsic volumes distribution will be that of the original
 #' (non-reduced) cone.
+#'
+#' @name polyh_rivols
 #'
 #' @param n number of samples
 #' @param A matrix
@@ -391,8 +421,9 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #' @param tol tolerance used in the reduction step
 #'            (single precision machine epsilon by default)
 #'
-#' @return The output of \code{polyh_rivols_gen(n,A)}, with the default value
-#'         \code{reduce==TRUE}, is a list containing the following elements:
+#' @return The outputs of \code{polyh_rivols_gen(n,A)} and \code{polyh_rivols_ineq(n,A)},
+#'         with the default value \code{reduce==TRUE},
+#'         are lists containing the following elements:
 #' \itemize{
 #'   \item \code{dimC}: the dimension of the linear span of \code{C},
 #'   \item \code{linC}: the lineality of the cone \code{C},
@@ -405,7 +436,8 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'   \item \code{A_reduced}: a matrix defining the reduced cone,
 #'   \item \code{samples}: an \code{n}-element vector of integers in \code{linC,...,dimC}
 #'         representing iid samples from the distribution on \code{{0,1,...,d}} with the
-#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={Ax|x>=0}},
+#'         probability for \code{k} given by \code{v_k(C)}, where
+#'         either \code{C={Ax|x>=0}} or \code{C={y|A^Ty<=0}},
 #'   \item \code{multsamp}: a \code{(d+1)}-element vector of integers
 #'         in \code{0,...,n} that sum up to \code{n} representing the frequency
 #'         table of the above categorical samples.
@@ -414,20 +446,35 @@ polyh_rbichibarsq_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'         the vectors \code{samples} and \code{multsamp}.
 #'
 #' @section See also:
-#' \code{\link[conivol]{polyh_rivols_ineq}}
-#'
 #' Package: \code{\link[conivol]{conivol}}
 #'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
+#' @note See \href{../doc/conic-intrinsic-volumes.html}{this vignette}
 #'       for further info.
 #'
 #' @examples
+#' # using the 'generators' interpretation
 #' set.seed(1234)
-#' out <- polyh_rivols_gen(20, matrix(1:12,4,3))
-#' print(out)
+#' out_gen <- polyh_rivols_gen(20, matrix(1:12,4,3))
+#' print(out_gen)
 #'
 #' set.seed(1234)
-#' out$linC + polyh_rivols_gen(20, out$A_reduced, solver="mosek", reduce=FALSE)$samples
+#' out_gen$linC + polyh_rivols_gen(20, out_gen$A_reduced, solver="mosek", reduce=FALSE)$samples
+#'
+#' # using the 'inequalities' interpretation
+#' set.seed(1234)
+#' out_ineq <- polyh_rivols_ineq(20, matrix(1:12,4,3))
+#' print(out_ineq)
+#'
+#' set.seed(1234)
+#' out_ineq$linC + polyh_rivols_ineq(20, out_ineq$A_reduced, solver="mosek", reduce=FALSE)$samples
+#'
+NULL
+
+
+#' @describeIn polyh_rivols Interprets \code{A} as generator matrix of the cone,
+#'                         that is, the cone is given by \code{{Ax|x>=0}}; the
+#'                         matrix \code{A_reduced} defines the reduced cone
+#'                         in the same way.
 #'
 #' @export
 #'
@@ -447,7 +494,7 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
         stop("\n Input is not a matrix.")
 
     if (reduce) {
-        red <- polyh_reduce(A, solver=solver, tol=tol)
+        red <- polyh_reduce_gen(A, solver=solver, tol=tol)
         dimC <- red$dimC
         if (dimC==0)
             return( list( dimC=0, linC=0, QL=NA, QC=NA, A_reduced=0, samples=NA) )
@@ -492,62 +539,10 @@ polyh_rivols_gen <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 }
 
 
-#' Sample from intrinsic volumes distribution of a polyhedral cone given by inequalities
-#'
-#' \code{polyh_rivols_ineq} generates a vector of iid samples from the intrinsic
-#' volumes distribution, that is, the distribution on \code{{0,1,...,d}} with the
-#' probability for \code{k} given by \code{v_k(C)}, where \code{C} is the
-#' polyhedral cone by the inequalities matrix \code{A}, that is, \code{C={y|A^Ty<=0}}.
-#' If \code{reduce==TRUE}, which is the default, then a
-#' reduced form of the cone will be computed and returned, see below;
-#' however, the intrinsic volumes distribution will be that of the original
-#' (non-reduced) cone.
-#'
-#' @param n number of samples
-#' @param A matrix
-#' @param solver either "nnls" or "mosek"
-#' @param reduce logical; if \code{TRUE}, the cone defined by \code{A} will be
-#'               decomposed orthogonally w.r.t. its lineality space
-#' @param tol tolerance used in the reduction step
-#'            (single precision machine epsilon by default)
-#'
-#' @return The output of \code{polyh_rivols_ineq(n,A)}, with the default value
-#'         \code{reduce==TRUE}, is a list containing the following elements:
-#' \itemize{
-#'   \item \code{dimC}: the dimension of the linear span of \code{C},
-#'   \item \code{linC}: the lineality of the cone \code{C},
-#'   \item \code{QL}: an orthogonal basis of the orthogonal complement of the
-#'                    linear span of \code{C},
-#'                    set to \code{NA} if \code{dim(C)==d},
-#'   \item \code{QC}: an orthogonal basis of the projection of \code{C} onto
-#'                    the orthogonal complement of the lineality space of \code{C},
-#'                    set to \code{NA} if \code{C} is a linear space,
-#'   \item \code{A_reduced}: a matrix defining the reduced cone,
-#'   \item \code{samples}: an \code{n}-element vector of integers in \code{linC,...,dimC}
-#'         representing iid samples from the distribution on \code{{0,1,...,d}} with the
-#'         probability for \code{k} given by \code{v_k(C)}, where \code{C={y|A^Ty<=0}},
-#'   \item \code{multsamp}: a \code{(d+1)}-element vector of integers
-#'         in \code{0,...,n} that sum up to \code{n} representing the frequency
-#'         table of the above categorical samples.
-#' }
-#'         If \code{reduce==FALSE} then the output is a list containing only
-#'         the vectors \code{samples} and \code{multsamp}.
-#'
-#' @section See also:
-#' \code{\link[conivol]{polyh_rivols_gen}}
-#'
-#' Package: \code{\link[conivol]{conivol}}
-#'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#sampling_polyh}{this vignette}
-#'       for further info.
-#'
-#' @examples
-#' set.seed(1234)
-#' out <- polyh_rivols_ineq(20, matrix(1:12,4,3))
-#' print(out)
-#'
-#' set.seed(1234)
-#' out$linC + polyh_rivols_ineq(20, out$A_reduced, solver="mosek", reduce=FALSE)$samples
+#' @describeIn polyh_rivols Interprets \code{A} as inequality matrix of the cone,
+#'                         that is, the cone is given by \code{{y|A^Ty<=0}}; the
+#'                         matrix \code{A_reduced} defines the reduced cone
+#'                         in the same way.
 #'
 #' @export
 #'
@@ -582,8 +577,8 @@ polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'                 multinomial intrinsic volumes distribution of a convex cone
 #' @param dimC the dimension of the cone
 #' @param linC the lineality of the cone
-#' @param prior either "noninformative" (default) or "informative"
 #' @param v_prior a prior estimate of the vector of intrinsic volumes (NA by default)
+#' @param prior_sample_size the sample size for the prior estimate (1 by default -> noninformative)
 #'
 #' @return The output of \code{polyh_bayes} is a list containing the following elements:
 #' \itemize{
@@ -653,9 +648,7 @@ polyh_rivols_ineq <- function(n, A, solver="nnls", reduce=TRUE, tol=1e-7) {
 #'
 #' @export
 #'
-polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA) {
-    if ( !(prior %in% c("noninformative", "informative")) )
-        stop("\n Parameter prior must be \"noninformative\" or \"informative\".")
+polyh_bayes <- function(multsamp, dimC, linC, v_prior=NA, prior_sample_size=1) {
     if ( linC>dimC )
         stop("\n Lineality linC must be less than dimension dimC.")
     if ( linC==dimC )
@@ -665,21 +658,17 @@ polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA
     I_even <- 2*(0:floor(d/2)) + 1          # final +1 is because of R indices start at 1
     I_odd  <- 1+2*(0:floor((d-1)/2)) + 1    # final +1 is because of R indices start at 1
 
-    if (is.na(v_prior)) {
+    if (all(is.na(v_prior))) {
         v_prior_adj <- rep(0,d+1)
         v_prior_adj[I_even] <- 1/ceiling((d+1)/2) / 2
         v_prior_adj[I_odd]  <- 1/floor((d+1)/2) / 2
     } else {
-        v_prior_adj <- v_prior[linC:dimC]
+        v_prior_adj <- v_prior[1+linC:dimC]
     }
 
-    Dir_prior_even <- 2*v_prior_adj[I_even]
-    Dir_prior_odd  <- 2*v_prior_adj[I_odd]
+    Dir_prior_even <- 2*prior_sample_size*v_prior_adj[I_even]
+    Dir_prior_odd  <- 2*prior_sample_size*v_prior_adj[I_odd]
 
-    if (prior=="informative"){
-        Dir_prior_even <- 1+Dir_prior_even
-        Dir_prior_odd  <- 1+Dir_prior_odd
-    }
     update <- multsamp[linC:(dimC-linC)+1]
 
     Dir_post_even <- Dir_prior_even + update[I_even]
@@ -733,6 +722,7 @@ polyh_bayes <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA
 #' \code{polyh_stan} generates inputs for Stan (data list and model string or external file)
 #' for sampling from the posterior distribution,
 #' given direct (multinomial) samples of the intrinsic volumes distribution.
+#'
 #' The prior distribution is taken on the log-concavity parameters
 #' (second iterated differences of the logarithms of the intrinsic volumes),
 #' which enforces log-concavity of the intrinsic volumes.
@@ -830,18 +820,18 @@ polyh_stan <- function(multsamp, dimC, linC, prior="noninformative", v_prior=NA,
     if ( linC==dimC )
         stop("\n Lineality and dimension (linC==dimC) indicate that cone is linear subspace.")
 
-    if (is.na(v_prior)) {
+    if (all(is.na(v_prior))) {
         v_nonz_prior <- rep(1,dimC-linC+1)/(dimC-linC+1)
     } else {
-        v_nonz_prior <- v_prior[linC:dimC]
+        v_nonz_prior <- v_prior[1+linC:dimC]
     }
 
-    if (prior=="informative"){
-        alpha <- v_nonz_prior / 2
-        beta  <- rep(1/2,dimC-linC+1)
+    if (prior=="noninformative"){
+        alpha <- rep(2,dimC-linC+1)
+        beta  <- 2 / v_nonz_prior
     } else {
-        alpha <- rep(1,dimC-linC+1)
-        beta  <- 1 / v_nonz_prior
+        alpha <- v_nonz_prior
+        beta  <- rep(1,dimC-linC+1)
     }
 
     T <- matrix( rep(0,(dimC-linC+1)^2), dimC-linC+1, dimC-linC+1 )
