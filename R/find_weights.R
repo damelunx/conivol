@@ -52,7 +52,10 @@ prepare_em <- function(d, m_samp) {
     out$n         <- n
     out$prop_prim <- max(length(I2),1)/n
     out$prop_pol  <- max(length(I1),1)/n
-    out$dens <- apply( m_samp[-c(I1,I2), ], 1, function(x){dchisq(x[1],1:(d-1))*dchisq(x[2],(d-1):1)} )
+    if (length(I1)+length(I2)>0)
+        out$dens <- apply( m_samp[-c(I1,I2), ], 1, function(x){dchisq(x[1],1:(d-1))*dchisq(x[2],(d-1):1)} )
+    else
+        out$dens <- apply( m_samp, 1, function(x){dchisq(x[1],1:(d-1))*dchisq(x[2],(d-1):1)} )
 
     return(out)
 }
