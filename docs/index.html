@@ -46,7 +46,7 @@
 <li>
   <a href="index.html">
     <span class="fa fa-home fa-lg"></span>
-     
+
   </a>
 </li>
 <li>
@@ -55,7 +55,7 @@
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     Articles
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
@@ -79,15 +79,19 @@
 </div>
 <!--/.navbar -->
 
-      
+
       </header><div class="row">
   <div class="col-md-9">
-    
 
-    
-    
+
+
+
 <div class="contents">
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+<div id="conivol" class="section level1">
+<div class="page-header"><h1 class="hasAnchor">
+<a href="#conivol" class="anchor"></a>conivol</h1></div>
+
 <p>This R package provides functions for the chi-bar-squared distribution, the bivariate chi-bar-squared distribution, and the conic intrinsic volumes. It supports standard functions for the density/cdf/sampling of the (bivariate) chi-bar-squared distribution, calculations and known formulas for special classes of intrinsic volumes of cones, sampling functions for ellipsoidal cones and general polyhedral cones, as well as functions for estimating intrinsic volumes either from direct samples of the intrinsic volumes distribution (in the case of polyhedral cones) or from samples of the corresponding bivariate chi-bar-squared distribution. The package supports point estimates as well as Bayesian estimates via JAGS and Stan.</p>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
@@ -452,6 +456,7 @@ tib_plot &lt;-<span class="st"> </span><span class="kw">as_tibble</span>( <span 
 <span class="st">    </span><span class="kw">geom_line</span>(<span class="dt">data=</span>tib_true,<span class="kw">aes</span>(<span class="dt">x=</span>k,<span class="dt">y=</span><span class="kw">log</span>(v_true)),<span class="dt">colour=</span><span class="st">"black"</span>,<span class="dt">linetype=</span><span class="st">"dashed"</span>) +
 <span class="st">    </span><span class="kw">theme</span>(<span class="dt">legend.position=</span><span class="st">"none"</span>, <span class="dt">axis.title.x=</span><span class="kw">element_blank</span>(), <span class="dt">axis.title.y=</span><span class="kw">element_blank</span>())</code></pre></div>
 <p><img src="README_figures/em-large-sample-2.png" width="672"></p>
+</div>
 </div>
 </div>
 </div>
