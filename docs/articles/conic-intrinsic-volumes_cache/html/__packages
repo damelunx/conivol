@@ -1,0 +1,17 @@
+base
+conivol
+tidyverse
+ggplot2
+tibble
+tidyr
+readr
+purrr
+dplyr
+partitions
+lattice
+plyr
+Rmisc
+Matrix
+mvtnorm
+cobs
+logcondiscr
