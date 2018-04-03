@@ -1,0 +1,60 @@
+title: conivol
+url: http://damelunx.github.io/conivol
+template:
+  params:
+    bootswatch: yeti
+reference:
+  - title: (Bivariate) Chi-bar-squared distribution
+    desc: ~
+    contents:
+      - '`chibarsq`'
+      - '`bichibarsq`'
+  - title: Special classes of cones
+    desc: ~
+    contents:
+      - '`prod_ivols`'
+      - '`circ_ivols`'
+      - '`ellips_semiax`'
+      - '`ellips_rbichibarsq`'
+      - '`weyl_matrix`'
+      - '`weyl_ivols`'
+  - title: General polyhedral cones
+    desc: ~
+    contents:
+      - '`polyh_reduce`'
+      - '`polyh_rivols`'
+      - '`polyh_rbichibarsq`'
+      - '`polyh_bayes`'
+      - '`polyh_stan`'
+  - title: Estimating the weights of the bivariate chi-bar-squared distribution
+    desc: ~
+    contents:
+      - '`estim_statdim_var`'
+      - '`init_ivols`'
+      - '`loglike_ivols`'
+      - '`prepare_em`'
+      - '`estim_em`'
+      - '`estim_jags`'
+      - '`estim_stan`'
+navbar:
+  type: inverse
+  left:
+    - icon: fa-home
+      href: index.html
+    - text: "Overview"
+      href: reference/conivol.html
+    - text: "Articles"
+      menu:
+        - text: Conic intrinsic volumes and (bivariate) chi-bar-squared distribution
+          href: articles/conic-intrinsic-volumes.html
+        - text: Estimating conic intrinsic volumes from bivariate chi-bar-squared data
+          href: articles/estim-conic-intrinsic-volumes-with-EM.html
+        - text: Bayesian estimates for conic intrinsic volumes
+          href: articles/bayesian.html
+  right:
+    - icon: fa-file-code-o 
+      text: "functions"
+      href: reference/index.html
+    - icon: fa-github fa-lg
+      text: "github"
+      href: https://github.com/damelunx/conivol
