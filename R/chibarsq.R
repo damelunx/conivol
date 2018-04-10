@@ -3,7 +3,7 @@
 #' Density, distribution function, and random generation for the chi-bar-squared
 #' distribution with mixing weights (conic intrinsic volumes) \code{v}.
 #'
-#' @name chibarsquare
+#' @name chibarsq
 #'
 #' @section See also:
 #' \code{\link[conivol]{dbichibarsq}}, \code{\link[conivol]{pbichibarsq}}, \code{\link[conivol]{rbichibarsq}},
@@ -14,7 +14,7 @@
 NULL
 
 
-#' @describeIn chibarsquare Evaluates the density of the chi-bar-squared distribution.
+#' @describeIn chibarsq Evaluates the density of the chi-bar-squared distribution.
 #'
 #' @param x,q vector of quantiles.
 #' @param v vector of mixing weights (conic intrinsic volumes).
@@ -49,7 +49,7 @@ dchibarsq <- function(x, v) {
 }
 
 
-#' @describeIn chibarsquare Evaluates the cdf of the chi-bar-squared distribution.
+#' @describeIn chibarsq Evaluates the cdf of the chi-bar-squared distribution.
 #'
 #' @return The output of \code{pchibarsq(q, v)} is a vector of length \code{length(q)}
 #'         such that the entries are the values of the cdf of the
@@ -73,7 +73,7 @@ pchibarsq <- function(q, v) {
 }
 
 
-#' @describeIn chibarsquare Samples from the chi-bar-squared distribution.
+#' @describeIn chibarsq Samples from the chi-bar-squared distribution.
 #'
 #' @param n number of observations.
 #'

@@ -46,6 +46,9 @@
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
+#' \dontrun{
+#'
+#' library(tidyverse)
 #' library(rjags)
 #' options(mc.cores = parallel::detectCores())
 #'
@@ -58,7 +61,7 @@
 #' # getting the sample data
 #' N <- 10^3
 #' set.seed(1234)
-#' m_samp <- circ_rbichibarsq(N,D,alpha)
+#' m_samp <- rbichibarsq(N,v_exact)
 #'
 #' # compute initial guess
 #' est <- estim_statdim_var(d, m_samp)
@@ -74,30 +77,34 @@
 #'                   n.chains = 4 ,
 #'                   n.adapt = 500)
 #' close(model_connection)
-#' update(mod, 1e3)
+#' # update(mod, 1e3)
 #'
 #' # simulate posterior distribution and display trace plots and summaries
 #' mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
-#' plot(mod_sim, ask=TRUE)
+#' # plot(mod_sim, ask=TRUE)
 #' mod_csim <- as.mcmc(do.call(rbind, mod_sim))
-#' tmp <- summary(mod_csim)
-#' tmp
 #'
+#' tib_plot <- tibble(
+#'     x=0:d,
+#'     y_true=v_exact,
+#'     y_est=v0,
+#'     y_bayes_mean=summary(mod_csim)$statistics[ ,'Mean'],
+#'     y_bayes_quant25=summary(mod_csim)$quantiles[ ,'25%'],
+#'     y_bayes_quant50=summary(mod_csim)$quantiles[ ,'50%'],
+#'     y_bayes_quant75=summary(mod_csim)$quantiles[ ,'75%']
+#' )
 #' # plot true values, the estimate v0, and marginals of the posterior samples
-#' library(tidyverse)
-#' ggplot(data=tibble(x=0:d,
-#'                    y_true=v_exact,
-#'                    y_est=v0,
-#'                    y_bayes_mean=tmp$statistics[ ,'Mean'],
-#'                    y_bayes_quant25=tmp$quantiles[ ,'25%'],
-#'                    y_bayes_quant50=tmp$quantiles[ ,'50%'],
-#'                    y_bayes_quant75=tmp$quantiles[ ,'75%'])) +
-#'      geom_line(aes(x=x, y=y_true), color="red") +
-#'      geom_line(aes(x=x, y=y_est), color="black") +
-#'      geom_line(aes(x=x, y=y_bayes_mean), color="blue") +
-#'      geom_line(aes(x=x, y=y_bayes_quant25), color="green") +
-#'      geom_line(aes(x=x, y=y_bayes_quant50), color="green") +
-#'      geom_line(aes(x=x, y=y_bayes_quant75), color="green")
+#' ggplot(data=tib_plot) +
+#'     geom_line(aes(x=x, y=y_true), color="red") +
+#'     geom_line(aes(x=x, y=y_est), color="black") +
+#'     geom_line(aes(x=x, y=y_bayes_mean), color="blue") +
+#'     geom_line(aes(x=x, y=y_bayes_quant25), color="green") +
+#'     geom_line(aes(x=x, y=y_bayes_quant50), color="green") +
+#'     geom_line(aes(x=x, y=y_bayes_quant75), color="green") +
+#'     theme(axis.title.x=element_blank(),
+#'           axis.title.y=element_blank())
+#'
+#' }
 #'
 #' @export
 #'
@@ -375,6 +382,8 @@ estim_jags <- function(samples, d, dimC=d, linC=0,
 #' Package: \code{\link[conivol]{conivol}}
 #'
 #' @examples
+#' \dontrun{
+#'
 #' library(rstan)
 #'
 #' # defining the example cone
@@ -421,6 +430,8 @@ estim_jags <- function(samples, d, dimC=d, linC=0,
 #' boxplot( value~key, tidyr::gather( data, factor_key=TRUE ) )
 #' lines(1+0:d, log(v_exact), col="red")
 #' lines(1+0:d, log(v_est_med), col="blue")
+#'
+#' }
 #'
 #' @export
 #'
