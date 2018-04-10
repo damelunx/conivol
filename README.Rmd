@@ -47,6 +47,10 @@ devtools::install_github("damelunx/conivol")
 * Source code: [github.com/damelunx/conivol](http://github.com/damelunx/conivol)
 * Manual: [damelunx.github.io/conivol](http://damelunx.github.io/conivol)
 
+**See also:**
+
+* `symconivol` package: [damelunx.github.io/symconivol](http://damelunx.github.io/symconivol)
+
 ## Vignettes
 
 The following vignettes introduce the theory of intrinsic volumes, explain the

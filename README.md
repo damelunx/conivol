@@ -15,6 +15,16 @@ You can install `conivol` from github with:
 devtools::install_github("damelunx/conivol")
 ```
 
+Code & documentation
+--------------------
+
+-   Source code: [github.com/damelunx/conivol](http://github.com/damelunx/conivol)
+-   Manual: [damelunx.github.io/conivol](http://damelunx.github.io/conivol)
+
+**See also:**
+
+-   `symconivol` package: [damelunx.github.io/symconivol](http://damelunx.github.io/symconivol)
+
 Vignettes
 ---------
 
@@ -67,20 +77,20 @@ pbichibarsq(xmat, v)
 
 # draw samples
 rchibarsq(10,v)
-#>  [1] 11.7136793  1.8455705  0.3968663  4.2529728 11.9379648  1.6168339
-#>  [7] 12.4645588  4.1396592 12.1570490  1.3374971
+#>  [1] 6.1463261 0.1416041 8.2826727 4.4773390 6.0058743 0.7937796 2.4157046
+#>  [8] 5.3227938 0.0000000 3.3612290
 rbichibarsq(10,v)
-#>            [,1]         [,2]
-#>  [1,]  9.158176 0.6671769752
-#>  [2,]  4.653150 0.3943444343
-#>  [3,]  3.511411 0.2112598458
-#>  [4,]  0.325022 9.4584050842
-#>  [5,]  3.512931 0.5548743991
-#>  [6,]  5.933315 0.0000000000
-#>  [7,]  0.000000 1.2225380465
-#>  [8,]  1.065171 3.0144153644
-#>  [9,] 10.853338 2.4789997414
-#> [10,]  6.457394 0.0005752294
+#>            [,1]       [,2]
+#>  [1,] 2.3668934  4.6920338
+#>  [2,] 0.1968204  0.3530046
+#>  [3,] 0.3625915  3.3433793
+#>  [4,] 1.1612110  5.1716681
+#>  [5,] 4.2781895  2.1164302
+#>  [6,] 0.3533374  3.2572594
+#>  [7,] 3.5040308  3.4984949
+#>  [8,] 7.4817297  0.0000000
+#>  [9,] 3.0479072  0.0000000
+#> [10,] 0.8220247 10.6227306
 ```
 
 ### Special classes of cones:
@@ -109,25 +119,25 @@ prod_ivols( list(circ_ivols(4,pi/4), circ_ivols(4,pi/4)) )
 # computing the semiaxes of the ellipsoidal cone given by the linear image of the Lorentz cone
 A <- matrix(sample(1:25),5,5)
 ellips_semiax(A)
-#> [1] 8.39031851 3.13814421 1.96798247 0.05006629
+#> [1] 3.5148018 1.3559270 0.7008142 0.2332776
 
 # draw samples of the bivariate chi-bar-squared distribution of the ellipsoidal cone
 ellips_rbichibarsq(10, A)
 #> $semiax
-#> [1] 8.39031851 3.13814421 1.96798247 0.05006629
+#> [1] 3.5148018 1.3559270 0.7008142 0.2332776
 #> 
 #> $samples
-#>               [,1]        [,2]
-#>  [1,] 0.2660257383 2.435511490
-#>  [2,] 1.4165146338 0.987217591
-#>  [3,] 0.0001986938 6.127696113
-#>  [4,] 2.8067142466 0.006943965
-#>  [5,] 0.9298638137 0.863948449
-#>  [6,] 0.5425539061 2.533520675
-#>  [7,] 5.0078025450 1.865901620
-#>  [8,] 2.8754255165 0.013595918
-#>  [9,] 2.3327089870 3.072222151
-#> [10,] 2.3602207583 0.659725270
+#>             [,1]          [,2]
+#>  [1,] 1.44800064  6.140950e-01
+#>  [2,] 1.68175167  2.105807e+00
+#>  [3,] 0.31838045  3.337049e-02
+#>  [4,] 6.05139921  1.757622e+00
+#>  [5,] 0.05535768  1.159143e+00
+#>  [6,] 9.68560644  1.083321e-02
+#>  [7,] 7.08237454  1.190387e-02
+#>  [8,] 1.99143032  2.970942e+00
+#>  [9,] 8.67029874  7.291365e-01
+#> [10,] 4.16674063 -2.664535e-15
 
 # compute the matrix of the product of some Weyl chambers
 weyl_matrix( rep(3,4), c("BC","BCp","D","Dp"), product=TRUE)
@@ -216,16 +226,16 @@ polyh_reduce_ineq(A)
 # (setting reduce to FALSE since otherwise polyh_reduce_*** would be called)
 polyh_rivols_gen(10, A, reduce=FALSE)
 #> $samples
-#>  [1] 0 1 0 1 1 1 1 1 1 0
+#>  [1] 2 2 0 1 1 0 1 1 1 1
 #> 
 #> $multsamp
-#> [1] 3 7 0 0 0 0
+#> [1] 2 6 2 0 0 0
 polyh_rivols_ineq(10, A, reduce=FALSE)
 #> $samples
-#>  [1] 4 3 5 4 5 5 4 4 3 5
+#>  [1] 5 5 5 5 4 3 3 5 4 5
 #> 
 #> $multsamp
-#> [1] 0 0 0 2 4 4
+#> [1] 0 0 0 2 2 6
 
 # computing the Bayesian posterior with Dirichlet prior (analytically solvable)
 # we sample from a product of Weyl chambers to have the true values at hand
@@ -240,11 +250,11 @@ bayes_est <- polyh_bayes( out$multsamp, out$dimC, out$linC )
 # compare posterior median with true values
 v_est_med <- bayes_est$post_marg_quant(0:12,0.5)
 v_est_med / v_true
-#>  [1] 0.014347632 0.561701529 0.951341821 0.989484391 0.947710174
-#>  [6] 0.946117581 1.071471519 1.163783356 0.950920886 0.806530482
-#> [11] 0.003950155 0.108555516 1.506501407
+#>  [1] 0.01410046 0.37153044 1.19947004 0.90232367 0.94922249 0.96785612
+#>  [7] 1.03949856 1.14828707 0.88510365 1.54273651 0.65696203 0.11059765
+#> [13] 1.48054868
 sum( (v_est_med-v_true)^2 )
-#> [1] 0.0009137502
+#> [1] 0.0007449245
 
 # display boxplot of posterior distribution, overlayed with true values
 data <- as.data.frame( bayes_est$post_samp(1e4) )
@@ -290,10 +300,10 @@ ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
 # estimate the moments of the intrinsic volumes, compare with true values
 est <- estim_statdim_var(d, m_samp); est
 #> $delta
-#> [1] 10.00048
+#> [1] 10.0086
 #> 
 #> $var
-#> [1] 2.485597
+#> [1] 2.484804
 list( statdim_true=sum((0:d)*v_true),
       var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
 #> $statdim_true
@@ -313,13 +323,13 @@ v_init <- tibble( v_est_0 = init_ivols(13,0),
 # compute log-likelihoods of initial estimates
 lapply( v_init, loglike_ivols, data, 0)
 #> $v_est_0
-#> [1] -5.475552
+#> [1] -5.473134
 #> 
 #> $v_est_1
-#> [1] -4.966583
+#> [1] -4.964647
 #> 
 #> $v_est_4
-#> [1] -4.974373
+#> [1] -4.972136
 # plot the different estimates and their logarithms
 tib_plot <- v_init %>% add_column(v_true=v_true,.before=1) %>%
     add_column(k=0:d,.before=1) %>% gather(mode,value,2:5)
