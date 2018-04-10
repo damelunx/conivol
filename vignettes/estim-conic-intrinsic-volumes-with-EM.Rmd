@@ -4,12 +4,6 @@ author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 # output: rmarkdown::pdf_document
-# header-includes:
-#   - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
-vignette: >
-  %\VignetteIndexEntry{Estimating conic intrinsic volumes from bivariate chi-bar-squared data}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
 bibliography: references.bib
 link-citations: true
 ---
@@ -191,7 +185,7 @@ Sample from the corresponding bivariate chi-bar-squared distribution, and use
 this to estimate statistical dimension and variance and find initial estimates
 of intrinsic volumes:
 
-```{r ellips-samp, fig.width = 7}
+```{r ellips-samp, fig.width=8, fig.align="center"}
 N <- 1e5
 E <- ellips_rbichibarsq(N,A)
 str(E)
@@ -213,7 +207,7 @@ ggplot(tib_plot,aes(x=k,y=v,color=mode)) +
 ```
 
 
-## The likelihood function
+## The likelihood function {#likelihood_fct}
 
 We derive the likelihood function of the modified bivariate chi-bar-squared
 distribution, as explained [above](#mod_bivchibarsq).
@@ -282,7 +276,7 @@ loglike_ivols( v_est$mode3 , out_prep )
 loglike_ivols( v_est$mode4 , out_prep )
 ```
 
-### Log-concavity
+### Log-concavity {#log-conc}
 
 The log-concavity inequalities are the inequalities $v_k^2\geq v_{k-1}v_{k+1}$
 for $k=1,\ldots,d-1$, or equivalently,
@@ -320,7 +314,7 @@ There are two natural ways in which log-concavity may be enforced:
 
 Both of these methods are supported in `estim_em`.
 
-## Expectation maximization (EM) algorithm
+## Expectation maximization (EM) algorithm {#EM_alg}
 
 The expectation maximization (EM) algorithm works by maximizing the conditional
 expectation of the maximum likelihood method -- expectation with respect
@@ -377,7 +371,7 @@ $v_0^{(t+1)}+v_2^{(t+1)}+\dots=v_1^{(t+1)}+v_3^{(t+1)}+\dots=\frac12$.
 data. For this we run the EM algorithm with the different starting points for
 200 iterations, and display the every twenty-fifth iteration.
 
-```{r ellips-em, fig.width = 7}
+```{r ellips-em, fig.width=8, fig.align="center"}
 em0 <- estim_em( d, E$samples, N=200, v_init=v_est$mode0, data=out_prep )
 em1 <- estim_em( d, E$samples, N=200, v_init=v_est$mode1, data=out_prep )
 em2 <- estim_em( d, E$samples, N=200, v_init=v_est$mode2, data=out_prep )
@@ -431,7 +425,7 @@ ggplot(tib_plot4,aes(x=k,y=value,color=step)) +
 
 Comparing the 200th iterates of the different runs shows that they have pretty
 much converged to the same estimate.
-```{r ellips-em-comp, fig.width = 7}
+```{r ellips-em-comp, fig.width=8, fig.align="center"}
 # prepare plot
 tib_plot_comp <- tibble(  mode0=em0$iterates[201, ],
                           mode1=em1$iterates[201, ],
@@ -448,7 +442,7 @@ ggplot(tib_plot_comp,aes(x=k,y=value,color=mode)) +
 
 To assess the influence of log-concavity we also have a look at the iterates
 of the EM algorithm without enforced log-concavity.
-```{r ellips-em-no-logconc, fig.width = 7}
+```{r ellips-em-no-logconc, fig.width=8, fig.align="center"}
 em_no_logconc <- estim_em( d, E$samples, N=200, v_init=v_est$mode0, data=out_prep,
                            no_of_lcc_projections=0 )
 
