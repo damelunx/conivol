@@ -11,8 +11,8 @@
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
-<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
@@ -32,6 +32,8 @@
 <meta property="og:description" content="polyh_stan generates inputs for Stan (data list and model string or external file)
 for sampling from the posterior distribution,
 given direct (multinomial) samples of the intrinsic volumes distribution." />
+
+<meta property="og:image" content="http://damelunx.github.io/conivol/logo.png" />
 <meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
@@ -47,7 +49,7 @@ given direct (multinomial) samples of the intrinsic volumes distribution." />
   <body>
     <div class="container template-reference-topic">
       <header>
-      <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
@@ -61,12 +63,12 @@ given direct (multinomial) samples of the intrinsic volumes distribution." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fa fa-home"></span>
      
   </a>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../reference/conivol.html">Overview</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -76,20 +78,33 @@ given direct (multinomial) samples of the intrinsic volumes distribution." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
-    </li>
-    <li>
-      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</a>
+      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and (bivariate) chi-bar-squared distribution</a>
     </li>
     <li>
       <a href="../articles/estim-conic-intrinsic-volumes-with-EM.html">Estimating conic intrinsic volumes from bivariate chi-bar-squared data</a>
+    </li>
+    <li>
+      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
     </li>
   </ul>
 </li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="../reference/index.html">
+    <span class="fa fa-file-code-o"></span>
+     
+    functions
+  </a>
+</li>
+<li>
+  <a href="https://github.com/damelunx/conivol">
+    <span class="fa fa-github fa-lg"></span>
+     
+    github
+  </a>
+</li>
       </ul>
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -180,8 +195,9 @@ which enforces log-concavity of the intrinsic volumes.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>rstan</span>)
-
+    <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>rstan</span>)</div><div class='output co'>#&gt; <span class='message'>Loading required package: ggplot2</span></div><div class='output co'>#&gt; <span class='message'>Loading required package: StanHeaders</span></div><div class='output co'>#&gt; <span class='message'>rstan (Version 2.16.2, packaged: 2017-07-03 09:24:58 UTC, GitRev: 2e1f913d3ca3)</span></div><div class='output co'>#&gt; <span class='message'>For execution on a local, multicore CPU with excess RAM we recommend calling</span>
+#&gt; <span class='message'>rstan_options(auto_write = TRUE)</span>
+#&gt; <span class='message'>options(mc.cores = parallel::detectCores())</span></div><div class='input'>
 <span class='co'># set parameters of cones</span>
 <span class='no'>D</span> <span class='kw'>&lt;-</span> <span class='fu'>c</span>(<span class='fl'>5</span>,<span class='fl'>7</span>)
 <span class='no'>cone_types</span> <span class='kw'>&lt;-</span> <span class='fu'>c</span>(<span class='st'>"BC"</span>,<span class='st'>"BCp"</span>)
@@ -228,6 +244,7 @@ which enforces log-concavity of the intrinsic volumes.</p>
 <span class='no'>staninp</span> <span class='kw'>&lt;-</span> <span class='fu'>polyh_stan</span>(<span class='no'>out</span>$<span class='no'>multsamp</span>, <span class='no'>out</span>$<span class='no'>dimC</span>, <span class='no'>out</span>$<span class='no'>linC</span>, <span class='kw'>prior</span><span class='kw'>=</span><span class='st'>"informative"</span>, <span class='kw'>filename</span><span class='kw'>=</span><span class='no'>filename</span>)
 
 <span class='co'># run the Stan model</span>
+<span class='fu'>sink</span>(<span class='st'>"no-output.txt"</span>)
 <span class='no'>stanfit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stan'>stan</a></span>( <span class='kw'>file</span> <span class='kw'>=</span> <span class='no'>filename</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>staninp</span>$<span class='no'>data</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>4</span>,
                  <span class='kw'>warmup</span> <span class='kw'>=</span> <span class='fl'>1000</span>, <span class='kw'>iter</span> <span class='kw'>=</span> <span class='fl'>2000</span>, <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>200</span> )</div><div class='output co'>#&gt; In file included from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/BH/include/boost/config.hpp:39:0,
 #&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/BH/include/boost/math/tools/config.hpp:13,
@@ -237,37 +254,40 @@ which enforces log-concavity of the intrinsic volumes.</p>
 #&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/stan/math/rev/mat.hpp:4,
 #&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/stan/math.hpp:4,
 #&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/src/stan/model/model_header.hpp:4,
-#&gt;                  from file9fb32687388.cpp:8:
+#&gt;                  from file36927019b314.cpp:8:
 #&gt; /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/BH/include/boost/config/compiler/gcc.hpp:186:0: warning: "BOOST_NO_CXX11_RVALUE_REFERENCES" redefined
 #&gt;  #  define BOOST_NO_CXX11_RVALUE_REFERENCES
 #&gt;  ^
 #&gt; &lt;command-line&gt;:0:0: note: this is the location of the previous definition
 #&gt; cc1plus: warning: unrecognized command line option ‘-Wno-macro-redefined’</div><div class='output co'>#&gt; <span class='warning'>Warning: There were 1016 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See</span>
-#&gt; <span class='warning'>http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Examine the pairs() plot to diagnose sampling problems</span></div><div class='input'><span class='fu'>str</span>(<span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stanfit-method-extract'>extract</a></span>(<span class='no'>stanfit</span>))</div><div class='output co'>#&gt; List of 5
-#&gt;  $ t        : num [1:4000, 1:13] 5.79e-27 8.71e-05 3.66e-16 1.46e-14 1.24e-15 ...
+#&gt; <span class='warning'>http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Examine the pairs() plot to diagnose sampling problems</span></div><div class='input'><span class='fu'>sink</span>()
+<span class='fu'>file.remove</span>(<span class='st'>"no-output.txt"</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>str</span>(<span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stanfit-method-extract'>extract</a></span>(<span class='no'>stanfit</span>))</div><div class='output co'>#&gt; List of 5
+#&gt;  $ t        : num [1:4000, 1:13] 1.53e-14 4.00e-13 8.20e-04 8.71e-05 1.19 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
 #&gt;   .. ..$ iterations: NULL
 #&gt;   .. ..$           : NULL
-#&gt;  $ v_nonz   : num [1:4000, 1:13] 0.0029 0.00207 0.0024 0.003 0.00278 ...
+#&gt;  $ v_nonz   : num [1:4000, 1:13] 0.00226 0.00318 0.00486 0.00207 0.00155 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
 #&gt;   .. ..$ iterations: NULL
 #&gt;   .. ..$           : NULL
-#&gt;  $ V        : num [1:4000, 1:13] 1.18e-05 6.93e-06 9.02e-06 1.24e-05 1.12e-05 ...
+#&gt;  $ V        : num [1:4000, 1:13] 8.55e-06 1.35e-05 2.31e-05 6.93e-06 6.11e-06 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
 #&gt;   .. ..$ iterations: NULL
 #&gt;   .. ..$           : NULL
-#&gt;  $ logV_nonz: num [1:4000, 1:13] -11.3 -11.9 -11.6 -11.3 -11.4 ...
+#&gt;  $ logV_nonz: num [1:4000, 1:13] -11.7 -11.2 -10.7 -11.9 -12 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
 #&gt;   .. ..$ iterations: NULL
 #&gt;   .. ..$           : NULL
-#&gt;  $ lp__     : num [1:4000(1d)] -16889 -16881 -16886 -16889 -16885 ...
+#&gt;  $ lp__     : num [1:4000(1d)] -16888 -16888 -16880 -16881 -16887 ...
 #&gt;   ..- attr(*, "dimnames")=List of 1
 #&gt;   .. ..$ iterations: NULL</div><div class='input'>
 <span class='co'># remove Stan file</span>
 <span class='fu'>file.remove</span>(<span class='no'>filename</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
 <span class='co'># compare posterior median with true values</span>
 <span class='no'>v_est_med</span> <span class='kw'>&lt;-</span> <span class='fu'>apply</span>(<span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stanfit-method-extract'>extract</a></span>(<span class='no'>stanfit</span>)$<span class='no'>V</span>, <span class='fl'>2</span>, <span class='kw'>FUN</span> <span class='kw'>=</span> <span class='no'>median</span>)
-<span class='no'>v_est_med</span> / <span class='no'>v</span></div><div class='output co'>#&gt;  [1] 33.9626993  4.9564095  1.6796997  1.0582269  1.0080429  0.9945965  0.9987856  0.9811167  1.0204250  1.0066855  1.0342103  0.7938889  1.5538762</div><div class='input'><span class='fu'>sum</span>( (<span class='no'>v_est_med</span>-<span class='no'>v</span>)^<span class='fl'>2</span> )</div><div class='output co'>#&gt; [1] 5.297396e-05</div><div class='input'>
+<span class='no'>v_est_med</span> / <span class='no'>v</span></div><div class='output co'>#&gt;  [1] 33.9626993  4.9564095  1.6796997  1.0582269  1.0080429  0.9945965
+#&gt;  [7]  0.9987856  0.9811167  1.0204250  1.0066855  1.0342103  0.7938889
+#&gt; [13]  1.5538762</div><div class='input'><span class='fu'>sum</span>( (<span class='no'>v_est_med</span>-<span class='no'>v</span>)^<span class='fl'>2</span> )</div><div class='output co'>#&gt; [1] 5.297396e-05</div><div class='input'>
 <span class='co'># display boxplot of posterior distribution, overlayed with true values</span>
 <span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'>as.data.frame</span>( <span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stanfit-method-extract'>extract</a></span>(<span class='no'>stanfit</span>)$<span class='no'>V</span> )
 <span class='fu'>colnames</span>(<span class='no'>data</span>) <span class='kw'>&lt;-</span> <span class='fu'>paste0</span>(<span class='fu'>rep</span>(<span class='st'>"V"</span>,<span class='no'>d</span>+<span class='fl'>1</span>),<span class='fu'>as.character</span>(<span class='fl'>0</span>:<span class='no'>d</span>))

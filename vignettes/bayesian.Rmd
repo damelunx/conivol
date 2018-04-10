@@ -4,12 +4,6 @@ author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 # output: rmarkdown::pdf_document
-# header-includes:
-#   - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
-vignette: >
-  %\VignetteIndexEntry{Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
 bibliography: references.bib
 link-citations: true
 ---
@@ -18,7 +12,7 @@ link-citations: true
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "conic-intrinsic-volumes_figures/"
+  fig.path = "bayesian_figures/"
 )
 ```
 
@@ -72,7 +66,7 @@ We assume familiarity with the
     describes the details of the algorithm for finding the intrinsic volumes of closed
     convex cones from samples of the associated bivariate chi-bar-squared distribution.
 
-## Setup and notation
+## Setup and notation {#setup}
 
 As in the [previous vignette](estim-conic-intrinsic-volumes-with-EM.html#setup),
 we use the following notation:
@@ -142,7 +136,7 @@ v0_bcb_la <- init_ivols( dimC, estim_statdim_var(dimC,samp_bcb_la)$delta, init_m
 The different initial starting points (their closeness is explained by the fact
 that the starting point depends on a single parameter (the statistical dimension),
 which is easily estimated):
-```{r start-V-disp, fig.width = 7, echo=FALSE}
+```{r start-V-disp, fig.width=7, fig.align="center", echo=FALSE}
 tib_plot <- tibble(iv_small = v0_iv_sm,
                    iv_large = v0_iv_la,
                    bcb_small = v0_bcb_sm,
@@ -154,7 +148,7 @@ ggplot(tib_plot,aes(x=k,y=v,color=sampling)) +
 ```
 
 
-## Prior distribution
+## Prior distribution {#prior_dist}
 
 In a Bayesian approach we do not consider the intrinsic volumes as fixed parameters
 but rather as random themselves. Hence, we introduce the random variable
@@ -202,7 +196,7 @@ distribution where the parity equation is too much violated, or one might projec
 these points on the corresponding linear subspace. But this step is not supported
 in `conivol` as it is unclear which approach will yield the best results.
 
-### No enforced parity or log-concavity
+### No enforced parity or log-concavity {#no_enf_par_logc}
 
 The natural choice for the prior distribution of $V$ as a random element in the
 probability simplex $\Delta^d$ is the Dirichlet distribution,
@@ -235,7 +229,7 @@ given by $\sum_j c v^{(0)}_j=c$. Choosing a prior sample size $c=1$ will yield
 a noninformative prior; setting this parameter to a higher value will
 make the prior more informative.
 
-### Enforced parity equation
+### Enforced parity equation {#enf_par}
 
 The parity equations are enforced simply by using the two random probability
 vectors $V^e$ and $V^o$. We use the same reasoning as above to find priors
@@ -257,7 +251,7 @@ the uniform distribution for the initial estimate $v^{(0)}$, which is the defaul
 in the function `polyh_bayes`.)  
 
 **Noninformative (prior sample size $=1$):**
-```{r prior-iv-noninf, fig.width=7, echo=FALSE}
+```{r prior-iv-noninf, fig.width=7, fig.align="center", echo=FALSE}
 # we use the built-in function; by providing zero weights the posterior will equal the prior
 prior_iv <- polyh_bayes(rep(0,dimC+1),dimC,linC,v_prior=v0_iv_sm)
 N <- 10
@@ -270,7 +264,7 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
 ```
 
 **Informative (prior sample size $=d$):**
-```{r prior-iv-inf, fig.width=7, echo=FALSE}
+```{r prior-iv-inf, fig.width=7, fig.align="center", echo=FALSE}
 # we use the built-in function; by providing zero weights the posterior will equal the prior
 prior_iv <- polyh_bayes(rep(0,dimC+1),dimC,linC,v_prior=v0_iv_sm,prior_sample_size=d)
 N <- 10
@@ -282,7 +276,7 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
 ```
 
-### Enforced log-concavity
+### Enforced log-concavity {#enf_logc}
 
 The log-concavity inequalities are enforced by using the transformed vector
 $S=T\log(V)$ and by choosing a prior distribution whose support lies in the
@@ -313,7 +307,7 @@ elements from this distribution, and transform those back to prior samples
 for $V$.
 
 **Noninformative:**
-```{r prior-iv-noninf-logc, fig.width=7, echo=FALSE}
+```{r prior-iv-noninf-logc, fig.width=7, fig.align="center", echo=FALSE}
 # construct matrix T
 T <- matrix(0,d+1,d+1)
 for (k in 0:(d-2)) {
@@ -345,7 +339,7 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
 ```
 
 **Informative:**
-```{r prior-iv-inf-logc, fig.width=7, echo=FALSE}
+```{r prior-iv-inf-logc, fig.width=7, fig.align="center", echo=FALSE}
 S_samp <- matrix(0,d+1,N)
 for (k in 0:d)
     S_samp[k+1,] <- rgamma(N,shape=s0[k+1],scale=1)
@@ -362,7 +356,7 @@ ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
 ```
 
-## Posterior for intrinsic volumes data
+## Posterior for intrinsic volumes data {#post_ivol}
 
 If the underlying cone is polyhedral, then we can obtain direct samples from
 the intrinsic volumes distribution (via `polyh_rivols_gen` and `polyh_rivols_ineq`).
@@ -378,7 +372,7 @@ $w=(w_0,\ldots,w_d)$, $w_k=|\{i\mid z_i=k\}|$, we see that $w$ is a sample of th
 random variable
   \[ W\sim\text{Multinom}(n;v_0,\ldots,v_d) . \]
 The corresponding graphical model thus has a very simple form:  
-```{r disp-d, echo=FALSE}
+```{r disp-d, echo=FALSE, fig.align="center"}
 include_graphics(img_paths$d, dpi=img_dpi)
 ```
 
@@ -395,12 +389,12 @@ samplers [Stan](http://mc-stan.org/) and
 [JAGS](http://mcmc-jags.sourceforge.net/) to sample from the
 posterior distribution.
 
-### Enforced parity equation
+### Enforced parity equation {#post_enf_par}
 
 As described above, the only thing we need to do to enforce the parity equation
 is to decompose the vector into even and odd parts. The corresponding graphical
 model thus still has a very simple form:  
-```{r disp-dp, echo=FALSE}
+```{r disp-dp, echo=FALSE, fig.align="center"}
 include_graphics(img_paths$dp, dpi=img_dpi)
 ```
 
@@ -422,59 +416,71 @@ and large samples, and using a noninformative and an informative prior,
 as described above.
 
 **Small sample, noninformative prior:**
-```{r dir-enf-par-sm-noninf-comp}
+```{r dir-enf-par-sm-noninf-comp, eval=FALSE}
 post_iv <- polyh_bayes(samp_iv_sm,dimC,linC,v_prior=v0_iv_sm,prior_sample_size=1)
 str(post_iv)
 ```
-```{r dir-enf-par-sm-noninf, fig.width=7, echo=FALSE}
-tib_plot <- t(post_iv$post_samp(N)) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r dir-enf-par-sm-noninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/dir-enf-par-sm-noninf-1_save.png", dpi=100)
 ```
+<!-- ```{r dir-enf-par-sm-noninf, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- tib_plot <- t(post_iv$post_samp(N)) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Small sample, informative prior:**
-```{r dir-enf-par-sm-inf, fig.width=7, echo=FALSE}
-post_iv <- polyh_bayes(samp_iv_sm,dimC,linC,v_prior=v0_iv_sm,prior_sample_size=d)
-tib_plot <- t(post_iv$post_samp(N)) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r dir-enf-par-sm-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/dir-enf-par-sm-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r dir-enf-par-sm-inf, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- post_iv <- polyh_bayes(samp_iv_sm,dimC,linC,v_prior=v0_iv_sm,prior_sample_size=d) -->
+<!-- tib_plot <- t(post_iv$post_samp(N)) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Large sample, noninformative prior:**
-```{r dir-enf-par-la-noninf, fig.width=7, echo=FALSE}
-post_iv <- polyh_bayes(samp_iv_la,dimC,linC,v_prior=v0_iv_la)
-tib_plot <- t(post_iv$post_samp(N)) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r dir-enf-par-la-noninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/dir-enf-par-la-noninf-1_save.png", dpi=100)
 ```
+<!-- ```{r dir-enf-par-la-noninf, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- post_iv <- polyh_bayes(samp_iv_la,dimC,linC,v_prior=v0_iv_la) -->
+<!-- tib_plot <- t(post_iv$post_samp(N)) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Large sample, informative prior:**
-```{r dir-enf-par-la-inf, fig.width=7, echo=FALSE}
-post_iv <- polyh_bayes(samp_iv_la,dimC,linC,v_prior=v0_iv_la,prior_sample_size=d)
-tib_plot <- t(post_iv$post_samp(N)) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r dir-enf-par-la-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/dir-enf-par-la-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r dir-enf-par-la-inf, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- post_iv <- polyh_bayes(samp_iv_la,dimC,linC,v_prior=v0_iv_la,prior_sample_size=d) -->
+<!-- tib_plot <- t(post_iv$post_samp(N)) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 
-### Enforced log-concavity
+### Enforced log-concavity {#post_enf_logc}
 
 In order to enforce log-concavity we use the prior on the transformed parameters
 $S_k=-T\log(V_k)$, as described above. We arrive at the following 
 graphical model:  
-```{r disp-dl, echo=FALSE}
+```{r disp-dl, fig.align="center", echo=FALSE}
 include_graphics(img_paths$dl, dpi=img_dpi)
 ```
 
@@ -494,94 +500,103 @@ a noninformative and an informative prior distribution.
 
 **Small sample, noninformative prior:**  
 Define Stan model:
-```{r dir-enf-logc-comp, warning=FALSE}
+```{r dir-enf-logc-comp, warning=FALSE, eval=FALSE}
 filename <- "ex_stan_model_iv.stan"
 staninp <- polyh_stan(samp_iv_sm, dimC, linC,
                       v_prior=v0_iv_sm, prior="noninformative", filename=filename)
 ```
-```{r include=FALSE}
+```{r include=FALSE, eval=FALSE}
 # this is so that some compiler warnings do not appear in the markdown
 # (those warnings are only shown when running the Stan model the first time)
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
                  warmup = 1, iter = 2, cores = 1, refresh = 10 )
 ```
 Run Stan model:
-```{r dir-enf-logc-comp2, fig.width=7, warning=FALSE}
+```{r dir-enf-logc-comp2, fig.width=7, fig.align="center", warning=FALSE, eval=FALSE}
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-
-str(rstan::extract(stanfit))
-
 post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
 ```
 
-```{r dir-enf-logc-sm-noninf, fig.width=7, echo=FALSE}
-tib_plot <- t(post_iv_logc) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r dir-enf-logc-sm-noninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/dir-enf-logc-sm-noninf-1_save.png", dpi=100)
 ```
+<!-- ```{r dir-enf-logc-sm-noninf, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- tib_plot <- t(post_iv_logc) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Small sample, informative prior:**
-```{r dir-enf-logc-sm-inf, fig.width=7, echo=FALSE, warning=FALSE}
-# obtain Stan input (model already defined)
-staninp <- polyh_stan(samp_iv_sm, dimC, linC,
-                      v_prior=v0_iv_sm, prior="informative")
-# run Stan model
-stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-
-post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
-
-tib_plot <- t(post_iv_logc) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r dir-enf-logc-sm-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/dir-enf-logc-sm-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r dir-enf-logc-sm-inf, fig.width=7, fig.align="center", echo=FALSE, warning=FALSE} -->
+<!-- # obtain Stan input (model already defined) -->
+<!-- staninp <- polyh_stan(samp_iv_sm, dimC, linC, -->
+<!--                       v_prior=v0_iv_sm, prior="informative") -->
+<!-- # run Stan model -->
+<!-- stanfit <- stan( file = filename, data = staninp$data, chains = 1, -->
+<!--                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 ) -->
+
+<!-- post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),] -->
+
+<!-- tib_plot <- t(post_iv_logc) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Large sample, noninformative prior:**
-```{r dir-enf-logc-la-noninf, fig.width=7, echo=FALSE, warning=FALSE}
-# obtain Stan input (model already defined)
-staninp <- polyh_stan(samp_iv_la, dimC, linC,
-                      v_prior=v0_iv_la, prior="noninformative")
-# run Stan model
-stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-
-post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
-
-tib_plot <- t(post_iv_logc) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r dir-enf-logc-la-noninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/dir-enf-logc-la-noninf-1_save.png", dpi=100)
 ```
+<!-- ```{r dir-enf-logc-la-noninf, fig.width=7, fig.align="center", echo=FALSE, warning=FALSE} -->
+<!-- # obtain Stan input (model already defined) -->
+<!-- staninp <- polyh_stan(samp_iv_la, dimC, linC, -->
+<!--                       v_prior=v0_iv_la, prior="noninformative") -->
+<!-- # run Stan model -->
+<!-- stanfit <- stan( file = filename, data = staninp$data, chains = 1, -->
+<!--                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 ) -->
+
+<!-- post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),] -->
+
+<!-- tib_plot <- t(post_iv_logc) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Large sample, informative prior:**
-```{r dir-enf-logc-la-inf, fig.width=7, echo=FALSE, warning=FALSE}
-# obtain Stan input (model already defined)
-staninp <- polyh_stan(samp_iv_la, dimC, linC,
-                      v_prior=v0_iv_la, prior="informative")
-# run Stan model
-stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-# remove Stan input file
-file.remove(filename)
-
-post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),]
-
-tib_plot <- t(post_iv_logc) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r dir-enf-logc-la-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/dir-enf-logc-la-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r dir-enf-logc-la-inf, fig.width=7, fig.align="center", echo=FALSE, warning=FALSE} -->
+<!-- # obtain Stan input (model already defined) -->
+<!-- staninp <- polyh_stan(samp_iv_la, dimC, linC, -->
+<!--                       v_prior=v0_iv_la, prior="informative") -->
+<!-- # run Stan model -->
+<!-- stanfit <- stan( file = filename, data = staninp$data, chains = 1, -->
+<!--                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 ) -->
+<!-- # remove Stan input file -->
+<!-- file.remove(filename) -->
+
+<!-- post_iv_logc <- rstan::extract(stanfit)$V[100*(1:10),] -->
+
+<!-- tib_plot <- t(post_iv_logc) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 ## Posterior for bivariate chi-bar-squared data {#biv-chibsq}
 
@@ -594,12 +609,12 @@ We will thus only regard the data points $(X_i,Y_i)$ such that both components
 are nonzero. These on the other hand follow independent chi-squared distributions
 with degrees of freedom given by the value of the latent variable. The graphical
 model looks as follows:  
-```{r disp-id, echo=FALSE}
+```{r disp-id, echo=FALSE, fig.align="center"}
 include_graphics(img_paths$id, dpi=img_dpi)
 ```
 
 
-### Enforced parity
+### Enforced parity {#bcb_enf_par}
 
 In order to enforce log-concavity we split up the intrinsic volumes variables
 according to even and odd indices, analogously to the case of sample data from the
@@ -607,12 +622,12 @@ intrinsic volumes distribution. According to the parity of $d$ we arrive at
 the following graphical models.
 
 $d$ even:  
-```{r disp-idpe, echo=FALSE}
+```{r disp-idpe, echo=FALSE, fig.align="center"}
 include_graphics(img_paths$idpe, dpi=img_dpi)
 ```
 
 $d$ odd:  
-```{r disp-idpo, echo=FALSE}
+```{r disp-idpo, echo=FALSE, fig.align="center"}
 include_graphics(img_paths$idpo, dpi=img_dpi)
 ```
 
@@ -630,208 +645,229 @@ bivariate chi-bar-squared data; and we do these computations twice, first
 using JAGS, then using Stan.
 
 **JAGS | Small sample, noninformative prior:**  
-```{r indir-JAGS-enf-par-sm-ninf, warning=FALSE, fig.width=7}
-# obtain input data for JAGS model
-in_jags <- estim_jags(samp_bcb_sm, d, v_prior=v0_bcb_sm)
-
-# create JAGS model
-model_connection <- textConnection(in_jags$model)
-mod <- jags.model(model_connection ,
-                  data = in_jags$data ,
-                  n.chains = 1 ,
-                  n.adapt = 1000)
-close(model_connection)
-
-# sample posterior distribution, take every thousandth sample
-mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
-mod_csim <- as.mcmc(do.call(rbind, mod_sim))
-post_bcb_pa <- mod_csim[1e3*(1:10),]
-
-tib_plot <- t(post_bcb_pa) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-JAGS-enf-par-sm-ninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-JAGS-enf-par-sm-ninf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-JAGS-enf-par-sm-ninf, warning=FALSE, fig.width=7, fig.align="center"} -->
+<!-- # obtain input data for JAGS model -->
+<!-- in_jags <- estim_jags(samp_bcb_sm, d, v_prior=v0_bcb_sm) -->
+
+<!-- # create JAGS model -->
+<!-- model_connection <- textConnection(in_jags$model) -->
+<!-- mod <- jags.model(model_connection , -->
+<!--                   data = in_jags$data , -->
+<!--                   n.chains = 1 , -->
+<!--                   n.adapt = 1000) -->
+<!-- close(model_connection) -->
+
+<!-- # sample posterior distribution, take every thousandth sample -->
+<!-- mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4) -->
+<!-- mod_csim <- as.mcmc(do.call(rbind, mod_sim)) -->
+<!-- post_bcb_pa <- mod_csim[1e3*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_pa) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **JAGS | Small sample, informative prior:**  
-```{r indir-JAGS-enf-par-sm-inf, warning=FALSE, fig.width=7, echo=FALSE, warning=FALSE, results=FALSE}
-# obtain input data for JAGS model
-in_jags <- estim_jags(samp_bcb_sm, d, v_prior=v0_bcb_sm, prior_sample_size=d)
-
-# create JAGS model
-model_connection <- textConnection(in_jags$model)
-mod <- jags.model(model_connection ,
-                  data = in_jags$data ,
-                  n.chains = 1 ,
-                  n.adapt = 1000)
-close(model_connection)
-
-# sample posterior distribution, take every thousandth sample
-mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
-mod_csim <- as.mcmc(do.call(rbind, mod_sim))
-post_bcb_pa <- mod_csim[1e3*(1:10),]
-
-tib_plot <- t(post_bcb_pa) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-JAGS-enf-par-sm-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-JAGS-enf-par-sm-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-JAGS-enf-par-sm-inf, warning=FALSE, fig.width=7, fig.align="center", echo=FALSE, warning=FALSE, results=FALSE} -->
+<!-- # obtain input data for JAGS model -->
+<!-- in_jags <- estim_jags(samp_bcb_sm, d, v_prior=v0_bcb_sm, prior_sample_size=d) -->
+
+<!-- # create JAGS model -->
+<!-- model_connection <- textConnection(in_jags$model) -->
+<!-- mod <- jags.model(model_connection , -->
+<!--                   data = in_jags$data , -->
+<!--                   n.chains = 1 , -->
+<!--                   n.adapt = 1000) -->
+<!-- close(model_connection) -->
+
+<!-- # sample posterior distribution, take every thousandth sample -->
+<!-- mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4) -->
+<!-- mod_csim <- as.mcmc(do.call(rbind, mod_sim)) -->
+<!-- post_bcb_pa <- mod_csim[1e3*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_pa) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **JAGS | Large sample, noninformative prior:**  
-```{r indir-JAGS-enf-par-la-ninf, warning=FALSE, fig.width=7, echo=FALSE, warning=FALSE, results=FALSE}
-# obtain input data for JAGS model
-in_jags <- estim_jags(samp_bcb_la, d, v_prior=v0_bcb_la)
-
-# create JAGS model
-model_connection <- textConnection(in_jags$model)
-mod <- jags.model(model_connection ,
-                  data = in_jags$data ,
-                  n.chains = 1 ,
-                  n.adapt = 1000)
-close(model_connection)
-
-# sample posterior distribution, take every thousandth sample
-mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
-mod_csim <- as.mcmc(do.call(rbind, mod_sim))
-post_bcb_pa <- mod_csim[1000*(1:10),]
-
-tib_plot <- t(post_bcb_pa) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-JAGS-enf-par-la-ninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-JAGS-enf-par-la-ninf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-JAGS-enf-par-la-ninf, warning=FALSE, fig.width=7, fig.align="center", echo=FALSE, warning=FALSE, results=FALSE} -->
+<!-- # obtain input data for JAGS model -->
+<!-- in_jags <- estim_jags(samp_bcb_la, d, v_prior=v0_bcb_la) -->
+
+<!-- # create JAGS model -->
+<!-- model_connection <- textConnection(in_jags$model) -->
+<!-- mod <- jags.model(model_connection , -->
+<!--                   data = in_jags$data , -->
+<!--                   n.chains = 1 , -->
+<!--                   n.adapt = 1000) -->
+<!-- close(model_connection) -->
+
+<!-- # sample posterior distribution, take every thousandth sample -->
+<!-- mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4) -->
+<!-- mod_csim <- as.mcmc(do.call(rbind, mod_sim)) -->
+<!-- post_bcb_pa <- mod_csim[1000*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_pa) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **JAGS | Large sample, informative prior:**  
-```{r indir-JAGS-enf-par-la-inf, warning=FALSE, fig.width=7, echo=FALSE, warning=FALSE, results=FALSE}
-# obtain input data for JAGS model
-in_jags <- estim_jags(samp_bcb_la, d, v_prior=v0_bcb_la, prior_sample_size=d)
-
-# create JAGS model
-model_connection <- textConnection(in_jags$model)
-mod <- jags.model(model_connection ,
-                  data = in_jags$data ,
-                  n.chains = 1 ,
-                  n.adapt = 1000)
-close(model_connection)
-
-# sample posterior distribution, take every thousandth sample
-mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4)
-mod_csim <- as.mcmc(do.call(rbind, mod_sim))
-post_bcb_pa <- mod_csim[1000*(1:10),]
-
-tib_plot <- t(post_bcb_pa) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-JAGS-enf-par-la-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-JAGS-enf-par-la-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-JAGS-enf-par-la-inf, warning=FALSE, fig.width=7, fig.align="center", echo=FALSE, warning=FALSE, results=FALSE} -->
+<!-- # obtain input data for JAGS model -->
+<!-- in_jags <- estim_jags(samp_bcb_la, d, v_prior=v0_bcb_la, prior_sample_size=d) -->
+
+<!-- # create JAGS model -->
+<!-- model_connection <- textConnection(in_jags$model) -->
+<!-- mod <- jags.model(model_connection , -->
+<!--                   data = in_jags$data , -->
+<!--                   n.chains = 1 , -->
+<!--                   n.adapt = 1000) -->
+<!-- close(model_connection) -->
+
+<!-- # sample posterior distribution, take every thousandth sample -->
+<!-- mod_sim <- coda.samples(model=mod, variable.names=in_jags$variable.names, n.iter=1e4) -->
+<!-- mod_csim <- as.mcmc(do.call(rbind, mod_sim)) -->
+<!-- post_bcb_pa <- mod_csim[1000*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_pa) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Stan | Small sample, noninformative prior:**  
-```{r indir-Stan-enf-par-sm-ninf-comp1, warning=FALSE, fig.width=7}
+```{r indir-Stan-enf-par-sm-ninf-comp1, warning=FALSE, fig.width=7, fig.align="center", eval=FALSE}
 filename <- "ex_stan_model_bcb.stan"
 staninp <- estim_stan(samp_bcb_sm, d, dimC, linC,
                       v_prior=v0_bcb_sm, filename=filename)
 ```
-```{r include=FALSE}
+```{r indir-Stan-enf-par-sm-ninf-comp1a, include=FALSE, eval=FALSE}
 # this is so that some compiler warnings do not appear in the markdown
 # (those warnings are only shown when running the Stan model the first time)
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
                  warmup = 1, iter = 2, cores = 1, refresh = 10 )
 ```
-```{r indir-Stan-enf-par-sm-ninf-comp2, warning=FALSE, fig.width=7}
+```{r indir-Stan-enf-par-sm-ninf-comp2, warning=FALSE, fig.width=7, fig.align="center", eval=FALSE}
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-
-str(rstan::extract(stanfit))
-
 post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
 ```
-```{r indir-Stan-enf-par-sm-ninf, fig.width=7, echo=FALSE}
-tib_plot <- t(post_bcb_pa) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-Stan-enf-par-sm-ninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-Stan-enf-par-sm-ninf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-Stan-enf-par-sm-ninf, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- tib_plot <- t(post_bcb_pa) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Stan | Small sample, informative prior:**  
-```{r indir-Stan-enf-par-sm-inf, warning=FALSE, fig.width=7, echo=FALSE}
-# obtain Stan input (model already defined)
-staninp <- estim_stan(samp_bcb_sm, d, dimC, linC,prior_sample_size=d,
-                      v_prior=v0_bcb_sm)
-stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-
-post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
-
-tib_plot <- t(post_bcb_pa) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-Stan-enf-par-sm-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-Stan-enf-par-sm-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-Stan-enf-par-sm-inf, warning=FALSE, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- # obtain Stan input (model already defined) -->
+<!-- staninp <- estim_stan(samp_bcb_sm, d, dimC, linC,prior_sample_size=d, -->
+<!--                       v_prior=v0_bcb_sm) -->
+<!-- stanfit <- stan( file = filename, data = staninp$data, chains = 1, -->
+<!--                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 ) -->
+
+<!-- post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_pa) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Stan | Large sample, noninformative prior:**  
-```{r indir-Stan-enf-par-la-ninf, warning=FALSE, fig.width=7, echo=FALSE}
-# obtain Stan input (model already defined)
-staninp <- estim_stan(samp_bcb_la, d, dimC, linC,
-                      v_prior=v0_bcb_la)
-stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-
-post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
-
-tib_plot <- t(post_bcb_pa) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-Stan-enf-par-la-ninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-Stan-enf-par-la-ninf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-Stan-enf-par-la-ninf, warning=FALSE, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- # obtain Stan input (model already defined) -->
+<!-- staninp <- estim_stan(samp_bcb_la, d, dimC, linC, -->
+<!--                       v_prior=v0_bcb_la) -->
+<!-- stanfit <- stan( file = filename, data = staninp$data, chains = 1, -->
+<!--                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 ) -->
+
+<!-- post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_pa) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Stan | Large sample, informative prior:**  
-```{r indir-Stan-enf-par-la-inf, warning=FALSE, fig.width=7, echo=FALSE}
-# obtain Stan input (model already defined)
-staninp <- estim_stan(samp_bcb_la, d, dimC, linC,prior_sample_size=d,
-                      v_prior=v0_bcb_la)
-stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-# remove Stan input file
-file.remove(filename)
-
-post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),]
-
-tib_plot <- t(post_bcb_pa) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-Stan-enf-par-la-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-Stan-enf-par-la-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-Stan-enf-par-la-inf, warning=FALSE, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- # obtain Stan input (model already defined) -->
+<!-- staninp <- estim_stan(samp_bcb_la, d, dimC, linC,prior_sample_size=d, -->
+<!--                       v_prior=v0_bcb_la) -->
+<!-- stanfit <- stan( file = filename, data = staninp$data, chains = 1, -->
+<!--                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 ) -->
+<!-- # remove Stan input file -->
+<!-- file.remove(filename) -->
+
+<!-- post_bcb_pa <- rstan::extract(stanfit)$V[100*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_pa) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 
-### Enforced log-concavity
+### Enforced log-concavity {#bcb_enf_logc}
 
 Finally, we enforce log-concavity again using the transformed parameters 
 $S_k=-T\log(V_k)$. The graphical models, according to the parity of $d$,
 thus look as follows.
 
 $d$ even:  
-```{r disp-idle, echo=FALSE}
+```{r disp-idle, echo=FALSE, fig.align="center"}
 include_graphics(img_paths$idle, dpi=img_dpi)
 ```
 
 $d$ odd:  
-```{r disp-idlo, echo=FALSE}
+```{r disp-idlo, echo=FALSE, fig.align="center"}
 include_graphics(img_paths$idlo, dpi=img_dpi)
 ```
 
@@ -844,92 +880,101 @@ We redo the computations one more time, this time using the Stan model
 that enforces log-concavity.
 
 **Small sample, noninformative prior:**  
-```{r indir-Stan-enf-logc-sm-ninf-comp1, warning=FALSE, fig.width=7}
+```{r indir-Stan-enf-logc-sm-ninf-comp1, warning=FALSE, fig.width=7, fig.align="center", eval=FALSE}
 filename <- "ex_stan_model_bcb_logc.stan"
 staninp <- estim_stan(samp_bcb_sm, d, dimC, linC, enforce_logconc=TRUE,
                       v_prior=v0_bcb_sm, filename=filename)
 ```
-```{r include=FALSE}
+```{r indir-Stan-enf-logc-sm-ninf-comp1a, include=FALSE, eval=FALSE}
 # this is so that some compiler warnings do not appear in the markdown
 # (those warnings are only shown when running the Stan model the first time)
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
                  warmup = 1, iter = 2, cores = 1, refresh = 10 )
 ```
-```{r indir-Stan-enf-logc-sm-ninf-comp2, warning=FALSE, fig.width=7}
+```{r indir-Stan-enf-logc-sm-ninf-comp2, warning=FALSE, fig.width=7, fig.align="center", eval=FALSE}
 stanfit <- stan( file = filename, data = staninp$data, chains = 1,
                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-
-str(rstan::extract(stanfit))
-
 post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
 ```
-```{r indir-Stan-enf-logc-sm-ninf, fig.width=7, echo=FALSE}
-tib_plot <- t(post_bcb_logc) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-Stan-enf-logc-sm-ninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-Stan-enf-logc-sm-ninf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-Stan-enf-logc-sm-ninf, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- tib_plot <- t(post_bcb_logc) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Small sample, informative prior:**  
-```{r indir-Stan-enf-logc-sm-inf, warning=FALSE, fig.width=7, echo=FALSE}
-# obtain Stan input (model already defined)
-staninp <- estim_stan(samp_bcb_sm, d, dimC, linC, enforce_logconc=TRUE,
-                      prior="informative", v_prior=v0_bcb_sm)
-stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-
-post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
-
-tib_plot <- t(post_bcb_logc) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-Stan-enf-logc-sm-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-Stan-enf-logc-sm-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-Stan-enf-logc-sm-inf, warning=FALSE, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- # obtain Stan input (model already defined) -->
+<!-- staninp <- estim_stan(samp_bcb_sm, d, dimC, linC, enforce_logconc=TRUE, -->
+<!--                       prior="informative", v_prior=v0_bcb_sm) -->
+<!-- stanfit <- stan( file = filename, data = staninp$data, chains = 1, -->
+<!--                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 ) -->
+
+<!-- post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_logc) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Large sample, noninformative prior:**  
-```{r indir-Stan-enf-logc-la-ninf, warning=FALSE, fig.width=7, echo=FALSE}
-# obtain Stan input (model already defined)
-staninp <- estim_stan(samp_bcb_la, d, dimC, linC, enforce_logconc=TRUE,
-                      v_prior=v0_bcb_la)
-stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-
-post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
-
-tib_plot <- t(post_bcb_logc) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-Stan-enf-logc-la-ninf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-Stan-enf-logc-la-ninf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-Stan-enf-logc-la-ninf, warning=FALSE, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- # obtain Stan input (model already defined) -->
+<!-- staninp <- estim_stan(samp_bcb_la, d, dimC, linC, enforce_logconc=TRUE, -->
+<!--                       v_prior=v0_bcb_la) -->
+<!-- stanfit <- stan( file = filename, data = staninp$data, chains = 1, -->
+<!--                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 ) -->
+
+<!-- post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_logc) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 **Large sample, informative prior:**  
-```{r indir-Stan-enf-logc-la-inf, warning=FALSE, fig.width=7, echo=FALSE}
-# obtain Stan input (model already defined)
-staninp <- estim_stan(samp_bcb_la, d, dimC, linC, enforce_logconc=TRUE,
-                      prior="informative", v_prior=v0_bcb_la)
-stanfit <- stan( file = filename, data = staninp$data, chains = 1,
-                 warmup = 1000, iter = 2000, cores = 2, refresh = 1000 )
-# remove Stan input file
-file.remove(filename)
-
-post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),]
-
-tib_plot <- t(post_bcb_logc) %>%
-    as_tibble() %>% add_column(k=linC:dimC, .before=1) %>%
-    gather(key,value,2:(N+1))
-ggplot(tib_plot, aes(x=k, y=(value), color=key)) +
-    geom_line() + theme_bw() +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r indir-Stan-enf-logc-la-inf, echo=FALSE, fig.align="center"}
+include_graphics("bayesian_figures/indir-Stan-enf-logc-la-inf-1_save.png", dpi=100)
 ```
+<!-- ```{r indir-Stan-enf-logc-la-inf, warning=FALSE, fig.width=7, fig.align="center", echo=FALSE} -->
+<!-- # obtain Stan input (model already defined) -->
+<!-- staninp <- estim_stan(samp_bcb_la, d, dimC, linC, enforce_logconc=TRUE, -->
+<!--                       prior="informative", v_prior=v0_bcb_la) -->
+<!-- stanfit <- stan( file = filename, data = staninp$data, chains = 1, -->
+<!--                  warmup = 1000, iter = 2000, cores = 2, refresh = 1000 ) -->
+<!-- # remove Stan input file -->
+<!-- file.remove(filename) -->
+
+<!-- post_bcb_logc <- rstan::extract(stanfit)$V[100*(1:10),] -->
+
+<!-- tib_plot <- t(post_bcb_logc) %>% -->
+<!--     as_tibble() %>% add_column(k=linC:dimC, .before=1) %>% -->
+<!--     gather(key,value,2:(N+1)) -->
+<!-- ggplot(tib_plot, aes(x=k, y=(value), color=key)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 
-## References
+## References {#refs}
 
 
 

@@ -82,7 +82,7 @@ circ_ivols <- function(d, alpha, product = FALSE) {
 #'
 #' Package: \code{\link[conivol]{conivol}}
 #'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
+#' @note See \href{https://damelunx.github.io/conivol/articles/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
 #'       for further info.
 #'
 #' @examples
@@ -168,7 +168,7 @@ ellips_semiax <- function(A) {
 #' @section See also:
 #' \code{\link[conivol]{ellips_semiax}}
 #'
-#' @note See \href{../doc/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
+#' @note See \href{https://damelunx.github.io/conivol/articles/conic-intrinsic-volumes.html#ellips_cone}{this vignette}
 #'       for further info.
 #'
 #' @section See also:

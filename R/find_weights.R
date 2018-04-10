@@ -38,7 +38,7 @@
 #' N <- 10^5
 #' v_exact <- circ_ivols( D, alpha, product=TRUE )
 #' m_samp <- rbichibarsq(N,v_exact)
-#' prepare_em( d, m_samp )
+#' str( prepare_em( d, m_samp ) )
 #'
 #' @export
 #'
@@ -164,7 +164,7 @@ loglike_ivols <- function(v, data, mode=0){
 #' d <- sum(D)
 #' alpha <- c(pi/3,pi/4)
 #' v_exact <- circ_ivols(D, alpha, product=TRUE)
-#' m_samp <- rbichibarsq(10^6,v)
+#' m_samp <- rbichibarsq(10^6,v_exact)
 #' est <- estim_statdim_var(d, m_samp)
 #'
 #' list( v_exact = v_exact , v_init0 = init_ivols( d ) ,
@@ -386,7 +386,7 @@ init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' est2 <- estim_em( d, m_samp, init_mode=1, data=data )
 #'
 #' # plot the iterates of the first EM run
-#' plot(1+0:d, v_exact)
+#' plot(1+0:d, v_exact, ann=FALSE)
 #' lines(1+0:d, v_exact, col="red")
 #' lines(1+0:d, est1$iterates[1,])
 #' lines(1+0:d, est1$iterates[5,])
@@ -394,7 +394,7 @@ init_ivols <- function(d,init_mode=0,delta=d/2,var=d/4) {
 #' lines(1+0:d, est1$iterates[21,])
 #'
 #' # plot the iterates of the second EM run
-#' plot(1+0:d, v_exact)
+#' plot(1+0:d, v_exact, ann=FALSE)
 #' lines(1+0:d, v_exact, col="red")
 #' lines(1+0:d, est2$iterates[1,])
 #' lines(1+0:d, est2$iterates[5,])

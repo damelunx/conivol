@@ -11,8 +11,8 @@
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
-<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
@@ -31,6 +31,8 @@
 
 <meta property="og:description" content="init_ivols find an initial estimate of the intrinsic volumes via
 moment-fitting." />
+
+<meta property="og:image" content="http://damelunx.github.io/conivol/logo.png" />
 <meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
@@ -46,7 +48,7 @@ moment-fitting." />
   <body>
     <div class="container template-reference-topic">
       <header>
-      <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
@@ -60,12 +62,12 @@ moment-fitting." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fa fa-home"></span>
      
   </a>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../reference/conivol.html">Overview</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -75,20 +77,33 @@ moment-fitting." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
-    </li>
-    <li>
-      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</a>
+      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and (bivariate) chi-bar-squared distribution</a>
     </li>
     <li>
       <a href="../articles/estim-conic-intrinsic-volumes-with-EM.html">Estimating conic intrinsic volumes from bivariate chi-bar-squared data</a>
+    </li>
+    <li>
+      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
     </li>
   </ul>
 </li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="../reference/index.html">
+    <span class="fa fa-file-code-o"></span>
+     
+    functions
+  </a>
+</li>
+<li>
+  <a href="https://github.com/damelunx/conivol">
+    <span class="fa fa-github fa-lg"></span>
+     
+    github
+  </a>
+</li>
       </ul>
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -143,7 +158,7 @@ moment-fitting.</p>
     
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <p><code><a href='bichibarsquare.html'>rbichibarsq</a></code>, <code>circ_rbichibarsq</code>,
+    <p><code><a href='bichibarsq.html'>rbichibarsq</a></code>, <code>circ_rbichibarsq</code>,
 <code>rbichibarsq_polyh</code>, <code><a href='loglike_ivols.html'>loglike_ivols</a></code></p>
 <p>Package: <code><a href='conivol.html'>conivol</a></code></p>
     
@@ -153,12 +168,39 @@ moment-fitting.</p>
 <span class='no'>d</span> <span class='kw'>&lt;-</span> <span class='fu'>sum</span>(<span class='no'>D</span>)
 <span class='no'>alpha</span> <span class='kw'>&lt;-</span> <span class='fu'>c</span>(<span class='no'>pi</span>/<span class='fl'>3</span>,<span class='no'>pi</span>/<span class='fl'>4</span>)
 <span class='no'>v_exact</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='circ_ivols.html'>circ_ivols</a></span>(<span class='no'>D</span>, <span class='no'>alpha</span>, <span class='kw'>product</span><span class='kw'>=</span><span class='fl'>TRUE</span>)
-<span class='no'>m_samp</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='bichibarsquare.html'>rbichibarsq</a></span>(<span class='fl'>10</span>^<span class='fl'>6</span>,<span class='no'>v</span>)</div><div class='output co'>#&gt; <span class='error'>Error in conivol:::.test_vector(v): object 'v' not found</span></div><div class='input'><span class='no'>est</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='estim_statdim_var.html'>estim_statdim_var</a></span>(<span class='no'>d</span>, <span class='no'>m_samp</span>)</div><div class='output co'>#&gt; <span class='error'>Error in is.data.frame(x): object 'm_samp' not found</span></div><div class='input'>
+<span class='no'>m_samp</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='bichibarsq.html'>rbichibarsq</a></span>(<span class='fl'>10</span>^<span class='fl'>6</span>,<span class='no'>v_exact</span>)
+<span class='no'>est</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='estim_statdim_var.html'>estim_statdim_var</a></span>(<span class='no'>d</span>, <span class='no'>m_samp</span>)
+
 <span class='fu'>list</span>( <span class='kw'>v_exact</span> <span class='kw'>=</span> <span class='no'>v_exact</span> , <span class='kw'>v_init0</span> <span class='kw'>=</span> <span class='fu'>init_ivols</span>( <span class='no'>d</span> ) ,
       <span class='kw'>v_init1</span> <span class='kw'>=</span> <span class='fu'>init_ivols</span>( <span class='no'>d</span>, <span class='fl'>1</span>, <span class='kw'>delta</span><span class='kw'>=</span><span class='no'>est</span>$<span class='no'>delta</span>, <span class='kw'>var</span><span class='kw'>=</span><span class='no'>est</span>$<span class='no'>var</span> ) ,
       <span class='kw'>v_init2</span> <span class='kw'>=</span> <span class='fu'>init_ivols</span>( <span class='no'>d</span>, <span class='fl'>2</span>, <span class='kw'>delta</span><span class='kw'>=</span><span class='no'>est</span>$<span class='no'>delta</span> ) ,
       <span class='kw'>v_init3</span> <span class='kw'>=</span> <span class='fu'>init_ivols</span>( <span class='no'>d</span>, <span class='fl'>3</span>, <span class='kw'>delta</span><span class='kw'>=</span><span class='no'>est</span>$<span class='no'>delta</span>, <span class='kw'>var</span><span class='kw'>=</span><span class='no'>est</span>$<span class='no'>var</span> ) ,
-      <span class='kw'>v_init4</span> <span class='kw'>=</span> <span class='fu'>init_ivols</span>( <span class='no'>d</span>, <span class='fl'>4</span>, <span class='kw'>delta</span><span class='kw'>=</span><span class='no'>est</span>$<span class='no'>delta</span>, <span class='kw'>var</span><span class='kw'>=</span><span class='no'>est</span>$<span class='no'>var</span> ) )</div><div class='output co'>#&gt; <span class='error'>Error in pnorm((k + 0.5 - delta)/sqrt(var)): object 'est' not found</span></div><div class='input'>
+      <span class='kw'>v_init4</span> <span class='kw'>=</span> <span class='fu'>init_ivols</span>( <span class='no'>d</span>, <span class='fl'>4</span>, <span class='kw'>delta</span><span class='kw'>=</span><span class='no'>est</span>$<span class='no'>delta</span>, <span class='kw'>var</span><span class='kw'>=</span><span class='no'>est</span>$<span class='no'>var</span> ) )</div><div class='output co'>#&gt; $v_exact
+#&gt;  [1] 0.0007466705 0.0059021152 0.0238862411 0.0650168700 0.1304771451
+#&gt;  [6] 0.1959118384 0.2206475000 0.1866928441 0.1151708399 0.0464763322
+#&gt; [11] 0.0090716034
+#&gt; 
+#&gt; $v_init0
+#&gt;  [1] 0.09090909 0.09090909 0.09090909 0.09090909 0.09090909 0.09090909
+#&gt;  [7] 0.09090909 0.09090909 0.09090909 0.09090909 0.09090909
+#&gt; 
+#&gt; $v_init1
+#&gt;  [1] 0.001027626 0.005615565 0.022273421 0.064145431 0.134169050 0.203861994
+#&gt;  [7] 0.225045217 0.180495106 0.105170839 0.044513592 0.013682161
+#&gt; 
+#&gt; $v_init2
+#&gt;  [1] 0.003195552 0.015418752 0.042267282 0.085501810 0.136724769 0.177800371
+#&gt;  [7] 0.189545420 0.164326460 0.112616650 0.056952606 0.015650327
+#&gt; 
+#&gt; $v_init3
+#&gt;  [1] 0.0003151408 0.0021400851 0.0084990689 0.0249073521 0.0577011768
+#&gt;  [6] 0.1087064603 0.1678885992 0.2108631213 0.2093538516 0.1533829812
+#&gt; [11] 0.0562421628
+#&gt; 
+#&gt; $v_init4
+#&gt;  [1] 0.001066540 0.006105089 0.020143723 0.049045970 0.094399095 0.147756265
+#&gt;  [7] 0.189591624 0.197836291 0.163190050 0.099333854 0.031531499
+#&gt; </div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

@@ -1,5 +1,4 @@
 ---
-title: "conivol: An R package for the (bivariate) chi-bar-squared distribution and conic intrinsic volumes"
 output: github_document
 ---
 
@@ -16,7 +15,12 @@ knitr::opts_chunk$set(
 ```{r load-pkgs, include=FALSE}
 library(conivol)
 library(tidyverse)
+library(knitr)
+library(png)
+img_dpi <- 100
 ```
+
+# conivol:<img src="logo.png" width="125" height="125" align="right"/> An R package for the (bivariate) chi-bar-squared distribution and conic intrinsic volumes
 
 This R package provides functions for the chi-bar-squared distribution,
 the bivariate chi-bar-squared distribution, and the conic intrinsic volumes.
@@ -37,6 +41,15 @@ You can install `conivol` from github with:
 # install.packages("devtools")
 devtools::install_github("damelunx/conivol")
 ```
+
+## Code & documentation
+
+* Source code: [github.com/damelunx/conivol](http://github.com/damelunx/conivol)
+* Manual: [damelunx.github.io/conivol](http://damelunx.github.io/conivol)
+
+**See also:**
+
+* `symconivol` package: [damelunx.github.io/symconivol](http://damelunx.github.io/symconivol)
 
 ## Vignettes
 
@@ -169,7 +182,7 @@ The following functions support these computations:
     (and cannot be solved analytically).
 
 **Usage:**
-```{r ex-polyh}
+```{r ex-polyh, fig.width=8, fig.height=5, fig.align="center"}
 # finding the reduced form of some odd polyhedral cone
 A <- matrix(1:35, 5, 7)
 polyh_reduce_gen(A)
@@ -233,12 +246,14 @@ illustrations of the usage of these functions.
     of the intrinsic volumes, given samples of the bivariate chi-bar-squared distribution
 
 **Usage:**
-```{r ex-reconstr}
-# sample from the bivariate chi-bar-squared distribution of a product of circular cones
+We use a sample from the bivariate chi-bar-squared distribution of a
+product of circular cones, for which we have exact formulas for its intrinsic
+volumes:
+
+```{r ex-reconstr, fig.width=8, fig.height=5, fig.align="center"}
 v_true <- circ_ivols( c(5,8), c(0.7*pi/2, 0.8*pi/2), product=TRUE)
 m_samp <- rbichibarsq(1e5, v_true)
 d <- 13
-
 # scatter plot of the sample
 ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
     theme_bw() +
@@ -258,7 +273,6 @@ v_init <- tibble( v_est_0 = init_ivols(13,0),
 
 # compute log-likelihoods of initial estimates
 lapply( v_init, loglike_ivols, data, 0)
-
 # plot the different estimates and their logarithms
 tib_plot <- v_init %>% add_column(v_true=v_true,.before=1) %>%
     add_column(k=0:d,.before=1) %>% gather(mode,value,2:5)
@@ -266,7 +280,11 @@ ggplot(tib_plot, aes(x=k, y=value, color=mode)) +
     geom_line() + theme_bw()
 ggplot(tib_plot, aes(x=k, y=log(value), color=mode)) +
     geom_line() + theme_bw()
-# computing some iterates of the EM algorithm
+```
+
+We compute some iterates of the EM algorithm for different initial estimates:
+
+```{r ex-reconstr-comp, eval=FALSE}
 em0 <- estim_em( d, m_samp, N=200, init_mode=0, data=data)
 em1 <- estim_em( d, m_samp, N=200, init_mode=1, data=data)
 em4 <- estim_em( d, m_samp, N=200, init_mode=4, data=data)
@@ -282,54 +300,70 @@ ggplot(tib_plot0,aes(x=k,y=value,color=step)) +
 # [...]
 ```
 
-```{r plot-em-iterates, echo=FALSE}
-ggplot(tib_plot0,aes(x=k,y=log(value),color=step)) +
-    geom_line() + theme_bw() +
-    geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
-tib_plot1 <- as_tibble( t(em0$iterates[1+20*(0:10), ]) ) %>%
-    add_column(k=0:d,.before=1) %>% gather(step,value,2:12)
-ggplot(tib_plot1,aes(x=k,y=value,color=step)) +
-    geom_line() + theme_bw() +
-    geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
-ggplot(tib_plot1,aes(x=k,y=log(value),color=step)) +
-    geom_line() + theme_bw() +
-    geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
-tib_plot4 <- as_tibble( t(em0$iterates[1+20*(0:10), ]) ) %>%
-    add_column(k=0:d,.before=1) %>% gather(step,value,2:12)
-ggplot(tib_plot4,aes(x=k,y=value,color=step)) +
-    geom_line() + theme_bw() +
-    geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
-ggplot(tib_plot4,aes(x=k,y=log(value),color=step)) +
-    geom_line() + theme_bw() +
-    geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+<!-- ```{r plot-em-iterates, echo=FALSE, fig.width=8, fig.height=5, fig.align="center"} -->
+<!-- ggplot(tib_plot0,aes(x=k,y=log(value),color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- tib_plot1 <- as_tibble( t(em0$iterates[1+20*(0:10), ]) ) %>% -->
+<!--     add_column(k=0:d,.before=1) %>% gather(step,value,2:12) -->
+<!-- ggplot(tib_plot1,aes(x=k,y=value,color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ggplot(tib_plot1,aes(x=k,y=log(value),color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- tib_plot4 <- as_tibble( t(em0$iterates[1+20*(0:10), ]) ) %>% -->
+<!--     add_column(k=0:d,.before=1) %>% gather(step,value,2:12) -->
+<!-- ggplot(tib_plot4,aes(x=k,y=value,color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ggplot(tib_plot4,aes(x=k,y=log(value),color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
+
+
+```{r ex-reconstr-disp, echo=FALSE, fig.align="center"}
+include_graphics("README_figures/save_ex-reconstr-comp-1.png", dpi=img_dpi)
+include_graphics("README_figures/save_plot-em-iterates-1.png", dpi=img_dpi)
+include_graphics("README_figures/save_plot-em-iterates-2.png", dpi=img_dpi)
+include_graphics("README_figures/save_plot-em-iterates-3.png", dpi=img_dpi)
+include_graphics("README_figures/save_plot-em-iterates-4.png", dpi=img_dpi)
+include_graphics("README_figures/save_plot-em-iterates-5.png", dpi=img_dpi)
 ```
 
 We can see that the estimate after 200 iterations is quite accurate for the larger
 values, but still comparably poor for the smaller values. If we increase the
 sample size to 10^6, we can see that the algorithm converges well.
 
-```{r em-large-sample}
-# obtain large sample
-set.seed(1234)
-m_samp_large <- rbichibarsq(1e6, v_true)
-em <- estim_em( d, m_samp_large, N=200 )
-
-tib_plot <- as_tibble( t(em$iterates[1+20*(0:10), ]) ) %>%
-    add_column(k=0:d,.before=1) %>% gather(step,value,2:12)
-ggplot(tib_plot,aes(x=k,y=value,color=step)) +
-    geom_line() + theme_bw() +
-    geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
-ggplot(tib_plot,aes(x=k,y=log(value),color=step)) +
-    geom_line() + theme_bw() +
-    geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
+```{r em-large-sample-disp, echo=FALSE, fig.align="center"}
+include_graphics("README_figures/save_em-large-sample-1.png", dpi=img_dpi)
+include_graphics("README_figures/save_em-large-sample-2.png", dpi=img_dpi)
 ```
+
+<!-- saved the output of the R code below (takes a few minutes) -->
+<!-- ```{r em-large-sample, fig.width=8, fig.height=5, fig.align="center"} -->
+<!-- # obtain large sample -->
+<!-- set.seed(1234) -->
+<!-- m_samp_large <- rbichibarsq(1e6, v_true) -->
+<!-- em <- estim_em( d, m_samp_large, N=200 ) -->
+
+<!-- tib_plot <- as_tibble( t(em$iterates[1+20*(0:10), ]) ) %>% -->
+<!--     add_column(k=0:d,.before=1) %>% gather(step,value,2:12) -->
+<!-- ggplot(tib_plot,aes(x=k,y=value,color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ggplot(tib_plot,aes(x=k,y=log(value),color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
 
 
 

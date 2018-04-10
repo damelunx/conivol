@@ -1,7 +1,8 @@
-conivol: An R package for the (bivariate) chi-bar-squared distribution and conic intrinsic volumes
-================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+conivol:<img src="logo.png" width="125" height="125" align="right"/> An R package for the (bivariate) chi-bar-squared distribution and conic intrinsic volumes
+==============================================================================================================================================================
+
 This R package provides functions for the chi-bar-squared distribution, the bivariate chi-bar-squared distribution, and the conic intrinsic volumes. It supports standard functions for the density/cdf/sampling of the (bivariate) chi-bar-squared distribution, calculations and known formulas for special classes of intrinsic volumes of cones, sampling functions for ellipsoidal cones and general polyhedral cones, as well as functions for estimating intrinsic volumes either from direct samples of the intrinsic volumes distribution (in the case of polyhedral cones) or from samples of the corresponding bivariate chi-bar-squared distribution. The package supports point estimates as well as Bayesian estimates via JAGS and Stan.
 
 Installation
@@ -13,6 +14,16 @@ You can install `conivol` from github with:
 # install.packages("devtools")
 devtools::install_github("damelunx/conivol")
 ```
+
+Code & documentation
+--------------------
+
+-   Source code: [github.com/damelunx/conivol](http://github.com/damelunx/conivol)
+-   Manual: [damelunx.github.io/conivol](http://damelunx.github.io/conivol)
+
+**See also:**
+
+-   `symconivol` package: [damelunx.github.io/symconivol](http://damelunx.github.io/symconivol)
 
 Vignettes
 ---------
@@ -66,20 +77,20 @@ pbichibarsq(xmat, v)
 
 # draw samples
 rchibarsq(10,v)
-#>  [1]  2.3918587  4.4510861  0.5022484  4.2238186  5.3131739  3.4599904
-#>  [7]  0.4576610  5.3195739  5.5375431 11.1122597
+#>  [1] 6.1463261 0.1416041 8.2826727 4.4773390 6.0058743 0.7937796 2.4157046
+#>  [8] 5.3227938 0.0000000 3.3612290
 rbichibarsq(10,v)
-#>             [,1]      [,2]
-#>  [1,] 0.00000000 9.3417217
-#>  [2,] 2.04589254 4.3345748
-#>  [3,] 1.54257645 2.4243350
-#>  [4,] 1.35398169 3.0641805
-#>  [5,] 2.08949334 3.1952437
-#>  [6,] 4.75112732 0.0000000
-#>  [7,] 3.42870404 0.5461283
-#>  [8,] 0.01269076 5.3659323
-#>  [9,] 0.00000000 3.4696579
-#> [10,] 7.70284494 0.3216500
+#>            [,1]       [,2]
+#>  [1,] 2.3668934  4.6920338
+#>  [2,] 0.1968204  0.3530046
+#>  [3,] 0.3625915  3.3433793
+#>  [4,] 1.1612110  5.1716681
+#>  [5,] 4.2781895  2.1164302
+#>  [6,] 0.3533374  3.2572594
+#>  [7,] 3.5040308  3.4984949
+#>  [8,] 7.4817297  0.0000000
+#>  [9,] 3.0479072  0.0000000
+#> [10,] 0.8220247 10.6227306
 ```
 
 ### Special classes of cones:
@@ -108,25 +119,25 @@ prod_ivols( list(circ_ivols(4,pi/4), circ_ivols(4,pi/4)) )
 # computing the semiaxes of the ellipsoidal cone given by the linear image of the Lorentz cone
 A <- matrix(sample(1:25),5,5)
 ellips_semiax(A)
-#> [1] 34.174818 17.712437  5.335419  2.650066
+#> [1] 3.5148018 1.3559270 0.7008142 0.2332776
 
 # draw samples of the bivariate chi-bar-squared distribution of the ellipsoidal cone
 ellips_rbichibarsq(10, A)
 #> $semiax
-#> [1] 34.174818 17.712437  5.335419  2.650066
+#> [1] 3.5148018 1.3559270 0.7008142 0.2332776
 #> 
 #> $samples
 #>             [,1]          [,2]
-#>  [1,]  1.8262861 -9.595045e-10
-#>  [2,]  0.3908564  4.723528e-01
-#>  [3,]  3.8903877  2.808700e-01
-#>  [4,]  6.8292999  3.646662e+00
-#>  [5,]  5.6744854 -2.045159e-08
-#>  [6,] 14.8446079 -2.023270e-11
-#>  [7,]  2.2339645 -1.643021e-08
-#>  [8,]  8.0010701  6.675965e-01
-#>  [9,]  4.2873706  4.162934e-01
-#> [10,]  5.1085968 -1.262772e-08
+#>  [1,] 1.44800064  6.140950e-01
+#>  [2,] 1.68175167  2.105807e+00
+#>  [3,] 0.31838045  3.337049e-02
+#>  [4,] 6.05139921  1.757622e+00
+#>  [5,] 0.05535768  1.159143e+00
+#>  [6,] 9.68560644  1.083321e-02
+#>  [7,] 7.08237454  1.190387e-02
+#>  [8,] 1.99143032  2.970942e+00
+#>  [9,] 8.67029874  7.291365e-01
+#> [10,] 4.16674063 -2.664535e-15
 
 # compute the matrix of the product of some Weyl chambers
 weyl_matrix( rep(3,4), c("BC","BCp","D","Dp"), product=TRUE)
@@ -215,16 +226,16 @@ polyh_reduce_ineq(A)
 # (setting reduce to FALSE since otherwise polyh_reduce_*** would be called)
 polyh_rivols_gen(10, A, reduce=FALSE)
 #> $samples
-#>  [1] 0 0 1 0 1 0 0 2 1 0
+#>  [1] 2 2 0 1 1 0 1 1 1 1
 #> 
 #> $multsamp
-#> [1] 6 3 1 0 0 0
+#> [1] 2 6 2 0 0 0
 polyh_rivols_ineq(10, A, reduce=FALSE)
 #> $samples
-#>  [1] 4 4 3 5 5 5 4 5 5 5
+#>  [1] 5 5 5 5 4 3 3 5 4 5
 #> 
 #> $multsamp
-#> [1] 0 0 0 1 3 6
+#> [1] 0 0 0 2 2 6
 
 # computing the Bayesian posterior with Dirichlet prior (analytically solvable)
 # we sample from a product of Weyl chambers to have the true values at hand
@@ -239,11 +250,11 @@ bayes_est <- polyh_bayes( out$multsamp, out$dimC, out$linC )
 # compare posterior median with true values
 v_est_med <- bayes_est$post_marg_quant(0:12,0.5)
 v_est_med / v_true
-#>  [1] 0.015429495 0.523062457 0.733636995 1.035679305 0.994780829
-#>  [6] 1.003383516 1.058643362 0.989737734 0.941499288 0.751049575
-#> [11] 0.004248011 0.101089266 1.620096938
+#>  [1] 0.01410046 0.37153044 1.19947004 0.90232367 0.94922249 0.96785612
+#>  [7] 1.03949856 1.14828707 0.88510365 1.54273651 0.65696203 0.11059765
+#> [13] 1.48054868
 sum( (v_est_med-v_true)^2 )
-#> [1] 0.0002665534
+#> [1] 0.0007449245
 
 # display boxplot of posterior distribution, overlayed with true values
 data <- as.data.frame( bayes_est$post_samp(1e4) )
@@ -253,7 +264,7 @@ lines(1+0:12, v_true, col="red")
 lines(1+0:12, v_est_med, col="blue")
 ```
 
-![](README_figures/ex-polyh-1.png)
+<img src="README_figures/ex-polyh-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # the Bayesian approach using a model that induces log-concavity works with
@@ -271,30 +282,28 @@ When the cone is nonpolyhedral or when sampling from the intrinsic volumes distr
 -   `estim_em`: produces EM-type iterates that may or may not converge to the maximum likelihood estimate for the weights of the bivariate chi-bar-squared distribution from sample data
 -   `estim_jags`, `estim_stan`: generate inputs for JAGS / Stan (data list and model string or external file) for sampling from the posterior distribution of the intrinsic volumes, given samples of the bivariate chi-bar-squared distribution
 
-**Usage:**
+**Usage:** We use a sample from the bivariate chi-bar-squared distribution of a product of circular cones, for which we have exact formulas for its intrinsic volumes:
 
 ``` r
-# sample from the bivariate chi-bar-squared distribution of a product of circular cones
 v_true <- circ_ivols( c(5,8), c(0.7*pi/2, 0.8*pi/2), product=TRUE)
 m_samp <- rbichibarsq(1e5, v_true)
 d <- 13
-
 # scatter plot of the sample
 ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
     theme_bw() +
     theme(axis.title.x=element_blank(),axis.title.y=element_blank())
 ```
 
-![](README_figures/ex-reconstr-1.png)
+<img src="README_figures/ex-reconstr-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # estimate the moments of the intrinsic volumes, compare with true values
 est <- estim_statdim_var(d, m_samp); est
 #> $delta
-#> [1] 9.987078
+#> [1] 10.0086
 #> 
 #> $var
-#> [1] 2.633351
+#> [1] 2.484804
 list( statdim_true=sum((0:d)*v_true),
       var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
 #> $statdim_true
@@ -314,14 +323,13 @@ v_init <- tibble( v_est_0 = init_ivols(13,0),
 # compute log-likelihoods of initial estimates
 lapply( v_init, loglike_ivols, data, 0)
 #> $v_est_0
-#> [1] -5.476975
+#> [1] -5.473134
 #> 
 #> $v_est_1
-#> [1] -4.971652
+#> [1] -4.964647
 #> 
 #> $v_est_4
-#> [1] -4.977581
-
+#> [1] -4.972136
 # plot the different estimates and their logarithms
 tib_plot <- v_init %>% add_column(v_true=v_true,.before=1) %>%
     add_column(k=0:d,.before=1) %>% gather(mode,value,2:5)
@@ -329,17 +337,18 @@ ggplot(tib_plot, aes(x=k, y=value, color=mode)) +
     geom_line() + theme_bw()
 ```
 
-![](README_figures/ex-reconstr-2.png)
+<img src="README_figures/ex-reconstr-2.png" style="display: block; margin: auto;" />
 
 ``` r
 ggplot(tib_plot, aes(x=k, y=log(value), color=mode)) +
     geom_line() + theme_bw()
 ```
 
-![](README_figures/ex-reconstr-3.png)
+<img src="README_figures/ex-reconstr-3.png" style="display: block; margin: auto;" />
+
+We compute some iterates of the EM algorithm for different initial estimates:
 
 ``` r
-# computing some iterates of the EM algorithm
 em0 <- estim_em( d, m_samp, N=200, init_mode=0, data=data)
 em1 <- estim_em( d, m_samp, N=200, init_mode=1, data=data)
 em4 <- estim_em( d, m_samp, N=200, init_mode=4, data=data)
@@ -352,39 +361,55 @@ ggplot(tib_plot0,aes(x=k,y=value,color=step)) +
     geom_line() + theme_bw() +
     geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") +
     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
-```
-
-![](README_figures/ex-reconstr-4.png)
-
-``` r
 # [...]
 ```
 
-![](README_figures/plot-em-iterates-1.png)![](README_figures/plot-em-iterates-2.png)![](README_figures/plot-em-iterates-3.png)![](README_figures/plot-em-iterates-4.png)![](README_figures/plot-em-iterates-5.png)
+<!-- ```{r plot-em-iterates, echo=FALSE, fig.width=8, fig.height=5, fig.align="center"} -->
+<!-- ggplot(tib_plot0,aes(x=k,y=log(value),color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- tib_plot1 <- as_tibble( t(em0$iterates[1+20*(0:10), ]) ) %>% -->
+<!--     add_column(k=0:d,.before=1) %>% gather(step,value,2:12) -->
+<!-- ggplot(tib_plot1,aes(x=k,y=value,color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ggplot(tib_plot1,aes(x=k,y=log(value),color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- tib_plot4 <- as_tibble( t(em0$iterates[1+20*(0:10), ]) ) %>% -->
+<!--     add_column(k=0:d,.before=1) %>% gather(step,value,2:12) -->
+<!-- ggplot(tib_plot4,aes(x=k,y=value,color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ggplot(tib_plot4,aes(x=k,y=log(value),color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->
+<img src="README_figures/save_ex-reconstr-comp-1.png" width="645" style="display: block; margin: auto;" /><img src="README_figures/save_plot-em-iterates-1.png" width="737" style="display: block; margin: auto;" /><img src="README_figures/save_plot-em-iterates-2.png" width="737" style="display: block; margin: auto;" /><img src="README_figures/save_plot-em-iterates-3.png" width="737" style="display: block; margin: auto;" /><img src="README_figures/save_plot-em-iterates-4.png" width="737" style="display: block; margin: auto;" /><img src="README_figures/save_plot-em-iterates-5.png" width="737" style="display: block; margin: auto;" />
 
 We can see that the estimate after 200 iterations is quite accurate for the larger values, but still comparably poor for the smaller values. If we increase the sample size to 10^6, we can see that the algorithm converges well.
 
-``` r
-# obtain large sample
-set.seed(1234)
-m_samp_large <- rbichibarsq(1e6, v_true)
-em <- estim_em( d, m_samp_large, N=200 )
+<img src="README_figures/save_em-large-sample-1.png" width="737" style="display: block; margin: auto;" /><img src="README_figures/save_em-large-sample-2.png" width="737" style="display: block; margin: auto;" />
 
-tib_plot <- as_tibble( t(em$iterates[1+20*(0:10), ]) ) %>%
-    add_column(k=0:d,.before=1) %>% gather(step,value,2:12)
-ggplot(tib_plot,aes(x=k,y=value,color=step)) +
-    geom_line() + theme_bw() +
-    geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
-```
-
-![](README_figures/em-large-sample-1.png)
-
-``` r
-ggplot(tib_plot,aes(x=k,y=log(value),color=step)) +
-    geom_line() + theme_bw() +
-    geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") +
-    theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank())
-```
-
-![](README_figures/em-large-sample-2.png)
+<!-- saved the output of the R code below (takes a few minutes) -->
+<!-- ```{r em-large-sample, fig.width=8, fig.height=5, fig.align="center"} -->
+<!-- # obtain large sample -->
+<!-- set.seed(1234) -->
+<!-- m_samp_large <- rbichibarsq(1e6, v_true) -->
+<!-- em <- estim_em( d, m_samp_large, N=200 ) -->
+<!-- tib_plot <- as_tibble( t(em$iterates[1+20*(0:10), ]) ) %>% -->
+<!--     add_column(k=0:d,.before=1) %>% gather(step,value,2:12) -->
+<!-- ggplot(tib_plot,aes(x=k,y=value,color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=v_true),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ggplot(tib_plot,aes(x=k,y=log(value),color=step)) + -->
+<!--     geom_line() + theme_bw() + -->
+<!--     geom_line(data=tib_true,aes(x=k,y=log(v_true)),colour="black",linetype="dashed") + -->
+<!--     theme(legend.position="none", axis.title.x=element_blank(), axis.title.y=element_blank()) -->
+<!-- ``` -->

@@ -4,12 +4,6 @@ author: "Dennis Amelunxen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 # output: rmarkdown::pdf_document
-# header-includes:
-#   - \hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
-vignette: >
-  %\VignetteIndexEntry{Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
 bibliography: references.bib
 link-citations: true
 ---
@@ -49,7 +43,7 @@ We will give further pointers to the literature within the text below.
     bivariate chi-bar-squared distribution, and which can be with or without
     enforcing log-concavity of the intrinsic volumes.
 
-## Closed convex cones
+## Closed convex cones {#cl_conv_con}
 
 As the name suggests, a closed convex cone $C\subseteq\text{R}^d$ satisfies
 the following three properties:  
@@ -82,7 +76,7 @@ they contain at least the origin.
 convex cones, then their direct product is a closed convex cone,
 $C\times D\subseteq\text{R}^{d+e}$.
 
-### Polar cones
+### Polar cones {#pol_con}
 
 Every closed convex cone $C\subseteq\text{R}^d$ defines a natural counterpart,
 its polar cone
@@ -127,7 +121,7 @@ lineality of a cone is the dimension of its lineality space,
 Note that by the above polarity statement we have
 $\text{dim}(C)=d-\text{lin}(C^\circ)$ and $\text{lin}(C)=d-\text{dim}(C^\circ)$.
 
-### Examples: linear subspaces
+### Examples: linear subspaces {#lin_subsp}
 
 A trivial yet important class of examples of closed convex cones are the
 linear subspaces. It is easily seen that the polar cone of a linear
@@ -324,7 +318,7 @@ t(A) %*% A
 round( t(A_red) %*% A_red ,digits=14)
 ```
 
-### Examples: circular cones
+### Examples: circular cones {#circ_con}
 
 Circular cones consist of all points that lie below a certain angle
 towards a given (half-)line. Choosing this line to be the $d$th
@@ -441,7 +435,7 @@ and looking at the volume of the (relative) boundary of the projection.]
   \[ v_k(C)=v_{k-\text{lin}(C)}(\bar C)>0 \quad\text{for}\quad
     \text{lin}(C)\leq k\leq\text{dim}(C) . \]
 
-### Statistical dimension and variance
+### Statistical dimension and variance {#statdim}
 
 The first moment of intrinsic volumes distribution of a cone is called
 its statistical dimension,
@@ -500,14 +494,14 @@ msamp <- S$multsamp
 ```
 
 We can look at the point estimate for the intrinsic volumes given by this sample:
-```{r plot-canc-samp, fig.width = 7}
+```{r plot-canc-samp, fig.width = 7, fig.align="center"}
 tib_plot <- tibble( k=linC:dimC, value=msamp[1+linC:dimC]/n )
 ggplot(tib_plot, aes(x=k, y=value))      + geom_line() + theme_bw()
 ggplot(tib_plot, aes(x=k, y=log(value))) + geom_line() + theme_bw()
 ```
 
 We can also look at the corresponding Bayes posterior:
-```{r canc-bayes, fig.width = 7}
+```{r canc-bayes, fig.width = 7, fig.align="center"}
 bayes_est <- polyh_bayes( msamp, dimC, linC )
 tib_plot_bay <- bayes_est$post_samp(1e4) %>%
     as_tibble() %>%
@@ -521,7 +515,7 @@ ggplot(tib_plot_bay, aes(x=key, y=value)) +
 Of course, the error bars are not too interesting in this case, as the sample
 size is quite large. So for illustration purpose we resample with much smaller
 sample size:
-```{r samp-canc-data-small, fig.width = 7}
+```{r samp-canc-data-small, fig.width = 7, fig.align="center"}
 n_sm <- 3e2
 set.seed(1111)
 S_sm <- polyh_rivols_gen(n_sm,A)
@@ -552,7 +546,7 @@ of intrinsic volumes.
 The package `logcondiscr` ([CRAN](https://cran.r-project.org/web/packages/logcondiscr/index.html))
 offers functionalities to compute the log-concave maximum likelihood estimate,
 see [@BJRP13]:
-```{r samp-canc-data-logconc, fig.width = 7}
+```{r samp-canc-data-logconc, fig.width = 7, fig.align="center"}
 logconc_MLE <- logConDiscrMLE(S_sm$samples, output=FALSE)
 log_est <- rep(0,dimC-linC+1)
 log_est[logconc_MLE$x+linC+1] <- exp(logconc_MLE$psi)
@@ -573,7 +567,7 @@ See the vignette on
 [Bayesian estimates for conic intrinsic volumes](bayesian.html)
 for information and example computations for this case.
 
-### Examples: Weyl chambers of finite reflection groups
+### Examples: Weyl chambers of finite reflection groups {#ex_weyl}
 
 The intrinsic volumes of the Weyl chambers are easily given through their
 generating function:
@@ -602,7 +596,7 @@ v_list <- weyl_ivols( c(5,5) , c("A","BC") )
 factorial(6)*2^5*factorial(5) * prod_ivols(v_list)
 ```
 
-### Examples: circular cones
+### Examples: circular cones {#ex_circ_con}
 
 The intrinsic volumes of circular cones are given by the following formulas:
   \[ v_k(\text{Circ}_d(\alpha)) = \begin{cases}
@@ -702,7 +696,7 @@ for more details.
 
 **Example computations:**
 
-```{r biv-chi-bar-sq, fig.width = 5, fig.height=5}
+```{r biv-chi-bar-sq, fig.width = 7, fig.height=5, fig.align="center"}
 # sample from the bivariate chi-bar-squared distribution of a product of circular cones
 D <- c(7,17)
 alpha <- c(0.7*pi/2, 0.6*pi/2)
@@ -728,7 +722,7 @@ of the intrinsic volumes, and that have already or might potentially prove usefu
 in applications. In particular, the log-concavity inequalities are useful in the
 estimation of intrinsic volumes from sampling data.
 
-### Inequalities from (half-)tail functionals
+### Inequalities from (half-)tail functionals {#ineq_tailf}
 
 The tail and half-tail functionals $t_k$ and $h_k$ are defined via
 \begin{align*}
@@ -745,7 +739,7 @@ in the arguments: let $C,D$ be cones with $C\subseteq D$,
  & h_k(C) & \leq h_{k+1}(C) , & h_k(C) & \leq h_k(D) .
 \end{align*}
 
-### Isoperimetric inequalities
+### Isoperimetric inequalities {#isop_ineq}
 
 Broadly speaking, (classical) isoperimetric inequalities compare surface area
 and volume of an object with those of a "round" object (in quotes because
@@ -761,7 +755,7 @@ Makowski and Scheuer [-@MS16] added to this inequality the following:
  & h_{d-2k+1}(C) & \geq h_{d-2k+1}(\text{Circ}_d(\alpha)) .
 \end{align*}
 
-### Variance conjecture
+### Variance conjecture {#var_conj}
 
 So far the only known inequality for the variance of the intrinsic volumes is
   \[ \text{var}(C) \leq 2\text{min}\{\delta(C),d-\delta(C)\} , \]
@@ -793,7 +787,7 @@ following way:
 **Example computations:** We test the above conjecture for products of circular
 cones in dimension $d=9$. We first compare the (statistical dimension, variance)
 plots of circular cones of dimensions $2,3,\ldots,9$.
-```{r statdim-var-circ, fig.width = 7}
+```{r statdim-var-circ, fig.width = 7, fig.align="center"}
 d <- 9
 N <- 1e3
 alpha <- (0:N)/N * pi/2
@@ -823,7 +817,7 @@ P <- parts(d); P
 Note that one-dimensional circular cones are just half-lines, so whenever a
 partition only contains half-lines and a single non-half-line, then we obtain a
 curve, as above. Collecting this in one plot, we obtain the following:
-```{r statdim-var-prod-curv, fig.width = 7}
+```{r statdim-var-prod-curv, fig.width = 7, fig.align="center"}
 sing <- which(colSums(P>1)==1)
 
 G <- ggplot()
@@ -836,7 +830,7 @@ for (k in sing) {
 G <- G + theme_bw(); G
 ```
 Finally, we obtain the following plots for the remaining products of circular cones:
-```{r statdim-var-prod-scatter, fig.width = 7, fig.height=10, echo=FALSE}
+```{r statdim-var-prod-scatter, fig.width = 7, fig.height=10, echo=FALSE, fig.align="center"}
 # line of d-dimensional circular cones
 Gd <- geom_line(data=tibble(sdim=Sdim[d-1,],var=Var[d-1,]), aes(sdim,var))
 

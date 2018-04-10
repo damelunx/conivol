@@ -1,31 +1,22 @@
 Package: conivol
 Type: Package
-Title: Conic intrinsic volumes and (bivariate) chi-bar-squared distribution
-Version: 0.0.1
+Version: 0.1.0
+Title: A package for the (bivariate) chi-bar-squared distribution and conic intrinsic volumes
 Authors@R: as.person(c(
         "Dennis Amelunxen <damelunx@gmail.com> [aut, cre]",
         "Martin Lotz <lotzma@gmail.com> [aut]"
     ))
-Description: --TBD--
-    A package for computing the conic intrinsic volumes and
-    chibarsquare distribution of products of circular cones, and
-    for estimating the intrinsic volumes of a closed convex cone
-    from projection data. The projection data has to consist of two values:
-    (1) the squared norm of a point in the ambient space, randomly
-    sampled from the corresponding standard normal distribution, and
-    (2) the squared norm of its projection on the cone.
-    The main function for the intrinsic volumes estimation produces EM-type
-    iterates, which should converge to the maximum likelihood estimate, if the
-    starting point has been chosen well. Different choices of starting points,
-    using products of circular cones or user-specified parameters, are
-    supported. See conivol website for more information.
+Description: The conivol package provides functions for the chi-bar-squared distribution, the bivariate chi-bar-squared distribution, and the conic intrinsic volumes.
 License: GPL-3
-Encoding: UTF-8
-LazyData: true
+Imports: Rmosek,
+    Matrix
 Suggests: knitr,
     rmarkdown,
     testthat
 VignetteBuilder: knitr
+URL: https://damelunx.github.io/conivol, http://github.com/damelunx/conivol
+BugReports: https://github.com/damelunx/conivol/issues
 RoxygenNote: 6.0.1
-Imports: Rmosek,
-    Matrix
+Encoding: UTF-8
+LazyData: true
+

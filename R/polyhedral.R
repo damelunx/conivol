@@ -784,8 +784,11 @@ polyh_bayes <- function(multsamp, dimC, linC, v_prior=NA, prior_sample_size=1) {
 #' staninp <- polyh_stan(out$multsamp, out$dimC, out$linC, prior="informative", filename=filename)
 #'
 #' # run the Stan model
+#' sink("no-output.txt")
 #' stanfit <- stan( file = filename, data = staninp$data, chains = 4,
 #'                  warmup = 1000, iter = 2000, cores = 2, refresh = 200 )
+#' sink()
+#' file.remove("no-output.txt")
 #' str(extract(stanfit))
 #'
 #' # remove Stan file
