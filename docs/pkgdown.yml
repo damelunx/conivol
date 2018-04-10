@@ -1,0 +1,8 @@
+urls:
+  reference: http://damelunx.github.io/conivol/reference
+  article: http://damelunx.github.io/conivol/articles
+articles:
+  bayesian: bayesian.html
+  conic-intrinsic-volumes: conic-intrinsic-volumes.html
+  estim-conic-intrinsic-volumes-with-EM: estim-conic-intrinsic-volumes-with-EM.html
+

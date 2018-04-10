@@ -11,8 +11,8 @@
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
-<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
@@ -28,6 +28,9 @@
   
   
 <meta property="og:title" content="Function reference" />
+
+<meta property="og:image" content="http://damelunx.github.io/conivol/logo.png" />
+<meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -42,7 +45,7 @@
   <body>
     <div class="container template-reference-index">
       <header>
-      <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
@@ -56,12 +59,12 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fa fa-home"></span>
      
   </a>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../reference/conivol.html">Overview</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -71,20 +74,33 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
-    </li>
-    <li>
-      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</a>
+      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and (bivariate) chi-bar-squared distribution</a>
     </li>
     <li>
       <a href="../articles/estim-conic-intrinsic-volumes-with-EM.html">Estimating conic intrinsic volumes from bivariate chi-bar-squared data</a>
+    </li>
+    <li>
+      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
     </li>
   </ul>
 </li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="../reference/index.html">
+    <span class="fa fa-file-code-o"></span>
+     
+    functions
+  </a>
+</li>
+<li>
+  <a href="https://github.com/damelunx/conivol">
+    <span class="fa fa-github fa-lg"></span>
+     
+    github
+  </a>
+</li>
       </ul>
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -98,7 +114,7 @@
     <div class="page-header">
       <h1>
         Reference
-        <small>version&nbsp;0.0.1</small>
+        <small>version&nbsp;0.1.0</small>
       </h1>
     </div>
 
@@ -113,22 +129,36 @@
       <tbody>
         <tr>
           <th colspan="2">
-            <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
+            <h2 id="section--bivariate-chi-bar-squared-distribution" class="hasAnchor"><a href="#section--bivariate-chi-bar-squared-distribution" class="anchor"></a>(Bivariate) Chi-bar-squared distribution</h2>
             <p class="section-desc"></p>
           </th>
         </tr>
         <tr>
           <!--  -->
           <td>
-            <p><code><a href="bichibarsquare.html">dbichibarsq</a></code> <code><a href="bichibarsquare.html">pbichibarsq</a></code> <code><a href="bichibarsquare.html">rbichibarsq</a></code> </p>
+            <p><code><a href="chibarsq.html">dchibarsq</a></code> <code><a href="chibarsq.html">pchibarsq</a></code> <code><a href="chibarsq.html">rchibarsq</a></code> </p>
           </td>
-          <td><p>The Bivariate Chi-bar-squared Distribution</p></td>
+          <td><p>The Chi-bar-squared Distribution</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="chibarsquare.html">dchibarsq</a></code> <code><a href="chibarsquare.html">pchibarsq</a></code> <code><a href="chibarsquare.html">rchibarsq</a></code> </p>
+            <p><code><a href="bichibarsq.html">dbichibarsq</a></code> <code><a href="bichibarsq.html">pbichibarsq</a></code> <code><a href="bichibarsq.html">rbichibarsq</a></code> </p>
           </td>
-          <td><p>The Chi-bar-squared Distribution</p></td>
+          <td><p>The Bivariate Chi-bar-squared Distribution</p></td>
+        </tr>
+      </tbody><tbody>
+        <tr>
+          <th colspan="2">
+            <h2 id="section-special-classes-of-cones" class="hasAnchor"><a href="#section-special-classes-of-cones" class="anchor"></a>Special classes of cones</h2>
+            <p class="section-desc"></p>
+          </th>
+        </tr>
+        <tr>
+          <!--  -->
+          <td>
+            <p><code><a href="prod_ivols.html">prod_ivols</a></code> </p>
+          </td>
+          <td><p>Compute intrinsic volumes of product cone from intrinsic volumes of components</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -138,9 +168,9 @@
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="conivol.html">conivol</a></code> </p>
+            <p><code><a href="ellips_semiax.html">ellips_semiax</a></code> </p>
           </td>
-          <td><p>conivol: A package for the (bivariate) chi-bar-squared distribution and conic intrinsic volumes</p></td>
+          <td><p>Computes the semiaxes of an ellipsoidal cone given as the linear image of the Lorentz cone</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -150,28 +180,62 @@
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="ellips_semiax.html">ellips_semiax</a></code> </p>
+            <p><code><a href="weyl_matrix.html">weyl_matrix</a></code> </p>
           </td>
-          <td><p>Computes the semiaxes of an ellipsoidal cone given as the linear image of the Lorentz cone</p></td>
+          <td><p>Matrix representation of (products/duals of) Weyl chambers</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="estim_em.html">estim_em</a></code> </p>
+            <p><code><a href="weyl_ivols.html">weyl_ivols</a></code> </p>
           </td>
-          <td><p>Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm</p></td>
+          <td><p>The conic intrinsic volumes of (products/duals of) Weyl chambers</p></td>
+        </tr>
+      </tbody><tbody>
+        <tr>
+          <th colspan="2">
+            <h2 id="section-general-polyhedral-cones" class="hasAnchor"><a href="#section-general-polyhedral-cones" class="anchor"></a>General polyhedral cones</h2>
+            <p class="section-desc"></p>
+          </th>
+        </tr>
+        <tr>
+          <!--  -->
+          <td>
+            <p><code><a href="polyh_reduce.html">polyh_reduce_gen</a></code> <code><a href="polyh_reduce.html">polyh_reduce_ineq</a></code> </p>
+          </td>
+          <td><p>Find a reduced form of a polyhedral cone</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="estim_jags.html">estim_jags</a></code> </p>
+            <p><code><a href="polyh_rivols.html">polyh_rivols_gen</a></code> <code><a href="polyh_rivols.html">polyh_rivols_ineq</a></code> </p>
           </td>
-          <td><p>JAGS model creation for Bayesian posterior given samples of bivariate chi-bar-squared distribution</p></td>
+          <td><p>Sample from intrinsic volumes distribution of a polyhedral cone</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="estim_stan.html">estim_stan</a></code> </p>
+            <p><code><a href="polyh_rbichibarsq.html">polyh_rbichibarsq_gen</a></code> <code><a href="polyh_rbichibarsq.html">polyh_rbichibarsq_ineq</a></code> </p>
           </td>
-          <td><p>Stan model creation for Bayesian posterior given samples of bivariate chi-bar-squared distribution</p></td>
+          <td><p>Sample from bivariate chi-bar-squared distribution of a polyhedral cone</p></td>
         </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="polyh_bayes.html">polyh_bayes</a></code> </p>
+          </td>
+          <td><p>Bayesian posterior for samples of intrinsic volumes distribution</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="polyh_stan.html">polyh_stan</a></code> </p>
+          </td>
+          <td><p>Stan model creation for Bayesian posterior given direct samples, enforcing log-concavity</p></td>
+        </tr>
+      </tbody><tbody>
+        <tr>
+          <th colspan="2">
+            <h2 id="section-estimating-the-weights-of-the-bivariate-chi-bar-squared-distribution" class="hasAnchor"><a href="#section-estimating-the-weights-of-the-bivariate-chi-bar-squared-distribution" class="anchor"></a>Estimating the weights of the bivariate chi-bar-squared distribution</h2>
+            <p class="section-desc"></p>
+          </th>
+        </tr>
+        <tr>
           <!--  -->
           <td>
             <p><code><a href="estim_statdim_var.html">estim_statdim_var</a></code> </p>
@@ -192,57 +256,27 @@
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="polyh_bayes.html">polyh_bayes</a></code> </p>
-          </td>
-          <td><p>Bayesian posterior for samples of intrinsic volumes distribution</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="polyh_rbichibarsq.html">polyh_rbichibarsq_gen</a></code> <code><a href="polyh_rbichibarsq.html">polyh_rbichibarsq_ineq</a></code> </p>
-          </td>
-          <td><p>Sample from bivariate chi-bar-squared distribution of a polyhedral cone</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="polyh_reduce.html">polyh_reduce_gen</a></code> <code><a href="polyh_reduce.html">polyh_reduce_ineq</a></code> </p>
-          </td>
-          <td><p>Find a reduced form of a polyhedral cone</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="polyh_rivols.html">polyh_rivols_gen</a></code> <code><a href="polyh_rivols.html">polyh_rivols_ineq</a></code> </p>
-          </td>
-          <td><p>Sample from intrinsic volumes distribution of a polyhedral cone</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="polyh_stan.html">polyh_stan</a></code> </p>
-          </td>
-          <td><p>Stan model creation for Bayesian posterior given direct samples, enforcing log-concavity</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
             <p><code><a href="prepare_em.html">prepare_em</a></code> </p>
           </td>
           <td><p>Evaluate the sample data for maximum likelihood estimation</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="prod_ivols.html">prod_ivols</a></code> </p>
+            <p><code><a href="estim_em.html">estim_em</a></code> </p>
           </td>
-          <td><p>Compute intrinsic volumes of product cone from intrinsic volumes of components</p></td>
+          <td><p>Finding the weights of the bivariate chi-bar-squared distribution using EM algorithm</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="weyl_ivols.html">weyl_ivols</a></code> </p>
+            <p><code><a href="estim_jags.html">estim_jags</a></code> </p>
           </td>
-          <td><p>The conic intrinsic volumes of (products/duals of) Weyl chambers</p></td>
+          <td><p>JAGS model creation for Bayesian posterior given samples of bivariate chi-bar-squared distribution</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="weyl_matrix.html">weyl_matrix</a></code> </p>
+            <p><code><a href="estim_stan.html">estim_stan</a></code> </p>
           </td>
-          <td><p>Matrix representation of (products/duals of) Weyl chambers</p></td>
+          <td><p>Stan model creation for Bayesian posterior given samples of bivariate chi-bar-squared distribution</p></td>
         </tr>
       </tbody>
       </table>
@@ -252,7 +286,10 @@
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#section-all-functions">All functions</a></li>
+      <li><a href="#section--bivariate-chi-bar-squared-distribution">(Bivariate) Chi-bar-squared distribution</a></li>
+      <li><a href="#section-special-classes-of-cones">Special classes of cones</a></li>
+      <li><a href="#section-general-polyhedral-cones">General polyhedral cones</a></li>
+      <li><a href="#section-estimating-the-weights-of-the-bivariate-chi-bar-squared-distribution">Estimating the weights of the bivariate chi-bar-squared distribution</a></li>
     </ul>
   </div>
 </div>

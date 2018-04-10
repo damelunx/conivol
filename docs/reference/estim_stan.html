@@ -11,8 +11,8 @@
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
-<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
@@ -32,6 +32,8 @@
 <meta property="og:description" content="estim_stan generates inputs for Stan (data list and model string or external file)
 for sampling from the posterior distribution,
 given samples of the bivariate chi-bar-squared distribution." />
+
+<meta property="og:image" content="http://damelunx.github.io/conivol/logo.png" />
 <meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
@@ -47,7 +49,7 @@ given samples of the bivariate chi-bar-squared distribution." />
   <body>
     <div class="container template-reference-topic">
       <header>
-      <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
@@ -61,12 +63,12 @@ given samples of the bivariate chi-bar-squared distribution." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fa fa-home"></span>
      
   </a>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../reference/conivol.html">Overview</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -76,20 +78,33 @@ given samples of the bivariate chi-bar-squared distribution." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
-    </li>
-    <li>
-      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</a>
+      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and (bivariate) chi-bar-squared distribution</a>
     </li>
     <li>
       <a href="../articles/estim-conic-intrinsic-volumes-with-EM.html">Estimating conic intrinsic volumes from bivariate chi-bar-squared data</a>
+    </li>
+    <li>
+      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
     </li>
   </ul>
 </li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
-        
+        <li>
+  <a href="../reference/index.html">
+    <span class="fa fa-file-code-o"></span>
+     
+    functions
+  </a>
+</li>
+<li>
+  <a href="https://github.com/damelunx/conivol">
+    <span class="fa fa-github fa-lg"></span>
+     
+    github
+  </a>
+</li>
       </ul>
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
@@ -189,14 +204,9 @@ which enforces log-concavity of the intrinsic volumes.</p>
     
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='fu'>library</span>(<span class='no'>rstan</span>)</div><div class='output co'>#&gt; <span class='message'>Loading required package: StanHeaders</span></div><div class='output co'>#&gt; <span class='message'>rstan (Version 2.16.2, packaged: 2017-07-03 09:24:58 UTC, GitRev: 2e1f913d3ca3)</span></div><div class='output co'>#&gt; <span class='message'>For execution on a local, multicore CPU with excess RAM we recommend calling</span>
-#&gt; <span class='message'>rstan_options(auto_write = TRUE)</span>
-#&gt; <span class='message'>options(mc.cores = parallel::detectCores())</span></div><div class='output co'>#&gt; <span class='message'></span>
-#&gt; <span class='message'>Attaching package: ‘rstan’</span></div><div class='output co'>#&gt; <span class='message'>The following object is masked from ‘package:tidyr’:</span>
-#&gt; <span class='message'></span>
-#&gt; <span class='message'>    extract</span></div><div class='output co'>#&gt; <span class='message'>The following object is masked from ‘package:coda’:</span>
-#&gt; <span class='message'></span>
-#&gt; <span class='message'>    traceplot</span></div><div class='input'>
+    <pre class="examples"><span class='co'># NOT RUN {</span>
+<span class='fu'>library</span>(<span class='no'>rstan</span>)
+
 <span class='co'># defining the example cone</span>
 <span class='no'>D</span> <span class='kw'>&lt;-</span> <span class='fu'>c</span>(<span class='fl'>5</span>,<span class='fl'>8</span>)
 <span class='no'>alpha</span> <span class='kw'>&lt;-</span> <span class='fu'>c</span>( <span class='fu'>asin</span>(<span class='fu'>sqrt</span>(<span class='fl'>0.9</span>)) , <span class='fu'>asin</span>(<span class='fu'>sqrt</span>(<span class='fl'>0.8</span>)))
@@ -206,7 +216,7 @@ which enforces log-concavity of the intrinsic volumes.</p>
 <span class='co'># getting the sample data</span>
 <span class='no'>N</span> <span class='kw'>&lt;-</span> <span class='fl'>10</span>^<span class='fl'>3</span>
 <span class='fu'>set.seed</span>(<span class='fl'>1234</span>)
-<span class='no'>m_samp</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='bichibarsquare.html'>rbichibarsq</a></span>(<span class='no'>N</span>,<span class='no'>v_exact</span>)
+<span class='no'>m_samp</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='bichibarsq.html'>rbichibarsq</a></span>(<span class='no'>N</span>,<span class='no'>v_exact</span>)
 
 <span class='co'># compute initial guess</span>
 <span class='no'>est</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='estim_statdim_var.html'>estim_statdim_var</a></span>(<span class='no'>d</span>, <span class='no'>m_samp</span>)
@@ -218,35 +228,31 @@ which enforces log-concavity of the intrinsic volumes.</p>
 
 <span class='co'># run the Stan model</span>
 <span class='no'>stanfit</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stan'>stan</a></span>( <span class='kw'>file</span> <span class='kw'>=</span> <span class='no'>filename</span>, <span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>staninp</span>$<span class='no'>data</span>, <span class='kw'>chains</span> <span class='kw'>=</span> <span class='fl'>4</span>,
-                 <span class='kw'>warmup</span> <span class='kw'>=</span> <span class='fl'>1000</span>, <span class='kw'>iter</span> <span class='kw'>=</span> <span class='fl'>2000</span>, <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>200</span> )</div><div class='output co'>#&gt; In file included from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/BH/include/boost/config.hpp:39:0,
-#&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/BH/include/boost/math/tools/config.hpp:13,
-#&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/stan/math/rev/core/var.hpp:7,
-#&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/stan/math/rev/core/gevv_vvv_vari.hpp:5,
-#&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/stan/math/rev/core.hpp:12,
-#&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/stan/math/rev/mat.hpp:4,
-#&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/stan/math.hpp:4,
-#&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/src/stan/model/model_header.hpp:4,
-#&gt;                  from file9fb4764f97c.cpp:8:
-#&gt; /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/BH/include/boost/config/compiler/gcc.hpp:186:0: warning: "BOOST_NO_CXX11_RVALUE_REFERENCES" redefined
-#&gt;  #  define BOOST_NO_CXX11_RVALUE_REFERENCES
-#&gt;  ^
-#&gt; &lt;command-line&gt;:0:0: note: this is the location of the previous definition
-#&gt; cc1plus: warning: unrecognized command line option ‘-Wno-macro-redefined’</div><div class='output co'>#&gt; <span class='warning'>Warning: There were 3470 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See</span>
-#&gt; <span class='warning'>http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Examine the pairs() plot to diagnose sampling problems</span></div><div class='input'>
+                 <span class='kw'>warmup</span> <span class='kw'>=</span> <span class='fl'>1000</span>, <span class='kw'>iter</span> <span class='kw'>=</span> <span class='fl'>2000</span>, <span class='kw'>cores</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>refresh</span> <span class='kw'>=</span> <span class='fl'>200</span> )
+
 <span class='co'># remove Stan file</span>
-<span class='fu'>file.remove</span>(<span class='no'>filename</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'>
+<span class='fu'>file.remove</span>(<span class='no'>filename</span>)
+
 <span class='co'># compare posterior median with true values</span>
 <span class='no'>v_est_med</span> <span class='kw'>&lt;-</span> <span class='fu'>apply</span>(<span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stanfit-method-extract'>extract</a></span>(<span class='no'>stanfit</span>)$<span class='no'>V</span>, <span class='fl'>2</span>, <span class='kw'>FUN</span> <span class='kw'>=</span> <span class='no'>median</span>)
-<span class='no'>v_est_med</span> / <span class='no'>v_exact</span></div><div class='output co'>#&gt;  [1] 4.093364e-131 6.187258e-120  6.576052e-86 4.231690e-145 9.351866e-133  6.727369e-86  4.804083e-15  2.973739e+00  3.543397e-01  7.572611e-02  1.541146e+00  1.188707e+00  7.836341e-01
-#&gt; [14]  6.851792e-01</div><div class='input'><span class='fu'>sum</span>( (<span class='no'>v_est_med</span>-<span class='no'>v_exact</span>)^<span class='fl'>2</span> )</div><div class='output co'>#&gt; [1] 0.07157305</div><div class='input'>
+<span class='no'>v_est_med</span> / <span class='no'>v_exact</span>
+<span class='fu'>sum</span>( (<span class='no'>v_est_med</span>-<span class='no'>v_exact</span>)^<span class='fl'>2</span> )
+
 <span class='co'># display boxplot of posterior distribution, overlayed with true values</span>
 <span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'>as.data.frame</span>( <span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stanfit-method-extract'>extract</a></span>(<span class='no'>stanfit</span>)$<span class='no'>V</span> )
 <span class='fu'>colnames</span>(<span class='no'>data</span>) <span class='kw'>&lt;-</span> <span class='fu'>paste0</span>(<span class='fu'>rep</span>(<span class='st'>"V"</span>,<span class='no'>d</span>+<span class='fl'>1</span>),<span class='fu'>as.character</span>(<span class='fl'>0</span>:<span class='no'>d</span>))
-<span class='fu'>boxplot</span>( <span class='no'>value</span>~<span class='no'>key</span>, <span class='kw pkg'>tidyr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/tidyr/topics/gather'>gather</a></span>( <span class='no'>data</span>, <span class='kw'>factor_key</span><span class='kw'>=</span><span class='fl'>TRUE</span> ) )</div><div class='input'><span class='fu'>lines</span>(<span class='fl'>1</span>+<span class='fl'>0</span>:<span class='no'>d</span>, <span class='no'>v_exact</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>"red"</span>)</div><div class='input'><span class='fu'>lines</span>(<span class='fl'>1</span>+<span class='fl'>0</span>:<span class='no'>d</span>, <span class='no'>v_est_med</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>"blue"</span>)</div><div class='img'><img src='estim_stan-1.png' alt='' width='700' height='432.632880098887' /></div><div class='input'>
+<span class='fu'>boxplot</span>( <span class='no'>value</span>~<span class='no'>key</span>, <span class='kw pkg'>tidyr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/tidyr/topics/gather'>gather</a></span>( <span class='no'>data</span>, <span class='kw'>factor_key</span><span class='kw'>=</span><span class='fl'>TRUE</span> ) )
+<span class='fu'>lines</span>(<span class='fl'>1</span>+<span class='fl'>0</span>:<span class='no'>d</span>, <span class='no'>v_exact</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>"red"</span>)
+<span class='fu'>lines</span>(<span class='fl'>1</span>+<span class='fl'>0</span>:<span class='no'>d</span>, <span class='no'>v_est_med</span>, <span class='kw'>col</span><span class='kw'>=</span><span class='st'>"blue"</span>)
+
 <span class='co'># display boxplot of posterior distribution of logs, overlayed with true values</span>
 <span class='no'>data</span> <span class='kw'>&lt;-</span> <span class='fu'>as.data.frame</span>( <span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stanfit-method-extract'>extract</a></span>(<span class='no'>stanfit</span>)$<span class='no'>logV_nonz</span> )
 <span class='fu'>colnames</span>(<span class='no'>data</span>) <span class='kw'>&lt;-</span> <span class='fu'>paste0</span>(<span class='fu'>rep</span>(<span class='st'>"logV"</span>,<span class='no'>d</span>+<span class='fl'>1</span>),<span class='fu'>as.character</span>(<span class='fl'>0</span>:<span class='no'>d</span>))
-<span class='fu'>boxplot</span>( <span class='no'>value</span>~<span class='no'>key</span>, <span class='kw pkg'>tidyr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/tidyr/topics/gather'>gather</a></span>( <span class='no'>data</span>, <span class='kw'>factor_key</span><span class='kw'>=</span><span class='fl'>TRUE</span> ) )</div><div class='input'><span class='fu'>lines</span>(<span class='fl'>1</span>+<span class='fl'>0</span>:<span class='no'>d</span>, <span class='fu'>log</span>(<span class='no'>v_exact</span>), <span class='kw'>col</span><span class='kw'>=</span><span class='st'>"red"</span>)</div><div class='input'><span class='fu'>lines</span>(<span class='fl'>1</span>+<span class='fl'>0</span>:<span class='no'>d</span>, <span class='fu'>log</span>(<span class='no'>v_est_med</span>), <span class='kw'>col</span><span class='kw'>=</span><span class='st'>"blue"</span>)</div><div class='img'><img src='estim_stan-2.png' alt='' width='700' height='432.632880098887' /></div><div class='input'>
+<span class='fu'>boxplot</span>( <span class='no'>value</span>~<span class='no'>key</span>, <span class='kw pkg'>tidyr</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/tidyr/topics/gather'>gather</a></span>( <span class='no'>data</span>, <span class='kw'>factor_key</span><span class='kw'>=</span><span class='fl'>TRUE</span> ) )
+<span class='fu'>lines</span>(<span class='fl'>1</span>+<span class='fl'>0</span>:<span class='no'>d</span>, <span class='fu'>log</span>(<span class='no'>v_exact</span>), <span class='kw'>col</span><span class='kw'>=</span><span class='st'>"red"</span>)
+<span class='fu'>lines</span>(<span class='fl'>1</span>+<span class='fl'>0</span>:<span class='no'>d</span>, <span class='fu'>log</span>(<span class='no'>v_est_med</span>), <span class='kw'>col</span><span class='kw'>=</span><span class='st'>"blue"</span>)
+
+<span class='co'># }</span><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

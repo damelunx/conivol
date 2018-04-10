@@ -6,11 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution • conivol</title>
-<!-- jquery --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<!-- jquery --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/yeti/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Font Awesome icons --><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../jquery.sticky-kit.min.js"></script><script src="../pkgdown.js"></script><meta property="og:title" content="Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution">
 <meta property="og:description" content="">
+<meta property="og:image" content="http://damelunx.github.io/conivol/logo.png">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -19,7 +20,7 @@
 </head>
 <body>
     <div class="container template-vignette">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <header><div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
@@ -33,12 +34,12 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fa fa-home"></span>
      
   </a>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../reference/conivol.html">Overview</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -48,18 +49,33 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
-    </li>
-    <li>
-      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</a>
+      <a href="../articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and (bivariate) chi-bar-squared distribution</a>
     </li>
     <li>
       <a href="../articles/estim-conic-intrinsic-volumes-with-EM.html">Estimating conic intrinsic volumes from bivariate chi-bar-squared data</a>
     </li>
+    <li>
+      <a href="../articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>
+    </li>
   </ul>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right"></ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+  <a href="../reference/index.html">
+    <span class="fa fa-file-code-o"></span>
+     
+    functions
+  </a>
+</li>
+<li>
+  <a href="https://github.com/damelunx/conivol">
+    <span class="fa fa-github fa-lg"></span>
+     
+    github
+  </a>
+</li>
+      </ul>
 </div>
 <!--/.nav-collapse -->
   </div>
@@ -74,7 +90,7 @@
       <h1>Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</h1>
                         <h4 class="author">Dennis Amelunxen</h4>
             
-            <h4 class="date">2018-03-01</h4>
+            <h4 class="date">2018-04-10</h4>
           </div>
 
     
@@ -88,9 +104,9 @@
 <li>
 <a href="bayesian.html">Bayesian estimates for conic intrinsic volumes</a>: describes the Bayesian approach for reconstructing intrinsic volumes from sampling data, which can either be samples from the intrinsic volumes distribution (in the case of polyhedral cones), or from the bivariate chi-bar-squared distribution, and which can be with or without enforcing log-concavity of the intrinsic volumes.</li>
 </ul>
-<div id="closed-convex-cones" class="section level2">
+<div id="cl_conv_con" class="section level2">
 <h2 class="hasAnchor">
-<a href="#closed-convex-cones" class="anchor"></a>Closed convex cones</h2>
+<a href="#cl_conv_con" class="anchor"></a>Closed convex cones</h2>
 <p>As the name suggests, a closed convex cone <span class="math inline">\(C\subseteq\text{R}^d\)</span> satisfies the following three properties:</p>
 <ol style="list-style-type: decimal">
 <li>
@@ -113,9 +129,9 @@ any positive scaling of an element in <span class="math inline">\(C\)</span> lie
 <li>Below we will always assume that closed convex cones are nonempty, hence, they contain at least the origin.</li>
 <li>If <span class="math inline">\(C\subseteq\text{R}^d\)</span> and <span class="math inline">\(D\subseteq\text{R}^e\)</span> are closed convex cones, then their direct product is a closed convex cone, <span class="math inline">\(C\times D\subseteq\text{R}^{d+e}\)</span>.</li>
 </ul>
-<div id="polar-cones" class="section level3">
+<div id="pol_con" class="section level3">
 <h3 class="hasAnchor">
-<a href="#polar-cones" class="anchor"></a>Polar cones</h3>
+<a href="#pol_con" class="anchor"></a>Polar cones</h3>
 <p>Every closed convex cone <span class="math inline">\(C\subseteq\text{R}^d\)</span> defines a natural counterpart, its polar cone <span class="math display">\[ C^\circ := \{y\in\text{R}^d\mid \forall x\in C: x^Ty\leq 0\} . \]</span> The polar cone is also a closed convex cone, and the polar of the polar cone is the original cone, which in this context is also called the primal cone, <span class="math inline">\((C^\circ)^\circ = C\)</span>. It thus makes sense to think about the primal cone and its polar cone as a primal-polar pair of cones. A cone is called self-dual, if <span class="math inline">\(C^\circ=-C\)</span>.</p>
 <p>Note that <span class="math inline">\((\text{R}^d)^\circ=\{0\}\)</span>. Also, polarity behaves well with direct products, <span class="math inline">\((C\times D)^\circ = C^\circ\times D^\circ\)</span>.<br>
 The polar cone depends on the ambient space, i.e., if we embed <span class="math inline">\(C\subseteq\text{R}^d\)</span> in <span class="math inline">\(\text{R}^e\)</span>, <span class="math inline">\(e\geq d\)</span>, by formally identifying <span class="math inline">\(C\)</span> with <span class="math inline">\(C\times\{0\}\subseteq\text{R}^e\)</span>, then the polar of the embedded cone is given by <span class="math inline">\((C\times\{0\})^\circ = C^\circ\times\text{R}^{e-d}\)</span> (as opposed to the polar of <span class="math inline">\(C\)</span> in <span class="math inline">\(\text{R}^d\)</span> embedded in <span class="math inline">\(\text{R}^e\)</span>).</p>
@@ -129,9 +145,9 @@ The polar cone depends on the ambient space, i.e., if we embed <span class="math
 <p>The (linear) dimension of a cone is the dimension of its linear hull, and the lineality of a cone is the dimension of its lineality space,</p>
 <p><span class="math display">\[ \text{dim}(C) = \text{dim}(C+(-C)) ,\quad \text{lin}(C) = \text{dim}(C\cap(-C)) . \]</span> Note that by the above polarity statement we have <span class="math inline">\(\text{dim}(C)=d-\text{lin}(C^\circ)\)</span> and <span class="math inline">\(\text{lin}(C)=d-\text{dim}(C^\circ)\)</span>.</p>
 </div>
-<div id="examples-linear-subspaces" class="section level3">
+<div id="lin_subsp" class="section level3">
 <h3 class="hasAnchor">
-<a href="#examples-linear-subspaces" class="anchor"></a>Examples: linear subspaces</h3>
+<a href="#lin_subsp" class="anchor"></a>Examples: linear subspaces</h3>
 <p>A trivial yet important class of examples of closed convex cones are the linear subspaces. It is easily seen that the polar cone of a linear subspace is just its orthogonal complement. Clearly, a cone is a linear space iff <span class="math inline">\(\text{dim}(C)=\text{lin}(C)\)</span>.</p>
 <p>The intrinsic volumes and (bivariate) chi-bar-squared distributions (see <a href="#bivchibarsq">below</a>) are in this case equivalent to the dimension of the subspace and the chi-squared distribution (see <a href="#bivchibars_cone">below</a> for more precise statements).</p>
 <p>Furthermore, for cones which are not linear subspaces the intrinsic volumes satisfy an additional linear relation, which is why the algorithms in <code>conivol</code> assume that the underlying closed convex cone is <strong>not</strong> a linear subspace.</p>
@@ -319,9 +335,9 @@ A_red &lt;-<span class="st"> </span><span class="kw"><a href="../reference/weyl_
 <span class="co">#&gt; [4,]    0    0   -1    2   -1</span>
 <span class="co">#&gt; [5,]    0    0    0   -1    2</span></code></pre></div>
 </div>
-<div id="examples-circular-cones" class="section level3">
+<div id="circ_con" class="section level3">
 <h3 class="hasAnchor">
-<a href="#examples-circular-cones" class="anchor"></a>Examples: circular cones</h3>
+<a href="#circ_con" class="anchor"></a>Examples: circular cones</h3>
 Circular cones consist of all points that lie below a certain angle towards a given (half-)line. Choosing this line to be the <span class="math inline">\(d\)</span>th coordinate axis, we define the <span class="math inline">\(d\)</span>-dimensional circular cone of angle <span class="math inline">\(0&lt;\alpha&lt;\frac{\pi}{2}\)</span> via
 <span class="math display">\[\begin{align*}
    \text{Circ}_d(\alpha) &amp; := \{x\in\text{R}^d\mid x_d\geq \cos(\alpha)\|x\|\}
@@ -376,9 +392,9 @@ Note that the circular cone <span class="math inline">\(\text{Circ}_d(\alpha)\)<
 <p>The intrinsic volumes of the polar cone are the same as those of the primal cone, but the index gets reversed, <span class="math display">\[ v_k(C^\circ) = v_{d-k}(C) . \]</span> The intrinsic volumes of a product of cones arise as the convolution of the intrinsic volumes of its components, <span class="math display">\[ v_k(C\times D) = \sum_{i+j=k} v_i(C) v_j(D) . \]</span> This convolution is conveniently implemented in <code>prod_ivols</code>.</p>
 <p>From the natural orthogonal decomposition <span class="math inline">\(C = L + \bar C\)</span>, where <span class="math inline">\(L=C\cap (-C)\)</span> and <span class="math inline">\(\bar C=\Pi_{L^\bot}(C)\)</span>, one can show that <span class="math inline">\(v_k(C)=0\)</span> if <span class="math inline">\(k&lt;\text{lin}(C)\)</span> or <span class="math inline">\(k&gt;\text{dim}(C)\)</span> and<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> <span class="math display">\[ v_k(C)=v_{k-\text{lin}(C)}(\bar C)&gt;0 \quad\text{for}\quad
     \text{lin}(C)\leq k\leq\text{dim}(C) . \]</span></p>
-<div id="statistical-dimension-and-variance" class="section level3">
+<div id="statdim" class="section level3">
 <h3 class="hasAnchor">
-<a href="#statistical-dimension-and-variance" class="anchor"></a>Statistical dimension and variance</h3>
+<a href="#statdim" class="anchor"></a>Statistical dimension and variance</h3>
 <p>The first moment of intrinsic volumes distribution of a cone is called its statistical dimension, <span class="math display">\[ \delta(C) = \sum_{k=0}^d k v_k(C) . \]</span> Note that the statistical dimension coincides with the (linear) dimension if <span class="math inline">\(C\)</span> is a linear subspace. It also generalizes some other properties, such as <span class="math inline">\(\delta(C^\circ)=d-\delta(C)\)</span> and <span class="math inline">\(\delta(C\times D)=\delta(C)+\delta(D)\)</span>.</p>
 <p>For later use we also define the variance of the cone via <span class="math display">\[ \text{var}(C) = \sum_{k=0}^d (k-\delta(C))^2 v_k(C) . \]</span></p>
 <p><strong>Example computations:</strong></p>
@@ -430,17 +446,17 @@ S &lt;-<span class="st"> </span><span class="kw"><a href="../reference/polyh_riv
 <span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span>
 <span class="co">#&gt;   .. ..$ : NULL</span>
 <span class="co">#&gt;   .. ..$ : chr [1:30] "Signature 1" "Signature 2" "Signature 3" "Signature 4" ...</span>
-<span class="co">#&gt;  $ samples  : int [1:100000] 7 3 7 6 3 4 7 5 4 7 ...</span>
-<span class="co">#&gt;  $ multsamp : int [1:97] 348 2205 7179 14237 19981 20697 16338 10388 5347 2194 ...</span>
+<span class="co">#&gt;  $ samples  : int [1:100000] 2 4 4 5 3 2 2 3 7 5 ...</span>
+<span class="co">#&gt;  $ multsamp : int [1:97] 360 2173 7150 14327 19845 20756 16550 10253 5343 2178 ...</span>
 linC &lt;-<span class="st"> </span>S$linC
 dimC &lt;-<span class="st"> </span>S$dimC
 msamp &lt;-<span class="st"> </span>S$multsamp</code></pre></div>
 <p>We can look at the point estimate for the intrinsic volumes given by this sample:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tib_plot &lt;-<span class="st"> </span><span class="kw">tibble</span>( <span class="dt">k=</span>linC:dimC, <span class="dt">value=</span>msamp[<span class="dv">1</span>+linC:dimC]/n )
 <span class="kw">ggplot</span>(tib_plot, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span>value))      +<span class="st"> </span><span class="kw">geom_line</span>() +<span class="st"> </span><span class="kw">theme_bw</span>()</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/plot-canc-samp-1.png" width="672"></p>
+<p><img src="conic-intrinsic-volumes_figures/plot-canc-samp-1.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(tib_plot, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span><span class="kw">log</span>(value))) +<span class="st"> </span><span class="kw">geom_line</span>() +<span class="st"> </span><span class="kw">theme_bw</span>()</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/plot-canc-samp-2.png" width="672"></p>
+<p><img src="conic-intrinsic-volumes_figures/plot-canc-samp-2.png" width="672" style="display: block; margin: auto;"></p>
 <p>We can also look at the corresponding Bayes posterior:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">bayes_est &lt;-<span class="st"> </span><span class="kw"><a href="../reference/polyh_bayes.html">polyh_bayes</a></span>( msamp, dimC, linC )
 tib_plot_bay &lt;-<span class="st"> </span>bayes_est$<span class="kw">post_samp</span>(<span class="fl">1e4</span>) %&gt;%
@@ -450,7 +466,7 @@ tib_plot_bay &lt;-<span class="st"> </span>bayes_est$<span class="kw">post_samp<
 <span class="kw">ggplot</span>(tib_plot_bay, <span class="kw">aes</span>(<span class="dt">x=</span>key, <span class="dt">y=</span>value)) +
 <span class="st">    </span><span class="kw">geom_boxplot</span>() +<span class="st"> </span><span class="kw">theme_bw</span>() +
 <span class="st">    </span><span class="kw">theme</span>(<span class="dt">axis.title.x=</span><span class="kw">element_blank</span>(), <span class="dt">axis.title.y=</span><span class="kw">element_blank</span>())</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/canc-bayes-1.png" width="672"></p>
+<p><img src="conic-intrinsic-volumes_figures/canc-bayes-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>Of course, the error bars are not too interesting in this case, as the sample size is quite large. So for illustration purpose we resample with much smaller sample size:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">n_sm &lt;-<span class="st"> </span><span class="fl">3e2</span>
 <span class="kw">set.seed</span>(<span class="dv">1111</span>)
@@ -461,10 +477,10 @@ msamp_sm &lt;-<span class="st"> </span>S_sm$multsamp
 tib_plot_sm &lt;-<span class="st"> </span><span class="kw">tibble</span>( <span class="dt">k=</span>linC:dimC, <span class="dt">value=</span>msamp_sm[<span class="dv">1</span>+linC:dimC]/n_sm )
 <span class="kw">ggplot</span>(tib_plot_sm, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span>value)) +<span class="st"> </span><span class="kw">geom_line</span>() +<span class="st"> </span><span class="kw">theme_bw</span>() +
 <span class="st">    </span><span class="kw">geom_line</span>(<span class="dt">data=</span>tib_plot, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span>value), <span class="dt">linetype=</span><span class="st">"dashed"</span>, <span class="dt">color=</span><span class="st">"red"</span>)</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-small-1.png" width="672"></p>
+<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-small-1.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(tib_plot_sm, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span><span class="kw">log</span>(value))) +<span class="st"> </span><span class="kw">geom_line</span>() +<span class="st"> </span><span class="kw">theme_bw</span>() +
 <span class="st">    </span><span class="kw">geom_line</span>(<span class="dt">data=</span>tib_plot, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span><span class="kw">log</span>(value)), <span class="dt">linetype=</span><span class="st">"dashed"</span>, <span class="dt">color=</span><span class="st">"red"</span>)</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-small-2.png" width="672"></p>
+<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-small-2.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Bayes posterior:</span>
 bayes_est_sm &lt;-<span class="st"> </span><span class="kw"><a href="../reference/polyh_bayes.html">polyh_bayes</a></span>( msamp_sm, dimC, linC )
 tib_plot_bay_sm &lt;-<span class="st"> </span>bayes_est_sm$<span class="kw">post_samp</span>(<span class="fl">1e4</span>) %&gt;%
@@ -475,7 +491,7 @@ tib_plot_bay_sm &lt;-<span class="st"> </span>bayes_est_sm$<span class="kw">post
 <span class="st">    </span><span class="kw">geom_boxplot</span>() +<span class="st"> </span><span class="kw">theme_bw</span>() +
 <span class="st">    </span><span class="kw">theme</span>(<span class="dt">axis.title.x=</span><span class="kw">element_blank</span>(), <span class="dt">axis.title.y=</span><span class="kw">element_blank</span>()) +
 <span class="st">    </span><span class="kw">geom_line</span>(<span class="dt">data=</span>tib_plot, <span class="kw">aes</span>(<span class="dt">x=</span>k<span class="dv">+1</span>, <span class="dt">y=</span>value), <span class="dt">linetype=</span><span class="st">"dashed"</span>, <span class="dt">color=</span><span class="st">"red"</span>)</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-small-3.png" width="672"></p>
+<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-small-3.png" width="672" style="display: block; margin: auto;"></p>
 <p>In a situation with too few data points one may improve the estimate by assuming <em>log-concavity</em> of the intrinsic volumes; see the discussion <a href="#log-conc">below</a> for more information about log-concavity of intrinsic volumes. The package <code>logcondiscr</code> (<a href="https://cran.r-project.org/web/packages/logcondiscr/index.html">CRAN</a>) offers functionalities to compute the log-concave maximum likelihood estimate, see <span class="citation">(Balabdaoui et al. <a href="#ref-BJRP13">2013</a>)</span>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">logconc_MLE &lt;-<span class="st"> </span><span class="kw">logConDiscrMLE</span>(S_sm$samples, <span class="dt">output=</span><span class="ot">FALSE</span>)
 log_est &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="dv">0</span>,dimC-linC<span class="dv">+1</span>)
@@ -486,16 +502,16 @@ tib_plot_logc &lt;-<span class="st"> </span><span class="kw">tibble</span>( <spa
 <span class="kw">ggplot</span>(tib_plot_logc, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span>value)) +<span class="st"> </span><span class="kw">geom_line</span>() +<span class="st"> </span><span class="kw">theme_bw</span>() +
 <span class="st">    </span><span class="kw">geom_line</span>(<span class="dt">data=</span>tib_plot_sm, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span>value), <span class="dt">linetype=</span><span class="st">"dashed"</span>, <span class="dt">color=</span><span class="st">"blue"</span>) +
 <span class="st">    </span><span class="kw">geom_line</span>(<span class="dt">data=</span>tib_plot, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span>value), <span class="dt">linetype=</span><span class="st">"dashed"</span>, <span class="dt">color=</span><span class="st">"red"</span>)</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-logconc-1.png" width="672"></p>
+<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-logconc-1.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(tib_plot_logc, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span><span class="kw">log</span>(value))) +<span class="st"> </span><span class="kw">geom_line</span>() +<span class="st"> </span><span class="kw">theme_bw</span>() +
 <span class="st">    </span><span class="kw">geom_line</span>(<span class="dt">data=</span>tib_plot_sm, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span><span class="kw">log</span>(value)), <span class="dt">linetype=</span><span class="st">"dashed"</span>, <span class="dt">color=</span><span class="st">"blue"</span>) +
 <span class="st">    </span><span class="kw">geom_line</span>(<span class="dt">data=</span>tib_plot, <span class="kw">aes</span>(<span class="dt">x=</span>k, <span class="dt">y=</span><span class="kw">log</span>(value)), <span class="dt">linetype=</span><span class="st">"dashed"</span>, <span class="dt">color=</span><span class="st">"red"</span>)</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-logconc-2.png" width="672"></p>
+<p><img src="conic-intrinsic-volumes_figures/samp-canc-data-logconc-2.png" width="672" style="display: block; margin: auto;"></p>
 <p>As for Bayesian posteriors enforcing log-concavity, <code>conivol</code> supports this functionality through the MCMC sampler <a href="http://mc-stan.org/">Stan</a>. See the vignette on <a href="bayesian.html">Bayesian estimates for conic intrinsic volumes</a> for information and example computations for this case.</p>
 </div>
-<div id="examples-weyl-chambers-of-finite-reflection-groups" class="section level3">
+<div id="ex_weyl" class="section level3">
 <h3 class="hasAnchor">
-<a href="#examples-weyl-chambers-of-finite-reflection-groups" class="anchor"></a>Examples: Weyl chambers of finite reflection groups</h3>
+<a href="#ex_weyl" class="anchor"></a>Examples: Weyl chambers of finite reflection groups</h3>
 The intrinsic volumes of the Weyl chambers are easily given through their generating function:
 <span class="math display">\[\begin{align*}
    \sum_{k=0}^{d+1} v_k(C_A)\, x^k &amp; = \frac{1}{(d+1)!} \prod_{k=1}^{d+1} (x+k-1) ,
@@ -522,9 +538,9 @@ v_list &lt;-<span class="st"> </span><span class="kw"><a href="../reference/weyl
 <span class="co">#&gt;  [1]      0 113400 461610 789411 748250 437510 165750  41388   6750    690</span>
 <span class="co">#&gt; [11]     40      1</span></code></pre></div>
 </div>
-<div id="examples-circular-cones-1" class="section level3">
+<div id="ex_circ_con" class="section level3">
 <h3 class="hasAnchor">
-<a href="#examples-circular-cones-1" class="anchor"></a>Examples: circular cones</h3>
+<a href="#ex_circ_con" class="anchor"></a>Examples: circular cones</h3>
 <p>The intrinsic volumes of circular cones are given by the following formulas: <span class="math display">\[ v_k(\text{Circ}_d(\alpha)) = \begin{cases}
        \displaystyle\frac{\Gamma(\frac{d}{2})}{\Gamma(\frac{k+1}{2})\Gamma(\frac{d-k+1}{2})}
             \frac{p^{(k-1)/2} (1-p)^{(d-k-1)/2}}{2} &amp; \text{if } 0&lt;k&lt;d
@@ -585,14 +601,14 @@ The moments of the continuous random variables <span class="math inline">\(\|\Pi
 D &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="dv">7</span>,<span class="dv">17</span>)
 alpha &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="fl">0.7</span>*pi/<span class="dv">2</span>, <span class="fl">0.6</span>*pi/<span class="dv">2</span>)
 v_true &lt;-<span class="st"> </span><span class="kw"><a href="../reference/circ_ivols.html">circ_ivols</a></span>( D, alpha, <span class="dt">product=</span><span class="ot">TRUE</span>)
-m_samp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/bichibarsquare.html">rbichibarsq</a></span>(<span class="fl">1e5</span>, v_true)
+m_samp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/bichibarsq.html">rbichibarsq</a></span>(<span class="fl">1e5</span>, v_true)
 d &lt;-<span class="st"> </span><span class="kw">sum</span>(D)
 
 <span class="co"># scatter plot of the sample</span>
 <span class="kw">ggplot</span>(<span class="kw">as_tibble</span>(m_samp), <span class="kw">aes</span>(V1,V2)) +<span class="st"> </span><span class="kw">geom_point</span>(<span class="dt">alpha=</span>.<span class="dv">02</span>) +
 <span class="st">    </span><span class="kw">theme_bw</span>() +
 <span class="st">    </span><span class="kw">theme</span>(<span class="dt">axis.title.x=</span><span class="kw">element_blank</span>(),<span class="dt">axis.title.y=</span><span class="kw">element_blank</span>())</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/biv-chi-bar-sq-1.png" width="480"></p>
+<p><img src="conic-intrinsic-volumes_figures/biv-chi-bar-sq-1.png" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
 <span class="co"># estimate moments, compare with true values</span>
 est &lt;-<span class="st"> </span><span class="kw"><a href="../reference/estim_statdim_var.html">estim_statdim_var</a></span>(d, m_samp); est
@@ -614,9 +630,9 @@ est &lt;-<span class="st"> </span><span class="kw"><a href="../reference/estim_s
 <h2 class="hasAnchor">
 <a href="#inequs" class="anchor"></a>Inequalities, known and conjectured</h2>
 <p>Finally, we collect inequalities, known and conjectured, that help our understanding of the intrinsic volumes, and that have already or might potentially prove useful in applications. In particular, the log-concavity inequalities are useful in the estimation of intrinsic volumes from sampling data.</p>
-<div id="inequalities-from-half-tail-functionals" class="section level3">
+<div id="ineq_tailf" class="section level3">
 <h3 class="hasAnchor">
-<a href="#inequalities-from-half-tail-functionals" class="anchor"></a>Inequalities from (half-)tail functionals</h3>
+<a href="#ineq_tailf" class="anchor"></a>Inequalities from (half-)tail functionals</h3>
 The tail and half-tail functionals <span class="math inline">\(t_k\)</span> and <span class="math inline">\(h_k\)</span> are defined via
 <span class="math display">\[\begin{align*}
    t_k &amp; = v_k + v_{k+1} + v_{k+2} + \dots ,
@@ -629,18 +645,18 @@ The above two-functionals are monotonically increasing in both the indices and i
  &amp; h_k(C) &amp; \leq h_{k+1}(C) , &amp; h_k(C) &amp; \leq h_k(D) .
 \end{align*}\]</span>
 </div>
-<div id="isoperimetric-inequalities" class="section level3">
+<div id="isop_ineq" class="section level3">
 <h3 class="hasAnchor">
-<a href="#isoperimetric-inequalities" class="anchor"></a>Isoperimetric inequalities</h3>
+<a href="#isop_ineq" class="anchor"></a>Isoperimetric inequalities</h3>
 Broadly speaking, (classical) isoperimetric inequalities compare surface area and volume of an object with those of a “round” object (in quotes because isoperimetric inequalities are known not only in Euclidean spaces but in curved spaces as well). In the context of convex cones one can find the following formulation: if <span class="math inline">\(C\subseteq\text{R}^d\)</span> is a closed convex cone and if the angle <span class="math inline">\(\alpha\)</span> is such that <span class="math inline">\(v_{d-1}(C)=v_{d-1}(\text{Circ}_d(\alpha))\)</span> then <span class="math display">\[ v_d(C)\leq v_d(\text{Circ}_d(\alpha)) . \]</span> Note that <span class="math inline">\(v_d(C)=t_d(C)=h_d(C)/2\)</span>. Makowski and Scheuer <span class="citation">(<a href="#ref-MS16">2016</a>)</span> added to this inequality the following:
 <span class="math display">\[\begin{align*}
    v_{d-2}(C) &amp; \geq v_{d-2}(\text{Circ}_d(\alpha)) ,
  &amp; h_{d-2k+1}(C) &amp; \geq h_{d-2k+1}(\text{Circ}_d(\alpha)) .
 \end{align*}\]</span>
 </div>
-<div id="variance-conjecture" class="section level3">
+<div id="var_conj" class="section level3">
 <h3 class="hasAnchor">
-<a href="#variance-conjecture" class="anchor"></a>Variance conjecture</h3>
+<a href="#var_conj" class="anchor"></a>Variance conjecture</h3>
 <p>So far the only known inequality for the variance of the intrinsic volumes is <span class="math display">\[ \text{var}(C) \leq 2\text{min}\{\delta(C),d-\delta(C)\} , \]</span> which was shown in <span class="citation">(McCoy and Tropp <a href="#ref-McCT14">2014</a>)</span>. We think that this inequality can be greatly improved (see the example computations below) through a new form of isoperimetric inequalities.</p>
 <p>We conjecture that among all <span class="math inline">\(d\)</span>-dimensional cones of a specific statistical dimension the variance of the intrinsic volumes is maximized by the corresponding <span class="math inline">\(d\)</span>-dimensional circular cone of the same statistical dimension: if <span class="math inline">\(C\subseteq\text{R}^d\)</span> is a closed convex cone, then <span class="math display">\[ \delta(C)=\delta(\text{Circ}_d)
     \quad \stackrel{?}{\Rightarrow} \quad
@@ -670,7 +686,7 @@ for (k in <span class="dv">2</span>:d) {
 }
 G &lt;-<span class="st"> </span>G +<span class="st"> </span><span class="kw">theme_bw</span>()
 G</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/statdim-var-circ-1.png" width="672"> Note that considering direct products with linear subspaces just amounts to shifts along the x-axis, so we will not consider this. Instead, we consider direct products of circular cones. Note that the number of different combinations is given by the partition function:</p>
+<p><img src="conic-intrinsic-volumes_figures/statdim-var-circ-1.png" width="672" style="display: block; margin: auto;"> Note that considering direct products with linear subspaces just amounts to shifts along the x-axis, so we will not consider this. Instead, we consider direct products of circular cones. Note that the number of different combinations is given by the partition function:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">P &lt;-<span class="st"> </span><span class="kw">parts</span>(d); P
 <span class="co">#&gt;                                                                  </span>
 <span class="co">#&gt;  [1,] 9 8 7 7 6 6 6 5 5 5 5 5 4 4 4 4 4 4 3 3 3 3 3 3 3 2 2 2 2 1</span>
@@ -693,7 +709,7 @@ for (k in sing) {
     G &lt;-<span class="st"> </span>G +<span class="st"> </span><span class="kw">geom_line</span>(<span class="dt">data=</span><span class="kw">tibble</span>(sdim,var), <span class="kw">aes</span>(sdim,var))
 }
 G &lt;-<span class="st"> </span>G +<span class="st"> </span><span class="kw">theme_bw</span>(); G</code></pre></div>
-<p><img src="conic-intrinsic-volumes_figures/statdim-var-prod-curv-1.png" width="672"> Finally, we obtain the following plots for the remaining products of circular cones: <img src="conic-intrinsic-volumes_figures/statdim-var-prod-scatter-1.png" width="672"></p>
+<p><img src="conic-intrinsic-volumes_figures/statdim-var-prod-curv-1.png" width="672" style="display: block; margin: auto;"> Finally, we obtain the following plots for the remaining products of circular cones: <img src="conic-intrinsic-volumes_figures/statdim-var-prod-scatter-1.png" width="672" style="display: block; margin: auto;"></p>
 </div>
 <div id="log-conc" class="section level3">
 <h3 class="hasAnchor">
@@ -754,7 +770,7 @@ Let <span class="math inline">\(C=A\mathcal L^d\)</span> for some invertible lin
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#closed-convex-cones">Closed convex cones</a></li>
+<li><a href="#cl_conv_con">Closed convex cones</a></li>
       <li><a href="#intro_intrvol">Conic intrinsic volumes</a></li>
       <li><a href="#bivchibarsq">(Bivariate) chi-bar-squared distribution</a></li>
       <li><a href="#inequs">Inequalities, known and conjectured</a></li>
