@@ -254,7 +254,7 @@ which enforces log-concavity of the intrinsic volumes.</p>
 #&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/stan/math/rev/mat.hpp:4,
 #&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/stan/math.hpp:4,
 #&gt;                  from /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/StanHeaders/include/src/stan/model/model_header.hpp:4,
-#&gt;                  from file36927019b314.cpp:8:
+#&gt;                  from file583a47333750.cpp:8:
 #&gt; /home/damlunx/R/x86_64-pc-linux-gnu-library/3.4/BH/include/boost/config/compiler/gcc.hpp:186:0: warning: "BOOST_NO_CXX11_RVALUE_REFERENCES" redefined
 #&gt;  #  define BOOST_NO_CXX11_RVALUE_REFERENCES
 #&gt;  ^
@@ -262,23 +262,23 @@ which enforces log-concavity of the intrinsic volumes.</p>
 #&gt; cc1plus: warning: unrecognized command line option ‘-Wno-macro-redefined’</div><div class='output co'>#&gt; <span class='warning'>Warning: There were 1016 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See</span>
 #&gt; <span class='warning'>http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup</span></div><div class='output co'>#&gt; <span class='warning'>Warning: Examine the pairs() plot to diagnose sampling problems</span></div><div class='input'><span class='fu'>sink</span>()
 <span class='fu'>file.remove</span>(<span class='st'>"no-output.txt"</span>)</div><div class='output co'>#&gt; [1] TRUE</div><div class='input'><span class='fu'>str</span>(<span class='fu'><a href='http://www.rdocumentation.org/packages/rstan/topics/stanfit-method-extract'>extract</a></span>(<span class='no'>stanfit</span>))</div><div class='output co'>#&gt; List of 5
-#&gt;  $ t        : num [1:4000, 1:13] 1.53e-14 4.00e-13 8.20e-04 8.71e-05 1.19 ...
+#&gt;  $ t        : num [1:4000, 1:13] 1.07e-11 2.95e-07 3.34e-02 2.47e-16 4.35e-15 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
 #&gt;   .. ..$ iterations: NULL
 #&gt;   .. ..$           : NULL
-#&gt;  $ v_nonz   : num [1:4000, 1:13] 0.00226 0.00318 0.00486 0.00207 0.00155 ...
+#&gt;  $ v_nonz   : num [1:4000, 1:13] 0.00236 0.00407 0.00394 0.00275 0.0026 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
 #&gt;   .. ..$ iterations: NULL
 #&gt;   .. ..$           : NULL
-#&gt;  $ V        : num [1:4000, 1:13] 8.55e-06 1.35e-05 2.31e-05 6.93e-06 6.11e-06 ...
+#&gt;  $ V        : num [1:4000, 1:13] 8.46e-06 1.73e-05 1.73e-05 1.10e-05 1.03e-05 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
 #&gt;   .. ..$ iterations: NULL
 #&gt;   .. ..$           : NULL
-#&gt;  $ logV_nonz: num [1:4000, 1:13] -11.7 -11.2 -10.7 -11.9 -12 ...
+#&gt;  $ logV_nonz: num [1:4000, 1:13] -11.7 -11 -11 -11.4 -11.5 ...
 #&gt;   ..- attr(*, "dimnames")=List of 2
 #&gt;   .. ..$ iterations: NULL
 #&gt;   .. ..$           : NULL
-#&gt;  $ lp__     : num [1:4000(1d)] -16888 -16888 -16880 -16881 -16887 ...
+#&gt;  $ lp__     : num [1:4000(1d)] -16881 -16881 -16884 -16885 -16886 ...
 #&gt;   ..- attr(*, "dimnames")=List of 1
 #&gt;   .. ..$ iterations: NULL</div><div class='input'>
 <span class='co'># remove Stan file</span>

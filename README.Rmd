@@ -58,13 +58,13 @@ idea behind the algorithm to reconstruct the intrinsic volumes from samples
 of the bivariate chi-bar-squared distribution, and the Bayesian approach
 to this reconstruction:
 
-* [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](articles/conic-intrinsic-volumes.html):
+* [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](http://damelunx.github.io/conivol/articles/conic-intrinsic-volumes.html):
     introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions,
     as well as the computations involving polyhedral cones,
-* [Estimating conic intrinsic volumes from bivariate chi-bar-squared data](articles/estim-conic-intrinsic-volumes-with-EM.html):
+* [Estimating conic intrinsic volumes from bivariate chi-bar-squared data](http://damelunx.github.io/conivol/articles/estim-conic-intrinsic-volumes-with-EM.html):
     describes the details of the algorithm for finding the intrinsic volumes of closed
     convex cones from samples of the associated bivariate chi-bar-squared distribution,
-* [Bayesian estimates for conic intrinsic volumes](articles/bayesian.html):
+* [Bayesian estimates for conic intrinsic volumes](http://damelunx.github.io/conivol/articles/bayesian.html):
     describes the Bayesian approach for reconstructing intrinsic volumes
     from sampling data, which can either be samples from the intrinsic
     volumes distribution (in the case of polyhedral cones), or from the

@@ -125,11 +125,11 @@ devtools::<span class="kw">install_github</span>(<span class="st">"damelunx/coni
 <p>The following vignettes introduce the theory of intrinsic volumes, explain the idea behind the algorithm to reconstruct the intrinsic volumes from samples of the bivariate chi-bar-squared distribution, and the Bayesian approach to this reconstruction:</p>
 <ul>
 <li>
-<a href="articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and (bivariate) chi-bar-squared distribution</a>: introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions, as well as the computations involving polyhedral cones,</li>
+<a href="http://damelunx.github.io/conivol/articles/conic-intrinsic-volumes.html">Conic intrinsic volumes and (bivariate) chi-bar-squared distribution</a>: introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions, as well as the computations involving polyhedral cones,</li>
 <li>
-<a href="articles/estim-conic-intrinsic-volumes-with-EM.html">Estimating conic intrinsic volumes from bivariate chi-bar-squared data</a>: describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples of the associated bivariate chi-bar-squared distribution,</li>
+<a href="http://damelunx.github.io/conivol/articles/estim-conic-intrinsic-volumes-with-EM.html">Estimating conic intrinsic volumes from bivariate chi-bar-squared data</a>: describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples of the associated bivariate chi-bar-squared distribution,</li>
 <li>
-<a href="articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>: describes the Bayesian approach for reconstructing intrinsic volumes from sampling data, which can either be samples from the intrinsic volumes distribution (in the case of polyhedral cones), or from the bivariate chi-bar-squared distribution, and which can be with or without enforcing log-concavity of the intrinsic volumes.</li>
+<a href="http://damelunx.github.io/conivol/articles/bayesian.html">Bayesian estimates for conic intrinsic volumes</a>: describes the Bayesian approach for reconstructing intrinsic volumes from sampling data, which can either be samples from the intrinsic volumes distribution (in the case of polyhedral cones), or from the bivariate chi-bar-squared distribution, and which can be with or without enforcing log-concavity of the intrinsic volumes.</li>
 </ul>
 </div>
 <div id="functions" class="section level2">
@@ -176,20 +176,20 @@ xmat &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="k
 
 <span class="co"># draw samples</span>
 <span class="kw"><a href="reference/chibarsq.html">rchibarsq</a></span>(<span class="dv">10</span>,v)
-<span class="co">#&gt;  [1]  7.7411471  8.7668777  0.3549214  1.3508474  0.0000000  2.2773917</span>
-<span class="co">#&gt;  [7]  4.8770173  4.3152972  3.2813015 10.3182881</span>
+<span class="co">#&gt;  [1] 0.0000000 0.0000000 0.1084343 0.0000000 8.2370964 0.7855319 5.0895097</span>
+<span class="co">#&gt;  [8] 9.5805189 5.4202461 5.5850965</span>
 <span class="kw"><a href="reference/bichibarsq.html">rbichibarsq</a></span>(<span class="dv">10</span>,v)
-<span class="co">#&gt;             [,1]      [,2]</span>
-<span class="co">#&gt;  [1,]  1.5583268  3.209531</span>
-<span class="co">#&gt;  [2,]  0.0000000  8.541466</span>
-<span class="co">#&gt;  [3,]  2.7387227  3.374385</span>
-<span class="co">#&gt;  [4,]  8.4134752  2.554337</span>
-<span class="co">#&gt;  [5,]  0.0000000 22.281228</span>
-<span class="co">#&gt;  [6,]  0.3001942  5.802075</span>
-<span class="co">#&gt;  [7,]  3.2969870  3.447288</span>
-<span class="co">#&gt;  [8,]  2.5710089 11.537947</span>
-<span class="co">#&gt;  [9,] 11.9151572  2.353439</span>
-<span class="co">#&gt; [10,]  7.7575697  0.000000</span></code></pre></div>
+<span class="co">#&gt;             [,1]        [,2]</span>
+<span class="co">#&gt;  [1,]  5.2812356  1.13121954</span>
+<span class="co">#&gt;  [2,]  0.0000000  2.97999171</span>
+<span class="co">#&gt;  [3,]  0.9257964  4.47915648</span>
+<span class="co">#&gt;  [4,]  3.6823265  0.01577407</span>
+<span class="co">#&gt;  [5,]  3.3726953  6.67588627</span>
+<span class="co">#&gt;  [6,]  1.5957511  0.48705365</span>
+<span class="co">#&gt;  [7,]  0.6368254 12.66360172</span>
+<span class="co">#&gt;  [8,] 18.0670532  0.00000000</span>
+<span class="co">#&gt;  [9,]  1.8780097  2.16712196</span>
+<span class="co">#&gt; [10,]  1.3245555  7.34712964</span></code></pre></div>
 </div>
 <div id="special-classes-of-cones" class="section level3">
 <h3 class="hasAnchor">
@@ -219,25 +219,25 @@ xmat &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="k
 <span class="co"># computing the semiaxes of the ellipsoidal cone given by the linear image of the Lorentz cone</span>
 A &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">sample</span>(<span class="dv">1</span>:<span class="dv">25</span>),<span class="dv">5</span>,<span class="dv">5</span>)
 <span class="kw"><a href="reference/ellips_semiax.html">ellips_semiax</a></span>(A)
-<span class="co">#&gt; [1] 21.989356  6.521781  4.501647  2.815021</span>
+<span class="co">#&gt; [1] 15.320889  5.425662  3.431199  2.310669</span>
 
 <span class="co"># draw samples of the bivariate chi-bar-squared distribution of the ellipsoidal cone</span>
 <span class="kw"><a href="reference/ellips_rbichibarsq.html">ellips_rbichibarsq</a></span>(<span class="dv">10</span>, A)
 <span class="co">#&gt; $semiax</span>
-<span class="co">#&gt; [1] 21.989356  6.521781  4.501647  2.815021</span>
+<span class="co">#&gt; [1] 15.320889  5.425662  3.431199  2.310669</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $samples</span>
-<span class="co">#&gt;           [,1]          [,2]</span>
-<span class="co">#&gt;  [1,] 5.351988  4.075967e+00</span>
-<span class="co">#&gt;  [2,] 4.849587  1.995710e+00</span>
-<span class="co">#&gt;  [3,] 2.621234  3.065948e+00</span>
-<span class="co">#&gt;  [4,] 1.073909  8.456273e-01</span>
-<span class="co">#&gt;  [5,] 9.990704  8.537987e-01</span>
-<span class="co">#&gt;  [6,] 2.272224  1.054433e+00</span>
-<span class="co">#&gt;  [7,] 9.112687  3.478196e-01</span>
-<span class="co">#&gt;  [8,] 6.313790 -7.648993e-12</span>
-<span class="co">#&gt;  [9,] 4.292650  2.856537e-02</span>
-<span class="co">#&gt; [10,] 4.479650 -2.081742e-07</span>
+<span class="co">#&gt;            [,1]          [,2]</span>
+<span class="co">#&gt;  [1,] 1.3110107  2.053912e+00</span>
+<span class="co">#&gt;  [2,] 2.3101572  7.352786e-03</span>
+<span class="co">#&gt;  [3,] 0.2258345  7.283595e+00</span>
+<span class="co">#&gt;  [4,] 0.5489826  3.083826e+00</span>
+<span class="co">#&gt;  [5,] 7.8276236  2.423922e-01</span>
+<span class="co">#&gt;  [6,] 2.0972942  1.083397e-04</span>
+<span class="co">#&gt;  [7,] 7.6529801  7.145592e-02</span>
+<span class="co">#&gt;  [8,] 0.3988723  4.868564e+00</span>
+<span class="co">#&gt;  [9,] 9.2423872 -4.032685e-10</span>
+<span class="co">#&gt; [10,] 3.5246967  2.092331e-02</span>
 
 <span class="co"># compute the matrix of the product of some Weyl chambers</span>
 <span class="kw"><a href="reference/weyl_matrix.html">weyl_matrix</a></span>( <span class="kw">rep</span>(<span class="dv">3</span>,<span class="dv">4</span>), <span class="kw">c</span>(<span class="st">"BC"</span>,<span class="st">"BCp"</span>,<span class="st">"D"</span>,<span class="st">"Dp"</span>), <span class="dt">product=</span><span class="ot">TRUE</span>)
@@ -329,16 +329,16 @@ A &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">
 <span class="co"># (setting reduce to FALSE since otherwise polyh_reduce_*** would be called)</span>
 <span class="kw"><a href="reference/polyh_rivols.html">polyh_rivols_gen</a></span>(<span class="dv">10</span>, A, <span class="dt">reduce=</span><span class="ot">FALSE</span>)
 <span class="co">#&gt; $samples</span>
-<span class="co">#&gt;  [1] 0 1 1 1 1 0 0 0 0 1</span>
+<span class="co">#&gt;  [1] 0 2 0 1 0 1 1 1 0 0</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $multsamp</span>
-<span class="co">#&gt; [1] 5 5 0 0 0 0</span>
+<span class="co">#&gt; [1] 5 4 1 0 0 0</span>
 <span class="kw"><a href="reference/polyh_rivols.html">polyh_rivols_ineq</a></span>(<span class="dv">10</span>, A, <span class="dt">reduce=</span><span class="ot">FALSE</span>)
 <span class="co">#&gt; $samples</span>
-<span class="co">#&gt;  [1] 5 5 4 5 3 4 5 4 4 4</span>
+<span class="co">#&gt;  [1] 4 4 4 5 4 4 5 4 4 4</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $multsamp</span>
-<span class="co">#&gt; [1] 0 0 0 1 5 4</span>
+<span class="co">#&gt; [1] 0 0 0 0 8 2</span>
 
 <span class="co"># computing the Bayesian posterior with Dirichlet prior (analytically solvable)</span>
 <span class="co"># we sample from a product of Weyl chambers to have the true values at hand</span>
@@ -353,10 +353,10 @@ bayes_est &lt;-<span class="st"> </span><span class="kw"><a href="reference/poly
 <span class="co"># compare posterior median with true values</span>
 v_est_med &lt;-<span class="st"> </span>bayes_est$<span class="kw">post_marg_quant</span>(<span class="dv">0</span>:<span class="dv">12</span>,<span class="fl">0.5</span>)
 v_est_med /<span class="st"> </span>v_true
-<span class="co">#&gt;  [1] 2.3816378 0.7750107 0.7278206 1.0391228 0.9785720 0.9422667 1.0150368</span>
-<span class="co">#&gt;  [8] 1.0757495 1.2287800 1.3051012 0.6557067 0.1108293 1.4777201</span>
+<span class="co">#&gt;  [1] 2.3457795 0.7882211 1.2369396 0.9588291 0.9156046 0.9663532 1.0617378</span>
+<span class="co">#&gt;  [8] 1.0750310 0.8944089 1.5723202 0.6458343 0.1127181 1.4554750</span>
 <span class="kw">sum</span>( (v_est_med-v_true)^<span class="dv">2</span> )
-<span class="co">#&gt; [1] 0.0005220288</span>
+<span class="co">#&gt; [1] 0.0007730948</span>
 
 <span class="co"># display boxplot of posterior distribution, overlayed with true values</span>
 data &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>( bayes_est$<span class="kw">post_samp</span>(<span class="fl">1e4</span>) )
@@ -398,10 +398,10 @@ d &lt;-<span class="st"> </span><span class="dv">13</span>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># estimate the moments of the intrinsic volumes, compare with true values</span>
 est &lt;-<span class="st"> </span><span class="kw"><a href="reference/estim_statdim_var.html">estim_statdim_var</a></span>(d, m_samp); est
 <span class="co">#&gt; $delta</span>
-<span class="co">#&gt; [1] 10.00653</span>
+<span class="co">#&gt; [1] 10.01082</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $var</span>
-<span class="co">#&gt; [1] 2.89369</span>
+<span class="co">#&gt; [1] 2.904957</span>
 <span class="kw">list</span>( <span class="dt">statdim_true=</span><span class="kw">sum</span>((<span class="dv">0</span>:d)*v_true),
       <span class="dt">var_true=</span><span class="kw">sum</span>((<span class="dv">0</span>:d)^<span class="dv">2</span>*v_true)-<span class="kw">sum</span>((<span class="dv">0</span>:d)*v_true)^<span class="dv">2</span> )
 <span class="co">#&gt; $statdim_true</span>
@@ -421,13 +421,13 @@ v_init &lt;-<span class="st"> </span><span class="kw">tibble</span>( <span class
 <span class="co"># compute log-likelihoods of initial estimates</span>
 <span class="kw">lapply</span>( v_init, loglike_ivols, data, <span class="dv">0</span>)
 <span class="co">#&gt; $v_est_0</span>
-<span class="co">#&gt; [1] -5.482306</span>
+<span class="co">#&gt; [1] -5.47858</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $v_est_1</span>
-<span class="co">#&gt; [1] -4.976301</span>
+<span class="co">#&gt; [1] -4.973619</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $v_est_4</span>
-<span class="co">#&gt; [1] -4.979601</span>
+<span class="co">#&gt; [1] -4.976519</span>
 <span class="co"># plot the different estimates and their logarithms</span>
 tib_plot &lt;-<span class="st"> </span>v_init %&gt;%<span class="st"> </span><span class="kw">add_column</span>(<span class="dt">v_true=</span>v_true,<span class="dt">.before=</span><span class="dv">1</span>) %&gt;%
 <span class="st">    </span><span class="kw">add_column</span>(<span class="dt">k=</span><span class="dv">0</span>:d,<span class="dt">.before=</span><span class="dv">1</span>) %&gt;%<span class="st"> </span><span class="kw">gather</span>(mode,value,<span class="dv">2</span>:<span class="dv">5</span>)

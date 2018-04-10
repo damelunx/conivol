@@ -30,9 +30,9 @@ Vignettes
 
 The following vignettes introduce the theory of intrinsic volumes, explain the idea behind the algorithm to reconstruct the intrinsic volumes from samples of the bivariate chi-bar-squared distribution, and the Bayesian approach to this reconstruction:
 
--   [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](articles/conic-intrinsic-volumes.html): introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions, as well as the computations involving polyhedral cones,
--   [Estimating conic intrinsic volumes from bivariate chi-bar-squared data](articles/estim-conic-intrinsic-volumes-with-EM.html): describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples of the associated bivariate chi-bar-squared distribution,
--   [Bayesian estimates for conic intrinsic volumes](articles/bayesian.html): describes the Bayesian approach for reconstructing intrinsic volumes from sampling data, which can either be samples from the intrinsic volumes distribution (in the case of polyhedral cones), or from the bivariate chi-bar-squared distribution, and which can be with or without enforcing log-concavity of the intrinsic volumes.
+-   [Conic intrinsic volumes and (bivariate) chi-bar-squared distribution](http://damelunx.github.io/conivol/articles/conic-intrinsic-volumes.html): introduces conic intrinsic volumes and (bivariate) chi-bar-squared distributions, as well as the computations involving polyhedral cones,
+-   [Estimating conic intrinsic volumes from bivariate chi-bar-squared data](http://damelunx.github.io/conivol/articles/estim-conic-intrinsic-volumes-with-EM.html): describes the details of the algorithm for finding the intrinsic volumes of closed convex cones from samples of the associated bivariate chi-bar-squared distribution,
+-   [Bayesian estimates for conic intrinsic volumes](http://damelunx.github.io/conivol/articles/bayesian.html): describes the Bayesian approach for reconstructing intrinsic volumes from sampling data, which can either be samples from the intrinsic volumes distribution (in the case of polyhedral cones), or from the bivariate chi-bar-squared distribution, and which can be with or without enforcing log-concavity of the intrinsic volumes.
 
 Functions
 ---------
@@ -77,20 +77,20 @@ pbichibarsq(xmat, v)
 
 # draw samples
 rchibarsq(10,v)
-#>  [1] 6.1463261 0.1416041 8.2826727 4.4773390 6.0058743 0.7937796 2.4157046
-#>  [8] 5.3227938 0.0000000 3.3612290
+#>  [1]  5.3821406 10.0900847  4.4661353  2.5068493  5.4043756  3.6074913
+#>  [7]  0.5705646  3.3406996  0.0000000  3.9253260
 rbichibarsq(10,v)
-#>            [,1]       [,2]
-#>  [1,] 2.3668934  4.6920338
-#>  [2,] 0.1968204  0.3530046
-#>  [3,] 0.3625915  3.3433793
-#>  [4,] 1.1612110  5.1716681
-#>  [5,] 4.2781895  2.1164302
-#>  [6,] 0.3533374  3.2572594
-#>  [7,] 3.5040308  3.4984949
-#>  [8,] 7.4817297  0.0000000
-#>  [9,] 3.0479072  0.0000000
-#> [10,] 0.8220247 10.6227306
+#>             [,1]        [,2]
+#>  [1,] 6.21419585 1.015559146
+#>  [2,] 9.40828047 0.975057795
+#>  [3,] 5.03423944 0.726614262
+#>  [4,] 0.00000000 2.757863611
+#>  [5,] 3.90871519 0.006180522
+#>  [6,] 0.27261766 3.241752106
+#>  [7,] 1.00797890 1.705562777
+#>  [8,] 0.03679793 2.692236254
+#>  [9,] 6.79061207 2.598650577
+#> [10,] 3.37671284 2.226124499
 ```
 
 ### Special classes of cones:
@@ -119,25 +119,25 @@ prod_ivols( list(circ_ivols(4,pi/4), circ_ivols(4,pi/4)) )
 # computing the semiaxes of the ellipsoidal cone given by the linear image of the Lorentz cone
 A <- matrix(sample(1:25),5,5)
 ellips_semiax(A)
-#> [1] 3.5148018 1.3559270 0.7008142 0.2332776
+#> [1] 7.9543636 2.5915758 1.9811380 0.8227369
 
 # draw samples of the bivariate chi-bar-squared distribution of the ellipsoidal cone
 ellips_rbichibarsq(10, A)
 #> $semiax
-#> [1] 3.5148018 1.3559270 0.7008142 0.2332776
+#> [1] 7.9543636 2.5915758 1.9811380 0.8227369
 #> 
 #> $samples
-#>             [,1]          [,2]
-#>  [1,] 1.44800064  6.140950e-01
-#>  [2,] 1.68175167  2.105807e+00
-#>  [3,] 0.31838045  3.337049e-02
-#>  [4,] 6.05139921  1.757622e+00
-#>  [5,] 0.05535768  1.159143e+00
-#>  [6,] 9.68560644  1.083321e-02
-#>  [7,] 7.08237454  1.190387e-02
-#>  [8,] 1.99143032  2.970942e+00
-#>  [9,] 8.67029874  7.291365e-01
-#> [10,] 4.16674063 -2.664535e-15
+#>            [,1]          [,2]
+#>  [1,]  4.903819  2.675108e+00
+#>  [2,] 12.394098  2.454733e-01
+#>  [3,]  1.477270  3.698028e+00
+#>  [4,]  3.449274  3.167491e-01
+#>  [5,]  5.773831  4.635336e-02
+#>  [6,]  1.639457 -2.229301e-07
+#>  [7,]  1.182619  3.211592e+00
+#>  [8,]  0.622225  1.183700e+00
+#>  [9,]  3.200294  1.976112e+00
+#> [10,]  7.969855  1.305236e-01
 
 # compute the matrix of the product of some Weyl chambers
 weyl_matrix( rep(3,4), c("BC","BCp","D","Dp"), product=TRUE)
@@ -226,16 +226,16 @@ polyh_reduce_ineq(A)
 # (setting reduce to FALSE since otherwise polyh_reduce_*** would be called)
 polyh_rivols_gen(10, A, reduce=FALSE)
 #> $samples
-#>  [1] 2 2 0 1 1 0 1 1 1 1
+#>  [1] 0 1 0 1 0 1 1 1 1 1
 #> 
 #> $multsamp
-#> [1] 2 6 2 0 0 0
+#> [1] 3 7 0 0 0 0
 polyh_rivols_ineq(10, A, reduce=FALSE)
 #> $samples
-#>  [1] 5 5 5 5 4 3 3 5 4 5
+#>  [1] 5 4 4 4 5 5 4 4 5 5
 #> 
 #> $multsamp
-#> [1] 0 0 0 2 2 6
+#> [1] 0 0 0 0 5 5
 
 # computing the Bayesian posterior with Dirichlet prior (analytically solvable)
 # we sample from a product of Weyl chambers to have the true values at hand
@@ -250,11 +250,11 @@ bayes_est <- polyh_bayes( out$multsamp, out$dimC, out$linC )
 # compare posterior median with true values
 v_est_med <- bayes_est$post_marg_quant(0:12,0.5)
 v_est_med / v_true
-#>  [1] 0.01410046 0.37153044 1.19947004 0.90232367 0.94922249 0.96785612
-#>  [7] 1.03949856 1.14828707 0.88510365 1.54273651 0.65696203 0.11059765
-#> [13] 1.48054868
+#>  [1] 0.013706912 0.590796631 1.023132559 0.981173132 0.987763057
+#>  [6] 0.995125069 1.041126180 1.040697519 0.836369183 0.972351840
+#> [11] 0.003773754 0.114177462 1.439225754
 sum( (v_est_med-v_true)^2 )
-#> [1] 0.0007449245
+#> [1] 0.0001567436
 
 # display boxplot of posterior distribution, overlayed with true values
 data <- as.data.frame( bayes_est$post_samp(1e4) )
@@ -300,10 +300,10 @@ ggplot(as_tibble(m_samp), aes(V1,V2)) + geom_point(alpha=.02) +
 # estimate the moments of the intrinsic volumes, compare with true values
 est <- estim_statdim_var(d, m_samp); est
 #> $delta
-#> [1] 10.0086
+#> [1] 9.98498
 #> 
 #> $var
-#> [1] 2.484804
+#> [1] 2.651625
 list( statdim_true=sum((0:d)*v_true),
       var_true=sum((0:d)^2*v_true)-sum((0:d)*v_true)^2 )
 #> $statdim_true
@@ -323,13 +323,13 @@ v_init <- tibble( v_est_0 = init_ivols(13,0),
 # compute log-likelihoods of initial estimates
 lapply( v_init, loglike_ivols, data, 0)
 #> $v_est_0
-#> [1] -5.473134
+#> [1] -5.477892
 #> 
 #> $v_est_1
-#> [1] -4.964647
+#> [1] -4.973259
 #> 
 #> $v_est_4
-#> [1] -4.972136
+#> [1] -4.978822
 # plot the different estimates and their logarithms
 tib_plot <- v_init %>% add_column(v_true=v_true,.before=1) %>%
     add_column(k=0:d,.before=1) %>% gather(mode,value,2:5)
