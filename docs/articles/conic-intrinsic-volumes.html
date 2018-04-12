@@ -90,7 +90,7 @@
       <h1>Conic intrinsic volumes and the (bivariate) chi-bar-squared distribution</h1>
                         <h4 class="author">Dennis Amelunxen</h4>
             
-            <h4 class="date">2018-04-10</h4>
+            <h4 class="date">2018-04-12</h4>
           </div>
 
     
@@ -446,8 +446,8 @@ S &lt;-<span class="st"> </span><span class="kw"><a href="../reference/polyh_riv
 <span class="co">#&gt;   ..- attr(*, "dimnames")=List of 2</span>
 <span class="co">#&gt;   .. ..$ : NULL</span>
 <span class="co">#&gt;   .. ..$ : chr [1:30] "Signature 1" "Signature 2" "Signature 3" "Signature 4" ...</span>
-<span class="co">#&gt;  $ samples  : int [1:100000] 4 3 4 9 9 6 5 3 4 3 ...</span>
-<span class="co">#&gt;  $ multsamp : int [1:97] 354 2264 7157 14344 19958 20418 16366 10605 5258 2223 ...</span>
+<span class="co">#&gt;  $ samples  : int [1:100000] 5 4 7 4 3 7 4 6 6 8 ...</span>
+<span class="co">#&gt;  $ multsamp : int [1:97] 306 2203 7178 14297 19892 20651 16553 10351 5407 2115 ...</span>
 linC &lt;-<span class="st"> </span>S$linC
 dimC &lt;-<span class="st"> </span>S$dimC
 msamp &lt;-<span class="st"> </span>S$multsamp</code></pre></div>
@@ -722,7 +722,7 @@ As for the other direction, it can be shown that in dimension <span class="math 
 <div id="proof_ellips" class="section level2">
 <h2 class="hasAnchor">
 <a href="#proof_ellips" class="anchor"></a>Appendix: Proof of ellipsoidal cone representation</h2>
-Let <span class="math inline">\(C=A\mathcal L^d\)</span> for some invertible linear transformation <span class="math inline">\(A\)</span>. Consider the eigenvalue decomposition of the symmetric matrix <span class="math inline">\(AJA^T\)</span> with <span class="math inline">\(J=\text{diag}(-1,\ldots,-1,1)\)</span>: according to <a href="https://en.wikipedia.org/wiki/Singular-value_decomposition">Sylvester’s law of inertia</a> this matrix has <span class="math inline">\(d-1\)</span> negative and one positive eigenvalues. Let these be given by <span class="math inline">\(-\lambda_1&lt;\dots&lt;-\lambda_{d-1}&lt;0\)</span> and <span class="math inline">\(\mu&gt;0\)</span>, so that <span class="math display">\[ AJA^T = Q\text{diag}(-\lambda_1,\ldots,-\lambda_{d-1},\mu)Q^T , \]</span> for <span class="math inline">\(Q\in\text{R}^d\)</span> orthogonal; taking inverses, we have <span class="math display">\[ A^{-T}JA^{-1} = Q\text{diag}(-1/\lambda_1,\ldots,-1/\lambda_{d-1},1/\mu)Q^T . \]</span> Setting <span class="math inline">\(\alpha_k=\sqrt{\lambda_k/\mu}\)</span> for <span class="math inline">\(k=1,\ldots,d-1\)</span>, we obtain
+Let <span class="math inline">\(C=A\mathcal L^d\)</span> for some invertible linear transformation <span class="math inline">\(A\)</span>. Consider the eigenvalue decomposition of the symmetric matrix <span class="math inline">\(AJA^T\)</span> with <span class="math inline">\(J=\text{diag}(-1,\ldots,-1,1)\)</span>: according to <a href="https://en.wikipedia.org/wiki/Singular-value_decomposition">Sylvester’s law of inertia</a> this matrix has <span class="math inline">\(d-1\)</span> negative and one positive eigenvalues. Let these be given by <span class="math inline">\(-\lambda_1&lt;\dots&lt;-\lambda_{d-1}&lt;0\)</span> and <span class="math inline">\(\mu&gt;0\)</span>, so that <span class="math display">\[ AJA^T = Q\text{diag}(-\lambda_1,\ldots,-\lambda_{d-1},\mu)Q^T , \]</span> for <span class="math inline">\(Q\in\text{R}^{d\times d}\)</span> orthogonal; taking inverses, we have <span class="math display">\[ A^{-T}JA^{-1} = Q\text{diag}(-1/\lambda_1,\ldots,-1/\lambda_{d-1},1/\mu)Q^T . \]</span> Setting <span class="math inline">\(\alpha_k=\sqrt{\lambda_k/\mu}\)</span> for <span class="math inline">\(k=1,\ldots,d-1\)</span>, we obtain
 <span class="math display">\[\begin{align*}
    \mu J &amp; = A^TQ\text{diag}(-\mu/\lambda_1,\ldots,-\mu/\lambda_{d-1},1)Q^TA
 \\ &amp; = A^TQ\text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1) J \text{diag}(\alpha_1^{-1},\ldots,\alpha_{d-1}^{-1},1)Q^TA

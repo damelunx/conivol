@@ -906,7 +906,7 @@ this matrix has $d-1$ negative and one positive eigenvalues. Let these
 be given by $-\lambda_1<\dots<-\lambda_{d-1}<0$ and $\mu>0$,
 so that
   \[ AJA^T = Q\text{diag}(-\lambda_1,\ldots,-\lambda_{d-1},\mu)Q^T , \]
-for $Q\in\text{R}^d$ orthogonal; taking inverses, we have
+for $Q\in\text{R}^{d\times d}$ orthogonal; taking inverses, we have
   \[ A^{-T}JA^{-1} = Q\text{diag}(-1/\lambda_1,\ldots,-1/\lambda_{d-1},1/\mu)Q^T . \]
 Setting $\alpha_k=\sqrt{\lambda_k/\mu}$ for $k=1,\ldots,d-1$, we obtain
 \begin{align*}
